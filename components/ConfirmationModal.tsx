@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Trash2 } from 'lucide-react';
 
@@ -5,9 +6,10 @@ interface ConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  t: (key: any) => string;
 }
 
-const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, onConfirm }) => {
+const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, onConfirm, t }) => {
   if (!isOpen) return null;
 
   return (
@@ -17,9 +19,9 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
           <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-2 shadow-inner">
             <Trash2 size={36} strokeWidth={2.5} />
           </div>
-          <h2 className="text-2xl font-black text-slate-800 leading-tight">Delete this card?</h2>
+          <h2 className="text-2xl font-black text-slate-800 leading-tight">{t('modal.confirm.delete_title')}</h2>
           <p className="text-slate-500 font-medium text-lg leading-relaxed px-2">
-            Are you sure? It will be gone forever.
+            {t('modal.confirm.delete_desc')}
           </p>
         </div>
         
@@ -28,13 +30,13 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
             onClick={onClose}
             className="py-3.5 rounded-2xl font-bold text-slate-600 bg-white border-b-4 border-slate-200 hover:bg-slate-50 active:border-b-0 active:translate-y-1 transition-all"
           >
-            Cancel
+            {t('modal.confirm.cancel')}
           </button>
           <button
             onClick={onConfirm}
             className="py-3.5 rounded-2xl font-bold text-white bg-red-500 border-b-4 border-red-700 hover:bg-red-600 active:border-b-0 active:translate-y-1 transition-all flex items-center justify-center"
           >
-            Yes, Delete
+            {t('modal.confirm.yes')}
           </button>
         </div>
       </div>

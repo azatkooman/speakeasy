@@ -6,9 +6,10 @@ interface ParentGateModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  t: (key: any) => string;
 }
 
-const ParentGateModal: React.FC<ParentGateModalProps> = ({ isOpen, onClose, onSuccess }) => {
+const ParentGateModal: React.FC<ParentGateModalProps> = ({ isOpen, onClose, onSuccess, t }) => {
   const [problem, setProblem] = useState({ a: 0, b: 0 });
   const [answer, setAnswer] = useState('');
   const [error, setError] = useState(false);
@@ -16,7 +17,6 @@ const ParentGateModal: React.FC<ParentGateModalProps> = ({ isOpen, onClose, onSu
 
   useEffect(() => {
     if (isOpen) {
-      // Generate numbers between 3 and 9 to ensure it's not too easy (like 1x1) but not too hard
       const a = Math.floor(Math.random() * 7) + 3; 
       const b = Math.floor(Math.random() * 7) + 3;
       setProblem({ a, b });
@@ -36,7 +36,6 @@ const ParentGateModal: React.FC<ParentGateModalProps> = ({ isOpen, onClose, onSu
     } else {
       setError(true);
       setAnswer('');
-      // Shake effect logic handled by CSS classes or simple state reset
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
@@ -57,8 +56,8 @@ const ParentGateModal: React.FC<ParentGateModalProps> = ({ isOpen, onClose, onSu
           </button>
         </div>
 
-        <h3 className="text-xl font-black text-slate-800 mb-1">For Parents Only</h3>
-        <p className="text-slate-500 text-sm mb-6 font-bold">Please solve this to unlock editing.</p>
+        <h3 className="text-xl font-black text-slate-800 mb-1">{t('gate.title')}</h3>
+        <p className="text-slate-500 text-sm mb-6 font-bold">{t('gate.desc')}</p>
 
         <div className="bg-slate-50 rounded-2xl p-6 mb-6 border-2 border-slate-100">
           <span className="text-3xl font-black text-slate-700 tracking-widest">
@@ -69,7 +68,7 @@ const ParentGateModal: React.FC<ParentGateModalProps> = ({ isOpen, onClose, onSu
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             ref={inputRef}
-            type="tel" // Triggers numeric keypad on mobile
+            type="tel"
             pattern="[0-9]*"
             value={answer}
             onChange={(e) => {
@@ -90,7 +89,7 @@ const ParentGateModal: React.FC<ParentGateModalProps> = ({ isOpen, onClose, onSu
             type="submit"
             className="w-full py-3.5 bg-slate-800 text-white rounded-xl font-bold shadow-lg active:scale-95 transition-transform flex items-center justify-center space-x-2"
           >
-            <span>Unlock</span>
+            <span>{t('gate.unlock')}</span>
             <ArrowRight size={20} />
           </button>
         </form>

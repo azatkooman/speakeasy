@@ -1,7 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Image as ImageIcon, Check, Mic, Keyboard, Play, RotateCcw, Camera } from 'lucide-react';
-import { AACItem, Category } from '../types';
+import { X, Image as ImageIcon, Check, Mic, Keyboard, Play, RotateCcw, Camera, RefreshCcw, Eye, EyeOff } from 'lucide-react';
+import { AACItem, Category, AppLanguage } from '../types';
 import AudioRecorder from './AudioRecorder';
 
 interface CreateCardModalProps {
@@ -10,6 +9,8 @@ interface CreateCardModalProps {
   onSave: (item: Omit<AACItem, 'id' | 'createdAt'>) => void;
   editItem?: AACItem | null;
   categories: Category[];
+  t: (key: any) => string;
+  language: AppLanguage;
 }
 
 // Map themes to display colors for selection
@@ -27,14 +28,17 @@ const THEME_PREVIEWS: Record<string, string> = {
 
 type SoundMode = 'recording' | 'tts';
 
-const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSave, editItem, categories }) => {
+const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSave, editItem, categories, t, language }) => {
   const [label, setLabel] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [isVisible, setIsVisible] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Camera State
   const [isCameraActive, setIsCameraActive] = useState(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
+  const [flashTrigger, setFlashTrigger] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -43,6 +47,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
   
   // Recording State
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [previewAudioUrl, setPreviewAudioUrl] = useState<string | null>(null);
   const [isAudioDeleted, setIsAudioDeleted] = useState(false);
   
   // TTS State
@@ -62,30 +67,62 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
   const startCamera = async () => {
     try {
         stopCamera();
+        // Short delay to ensure clean state switch
+        await new Promise(r => setTimeout(r, 100));
+
         const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'environment' } 
+            video: { 
+                facingMode: facingMode,
+                width: { ideal: 1280 },
+                height: { ideal: 1280 } // Ask for square-ish or high res
+            },
+            audio: false 
         });
         streamRef.current = stream;
         setIsCameraActive(true);
     } catch (err) {
         console.error("Error accessing camera:", err);
         alert("Could not access the camera. Please check permissions.");
+        setIsCameraActive(false);
     }
   };
+
+  const switchCamera = () => {
+      setFacingMode(prev => prev === 'environment' ? 'user' : 'environment');
+  };
+
+  // Re-trigger camera if facing mode changes while active
+  useEffect(() => {
+      if (isCameraActive) {
+          startCamera();
+      }
+  }, [facingMode]);
 
   const capturePhoto = () => {
       const video = videoRef.current;
       if (video && video.videoWidth > 0 && video.videoHeight > 0) {
+          // Trigger flash animation
+          setFlashTrigger(true);
+          setTimeout(() => setFlashTrigger(false), 200);
+
           const canvas = document.createElement('canvas');
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
+          // We want a square crop from the center
+          const size = Math.min(video.videoWidth, video.videoHeight);
+          const startX = (video.videoWidth - size) / 2;
+          const startY = (video.videoHeight - size) / 2;
+
+          canvas.width = 600; // Output size (good balance for quality/storage)
+          canvas.height = 600;
+          
           const ctx = canvas.getContext('2d');
           if (ctx) {
-              ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+              // Draw the center square of the video to the canvas
+              ctx.drawImage(video, startX, startY, size, size, 0, 0, canvas.width, canvas.height);
               try {
-                const dataUrl = canvas.toDataURL('image/jpeg');
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
                 setImagePreview(dataUrl);
-                stopCamera();
+                // Delay stop slightly to let flash finish
+                setTimeout(() => stopCamera(), 100);
               } catch (e) {
                 console.error("Capture failed", e);
                 alert("Failed to capture photo.");
@@ -98,9 +135,18 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
     setLabel('');
     setImagePreview(null);
     setAudioBlob(null);
+    
+    // Cleanup old blob url if exists
+    if (previewAudioUrl && previewAudioUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewAudioUrl);
+    }
+    setPreviewAudioUrl(null);
+    
     setIsAudioDeleted(false);
     setTextToSpeak('');
     setSoundMode('recording');
+    setFacingMode('environment');
+    setIsVisible(true);
     stopCamera();
     if (categories.length > 0) setSelectedCategoryId(categories[0].id);
   };
@@ -113,7 +159,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
         videoRef.current.srcObject = streamRef.current;
         videoRef.current.play().catch(err => console.log("Play error (handled by autoplay):", err));
     }
-  }, [isCameraActive]);
+  }, [isCameraActive, streamRef.current]);
 
   // Handle Open/Edit
   useEffect(() => {
@@ -121,9 +167,9 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
       if (editItem) {
         setLabel(editItem.label);
         setImagePreview(editItem.imageUrl);
+        setIsVisible(editItem.isVisible !== false);
         
-        // Handle orphaned categories: If the item's category ID no longer exists, 
-        // default to the first available category so the user can "fix" it.
+        // Handle orphaned categories
         const categoryExists = categories.some(c => c.id === editItem.category);
         if (categoryExists) {
             setSelectedCategoryId(editItem.category);
@@ -133,10 +179,15 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
         
         if (editItem.audioUrl) {
             setSoundMode('recording');
-            setAudioBlob(null); 
+            setAudioBlob(null);
+            setPreviewAudioUrl(editItem.audioUrl);
             setTextToSpeak(editItem.textToSpeak || '');
         } else {
             setSoundMode('tts');
+            setPreviewAudioUrl(null);
+            if (editItem.audioUrl) {
+                setPreviewAudioUrl(editItem.audioUrl);
+            }
             setTextToSpeak(editItem.textToSpeak || '');
         }
         setIsAudioDeleted(false);
@@ -157,7 +208,9 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
 
   // Cleanup
   useEffect(() => {
-      return () => stopCamera();
+      return () => {
+          stopCamera();
+      };
   }, []);
 
   if (!isOpen) return null;
@@ -175,9 +228,21 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
   };
 
   const handleAudioRecordingComplete = (blob: Blob | null) => {
+    // Cleanup previous blob URL to prevent leaks
+    if (previewAudioUrl && previewAudioUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewAudioUrl);
+    }
+
     setAudioBlob(blob);
-    if (blob === null) setIsAudioDeleted(true);
-    else setIsAudioDeleted(false);
+    
+    if (blob === null) {
+        setIsAudioDeleted(true);
+        setPreviewAudioUrl(null);
+    } else {
+        setIsAudioDeleted(false);
+        const url = URL.createObjectURL(blob);
+        setPreviewAudioUrl(url);
+    }
   };
 
   const startDictation = () => {
@@ -190,7 +255,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.lang = 'en-US';
+    recognition.lang = language === 'ru' ? 'ru-RU' : 'en-US';
 
     recognition.onstart = () => setIsListening(true);
     recognition.onend = () => setIsListening(false);
@@ -208,6 +273,8 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
       if (!text) return;
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
+      u.lang = language === 'ru' ? 'ru-RU' : 'en-US';
+      
       const savedSettings = localStorage.getItem('aac_settings');
       if (savedSettings) {
           const s = JSON.parse(savedSettings);
@@ -230,8 +297,9 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                 reader.onloadend = () => resolve(reader.result as string);
                 reader.readAsDataURL(audioBlob);
             });
-        } else if (!isAudioDeleted && editItem?.audioUrl) {
-            finalAudioUrl = editItem.audioUrl;
+        } else if (!isAudioDeleted && previewAudioUrl && !previewAudioUrl.startsWith('blob:')) {
+            // Use existing valid URL if not a temporary blob and not deleted
+            finalAudioUrl = previewAudioUrl;
         }
     } else {
         finalTextToSpeak = textToSpeak.trim() || undefined;
@@ -243,6 +311,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
         audioUrl: finalAudioUrl,
         textToSpeak: finalTextToSpeak,
         category: selectedCategoryId,
+        isVisible,
     });
     
     if (!editItem) resetForm();
@@ -251,10 +320,71 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] transition-all">
+      <div className="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] h-full sm:h-auto transition-all relative">
         
+        {/* === Full Screen Camera Overlay === */}
+        {isCameraActive && (
+             <div className="absolute inset-0 z-[60] bg-black flex flex-col animate-in fade-in duration-300">
+                 {/* Video Feed */}
+                 <div className="relative flex-1 bg-black overflow-hidden flex items-center justify-center">
+                    <video 
+                        ref={videoRef} 
+                        autoPlay 
+                        playsInline 
+                        muted 
+                        className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    
+                    {/* Visual Guide Overlay (Darkens outside the square) */}
+                    <div className="absolute inset-0 pointer-events-none">
+                        <div className="w-full h-full bg-black/50 flex items-center justify-center">
+                            {/* Clear square in center */}
+                            <div className="w-[80%] aspect-square border-2 border-white/80 rounded-2xl relative shadow-[0_0_0_9999px_rgba(0,0,0,0.5)] bg-transparent">
+                                {/* Corner markers for aesthetics */}
+                                <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-white -mt-1 -ml-1 rounded-tl-lg"></div>
+                                <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-white -mt-1 -mr-1 rounded-tr-lg"></div>
+                                <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-white -mb-1 -ml-1 rounded-bl-lg"></div>
+                                <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-white -mb-1 -mr-1 rounded-br-lg"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Flash Animation */}
+                    {flashTrigger && (
+                        <div className="absolute inset-0 bg-white animate-out fade-out duration-300 pointer-events-none z-50"></div>
+                    )}
+                 </div>
+
+                 {/* Camera Controls Footer */}
+                 <div className="h-32 bg-black/90 backdrop-blur-md flex items-center justify-between px-10 pb-4 pt-2 z-50">
+                     <button 
+                        onClick={stopCamera}
+                        className="p-4 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all active:scale-95"
+                        title="Close Camera"
+                     >
+                         <X size={24} />
+                     </button>
+                     
+                     <button 
+                        onClick={capturePhoto}
+                        className="w-20 h-20 rounded-full bg-white border-[6px] border-slate-300 ring-4 ring-white/10 active:scale-95 active:ring-white/30 transition-all shadow-xl"
+                        title="Take Photo"
+                     />
+
+                    <button 
+                        onClick={switchCamera}
+                        className="p-4 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all active:scale-95"
+                        title="Switch Camera"
+                     >
+                         <RefreshCcw size={24} />
+                     </button>
+                 </div>
+             </div>
+        )}
+
+        {/* === Normal Modal Content === */}
         <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50/50">
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">{editItem ? 'Edit Card' : 'New Card'}</h2>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">{editItem ? t('modal.create.title_edit') : t('modal.create.title_new')}</h2>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-600 transition-colors">
             <X size={28} />
           </button>
@@ -264,45 +394,21 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
           
           <div className="flex flex-col sm:flex-row gap-6">
             <div className="relative flex-shrink-0 aspect-square w-32 sm:w-40 rounded-2xl overflow-hidden border-2 border-slate-200 bg-slate-50 group shadow-sm">
-              {isCameraActive ? (
-                  <div className="absolute inset-0 bg-black flex flex-col items-center justify-center">
-                      <video 
-                        ref={videoRef} 
-                        autoPlay 
-                        playsInline 
-                        muted 
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-                      <div className="absolute bottom-2 flex space-x-4 z-10">
-                          <button 
-                            onClick={stopCamera}
-                            className="p-2 bg-white/20 rounded-full text-white hover:bg-white/40 backdrop-blur-md"
-                          >
-                              <X size={20} />
-                          </button>
-                          <button 
-                            onClick={capturePhoto}
-                            className="w-12 h-12 rounded-full bg-white border-4 border-slate-300 hover:scale-110 transition-transform"
-                          />
-                      </div>
-                  </div>
-              ) : (
-                  <>
-                    {imagePreview ? (
+                  {imagePreview ? (
                         <div className="relative w-full h-full group">
                             <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center space-y-2">
                                 <button 
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="px-3 py-1 bg-white rounded-full text-xs font-bold text-slate-700 hover:bg-primary hover:text-white flex items-center gap-1"
+                                    className="px-3 py-1 bg-white rounded-full text-xs font-bold text-slate-700 hover:bg-primary hover:text-white flex items-center gap-1 shadow-sm"
                                 >
-                                    <ImageIcon size={12}/> Change
+                                    <ImageIcon size={12}/> {t('modal.create.change')}
                                 </button>
                                 <button 
                                     onClick={startCamera}
-                                    className="px-3 py-1 bg-white rounded-full text-xs font-bold text-slate-700 hover:bg-primary hover:text-white flex items-center gap-1"
+                                    className="px-3 py-1 bg-white rounded-full text-xs font-bold text-slate-700 hover:bg-primary hover:text-white flex items-center gap-1 shadow-sm"
                                 >
-                                    <Camera size={12}/> Retake
+                                    <Camera size={12}/> {t('modal.create.retake')}
                                 </button>
                             </div>
                         </div>
@@ -310,43 +416,63 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                         <div className="w-full h-full flex flex-col items-center justify-center p-2 space-y-2">
                              <button 
                                 onClick={startCamera}
-                                className="w-full flex-1 bg-primary/5 hover:bg-primary/10 rounded-xl flex flex-col items-center justify-center text-primary transition-colors"
+                                className="w-full flex-1 bg-primary/5 hover:bg-primary/10 rounded-xl flex flex-col items-center justify-center text-primary transition-colors border border-primary/10"
                              >
-                                <Camera size={20} className="mb-1" />
-                                <span className="text-[10px] font-black uppercase tracking-wide">Camera</span>
+                                <Camera size={24} className="mb-1" />
+                                <span className="text-[10px] font-black uppercase tracking-wide">{t('modal.create.camera')}</span>
                              </button>
                              <button 
                                 onClick={() => fileInputRef.current?.click()}
-                                className="w-full flex-1 bg-slate-100 hover:bg-slate-200 rounded-xl flex flex-col items-center justify-center text-slate-500 transition-colors"
+                                className="w-full flex-1 bg-slate-100 hover:bg-slate-200 rounded-xl flex flex-col items-center justify-center text-slate-500 transition-colors border border-slate-200"
                              >
-                                <ImageIcon size={20} className="mb-1" />
-                                <span className="text-[10px] font-black uppercase tracking-wide">Upload</span>
+                                <ImageIcon size={24} className="mb-1" />
+                                <span className="text-[10px] font-black uppercase tracking-wide">{t('modal.create.upload')}</span>
                              </button>
                         </div>
                     )}
-                  </>
-              )}
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
             </div>
 
             <div className="flex-1 space-y-3">
                <div className="flex items-center justify-between">
-                 <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">Name (Label)</label>
+                 <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">{t('modal.create.name_label')}</label>
                </div>
                <div className="relative">
                  <input
                     type="text"
                     value={label}
                     onChange={(e) => setLabel(e.target.value)}
-                    placeholder="e.g. Apple"
+                    placeholder={t('modal.create.name_placeholder')}
                     className="w-full px-4 py-3 bg-white rounded-xl border-2 border-slate-300 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-xl font-bold text-slate-900 placeholder:text-slate-400 transition-all"
                   />
+               </div>
+               
+               <div className="pt-2">
+                  <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full ${isVisible ? 'bg-primary/10 text-primary' : 'bg-slate-200 text-slate-400'}`}>
+                            {isVisible ? <Eye size={20} /> : <EyeOff size={20} />}
+                        </div>
+                        <div>
+                            <p className="text-sm font-bold text-slate-700">{t('modal.create.visibility')}</p>
+                            <p className="text-xs text-slate-400">
+                                {isVisible ? t('modal.create.visible') : t('modal.create.hidden')}
+                            </p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => setIsVisible(!isVisible)}
+                        className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${isVisible ? 'bg-primary' : 'bg-slate-300'}`}
+                    >
+                        <div className={`absolute top-1 left-1 bg-white w-5 h-5 rounded-full shadow-sm transition-transform duration-200 ${isVisible ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
                </div>
             </div>
           </div>
 
           <div className="space-y-3">
-            <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">Category</label>
+            <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">{t('modal.create.category')}</label>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {categories.map((cat) => (
                 <button
@@ -374,19 +500,19 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
 
           <div className="space-y-3">
             <div className="flex justify-between items-end">
-                <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">Card Sound</label>
+                <label className="text-sm font-bold text-slate-700 uppercase tracking-wider">{t('modal.create.sound_label')}</label>
                 <div className="flex space-x-1 bg-slate-100 p-1 rounded-lg">
                     <button 
                         onClick={() => setSoundMode('recording')}
                         className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${soundMode === 'recording' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                        <div className="flex items-center gap-1"><Mic size={12}/> Recording</div>
+                        <div className="flex items-center gap-1"><Mic size={12}/> {t('modal.create.recording')}</div>
                     </button>
                     <button 
                         onClick={() => setSoundMode('tts')}
                         className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${soundMode === 'tts' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                     >
-                        <div className="flex items-center gap-1"><Keyboard size={12}/> Text to Speech</div>
+                        <div className="flex items-center gap-1"><Keyboard size={12}/> {t('modal.create.tts')}</div>
                     </button>
                 </div>
             </div>
@@ -394,8 +520,9 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
             {soundMode === 'recording' ? (
                 <div className="animate-in slide-in-from-top-2 duration-200">
                      <AudioRecorder 
-                        initialAudioUrl={editItem?.audioUrl}
+                        initialAudioUrl={previewAudioUrl || undefined}
                         onRecordingComplete={handleAudioRecordingComplete} 
+                        t={t}
                     />
                 </div>
             ) : (
@@ -404,7 +531,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                         <textarea
                             value={textToSpeak}
                             onChange={(e) => setTextToSpeak(e.target.value)}
-                            placeholder={label || "Enter what the card should say..."}
+                            placeholder={label || t('modal.create.tts_placeholder')}
                             className="w-full p-3 pr-12 bg-white rounded-xl border-2 border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none text-slate-800 font-bold resize-none h-24"
                         />
                         <div className="absolute right-2 bottom-2 flex flex-col gap-2">
@@ -419,14 +546,14 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                      </div>
                      <div className="flex justify-between items-center mt-3">
                          <p className="text-xs text-slate-400 font-medium">
-                            Leaving this empty will speak the card name.
+                            {t('modal.create.tts_hint')}
                          </p>
                          <button 
                             onClick={previewTTS}
                             className="flex items-center space-x-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-primary active:scale-95 transition-all"
                          >
                             <Play size={12} fill="currentColor" />
-                            <span>Preview Voice</span>
+                            <span>{t('modal.create.preview')}</span>
                          </button>
                      </div>
                 </div>
@@ -446,7 +573,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                 : 'bg-primary text-white shadow-btn active:shadow-btn-active active:translate-y-[4px] hover:brightness-110'}
             `}
           >
-            <span>{editItem ? 'Update Card' : 'Save Card'}</span>
+            <span>{editItem ? t('modal.create.update') : t('modal.create.save')}</span>
             <Check size={24} strokeWidth={3} />
           </button>
         </div>

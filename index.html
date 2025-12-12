@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>SpeakEasy AAC</title>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -53,6 +52,18 @@
         background-color: #f0f4f8;
         overscroll-behavior-y: none;
         -webkit-tap-highlight-color: transparent;
+        /* Disable text selection for app-like feel */
+        -webkit-user-select: none;
+        user-select: none;
+        /* Disable callouts (like save image on long press) */
+        -webkit-touch-callout: none;
+        /* Note: Safe area padding is handled in App.tsx components */
+        margin: 0;
+      }
+      /* Allow selection on inputs */
+      input, textarea {
+        -webkit-user-select: text;
+        user-select: text;
       }
       .pattern-grid {
         background-image: radial-gradient(#cbd5e1 1px, transparent 1px);

@@ -1,7 +1,6 @@
-
 import React, { useRef } from 'react';
-import { X, Download, Upload, Monitor, Volume2, Grid, Check } from 'lucide-react';
-import { AppSettings, AACItem, Category } from '../types';
+import { X, Download, Upload, Monitor, Volume2, Grid, Languages } from 'lucide-react';
+import { AppSettings } from '../types';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -10,6 +9,7 @@ interface SettingsModalProps {
   onUpdateSettings: (newSettings: AppSettings) => void;
   onExportData: () => void;
   onImportData: (file: File) => void;
+  t: (key: any) => string;
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -19,6 +19,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onUpdateSettings,
   onExportData,
   onImportData,
+  t,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,7 +42,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
              <div className="p-2 bg-slate-200 rounded-xl text-slate-600">
                 <Monitor size={24} />
              </div>
-             <h2 className="text-2xl font-black text-slate-800">Settings</h2>
+             <h2 className="text-2xl font-black text-slate-800">{t('modal.settings.title')}</h2>
           </div>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-600 transition-colors">
             <X size={24} />
@@ -50,16 +51,38 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
         <div className="flex-1 overflow-y-auto p-6 space-y-8">
           
+          {/* Language Settings */}
+          <section className="space-y-4">
+             <div className="flex items-center space-x-2 text-slate-800 font-bold text-lg">
+                <Languages size={20} className="text-primary" />
+                <h3>{t('modal.settings.language')}</h3>
+             </div>
+             <div className="grid grid-cols-2 gap-3">
+                 <button 
+                    onClick={() => onUpdateSettings({...settings, language: 'en'})}
+                    className={`py-3 rounded-xl border-2 font-bold transition-all ${settings.language === 'en' ? 'border-primary bg-primary/10 text-primary' : 'border-slate-200 text-slate-500'}`}
+                 >
+                    English
+                 </button>
+                 <button 
+                    onClick={() => onUpdateSettings({...settings, language: 'ru'})}
+                    className={`py-3 rounded-xl border-2 font-bold transition-all ${settings.language === 'ru' ? 'border-primary bg-primary/10 text-primary' : 'border-slate-200 text-slate-500'}`}
+                 >
+                    Русский
+                 </button>
+             </div>
+          </section>
+
           {/* Voice Settings */}
           <section className="space-y-4">
             <div className="flex items-center space-x-2 text-slate-800 font-bold text-lg">
                 <Volume2 size={20} className="text-primary" />
-                <h3>Voice & Speech</h3>
+                <h3>{t('modal.settings.voice')}</h3>
             </div>
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-4">
                 <div>
                     <div className="flex justify-between mb-2">
-                        <label className="text-sm font-bold text-slate-500 uppercase">Speed</label>
+                        <label className="text-sm font-bold text-slate-500 uppercase">{t('modal.settings.speed')}</label>
                         <span className="text-sm font-bold text-slate-700">{settings.voiceRate.toFixed(1)}x</span>
                     </div>
                     <input 
@@ -74,7 +97,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
                 <div>
                     <div className="flex justify-between mb-2">
-                        <label className="text-sm font-bold text-slate-500 uppercase">Pitch</label>
+                        <label className="text-sm font-bold text-slate-500 uppercase">{t('modal.settings.pitch')}</label>
                         <span className="text-sm font-bold text-slate-700">{settings.voicePitch.toFixed(1)}</span>
                     </div>
                     <input 
@@ -94,7 +117,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           <section className="space-y-4">
             <div className="flex items-center space-x-2 text-slate-800 font-bold text-lg">
                 <Grid size={20} className="text-primary" />
-                <h3>Card Size</h3>
+                <h3>{t('modal.settings.grid')}</h3>
             </div>
             <div className="grid grid-cols-3 gap-3">
                 {(['large', 'medium', 'small'] as const).map((size) => (
@@ -108,7 +131,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                                 : 'border-slate-200 text-slate-400 hover:border-slate-300'}
                         `}
                     >
-                        {size}
+                        {t(`modal.settings.grid_${size}`)}
                     </button>
                 ))}
             </div>
@@ -118,11 +141,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           <section className="space-y-4">
             <div className="flex items-center space-x-2 text-slate-800 font-bold text-lg">
                 <Download size={20} className="text-primary" />
-                <h3>Backup & Restore</h3>
+                <h3>{t('modal.settings.backup')}</h3>
             </div>
             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
                 <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                    Save your library to a file so you can transfer it to another device or restore it later.
+                    {t('modal.settings.backup_desc')}
                 </p>
                 <div className="flex space-x-3">
                     <button 
@@ -130,14 +153,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         className="flex-1 flex flex-col items-center justify-center p-3 bg-white border-2 border-slate-200 rounded-xl hover:border-slate-300 text-slate-700 font-bold transition-all active:scale-95"
                     >
                         <Download size={24} className="mb-1 text-blue-500" />
-                        <span className="text-xs">Export</span>
+                        <span className="text-xs">{t('modal.settings.export')}</span>
                     </button>
                     <button 
                         onClick={() => fileInputRef.current?.click()}
                         className="flex-1 flex flex-col items-center justify-center p-3 bg-white border-2 border-slate-200 rounded-xl hover:border-slate-300 text-slate-700 font-bold transition-all active:scale-95"
                     >
                         <Upload size={24} className="mb-1 text-green-500" />
-                        <span className="text-xs">Import</span>
+                        <span className="text-xs">{t('modal.settings.import')}</span>
                     </button>
                     <input 
                         ref={fileInputRef}
@@ -157,7 +180,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 onClick={onClose}
                 className="w-full py-3 bg-slate-800 text-white rounded-xl font-bold shadow-lg shadow-slate-200 active:scale-[0.98] transition-transform"
              >
-                Done
+                {t('modal.settings.done')}
              </button>
         </div>
 

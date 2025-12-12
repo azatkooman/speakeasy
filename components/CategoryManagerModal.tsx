@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { X, Pencil, Trash2, Plus, AlertCircle, Check, Loader2 } from 'lucide-react';
 import { Category, ColorTheme } from '../types';
@@ -9,6 +8,7 @@ interface CategoryManagerModalProps {
   categories: Category[];
   onSaveCategory: (cat: Category) => Promise<void>;
   onDeleteCategory: (id: string) => Promise<void>;
+  t: (key: any) => string;
 }
 
 const COLOR_THEMES: { theme: ColorTheme; bg: string; border: string }[] = [
@@ -29,17 +29,16 @@ const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
   categories,
   onSaveCategory,
   onDeleteCategory,
+  t
 }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState('');
   const [editTheme, setEditTheme] = useState<ColorTheme>('yellow');
   const [isAdding, setIsAdding] = useState(false);
   
-  // Deletion state
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Reset form when adding/editing starts
   useEffect(() => {
     if (!isOpen) {
       setEditingId(null);
@@ -126,7 +125,7 @@ const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
       <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
         
         <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50/50">
-          <h2 className="text-2xl font-black text-slate-900">Manage Categories</h2>
+          <h2 className="text-2xl font-black text-slate-900">{t('modal.categories.title')}</h2>
           <button onClick={onClose} disabled={isProcessing} className="p-2 rounded-full hover:bg-slate-200 text-slate-600 disabled:opacity-50">
             <X size={24} />
           </button>
@@ -134,7 +133,6 @@ const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
 
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
           
-          {/* Existing Categories List */}
           {!isAdding && !editingId && (
             <div className="space-y-3">
               {categories.map((cat) => (
@@ -190,23 +188,20 @@ const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
                 className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl flex items-center justify-center space-x-2 text-slate-500 font-bold hover:border-primary hover:text-primary hover:bg-slate-50 transition-all"
               >
                 <Plus size={20} />
-                <span>Add Custom Category</span>
+                <span>{t('modal.categories.add')}</span>
               </button>
               
               <div className="flex items-start gap-2 bg-blue-50 p-3 rounded-xl">
                 <AlertCircle size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
-                <p className="text-xs text-blue-700 leading-tight">
-                    Note: Deleting a category does <strong>not</strong> delete the cards inside it. They will turn gray and appear in the "All" tab until you reassign them.
-                </p>
+                <p className="text-xs text-blue-700 leading-tight" dangerouslySetInnerHTML={{__html: t('modal.categories.note')}} />
               </div>
             </div>
           )}
 
-          {/* Add/Edit Form */}
           {(isAdding || editingId) && (
             <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-200">
                 <div>
-                    <label className="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Name</label>
+                    <label className="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">{t('modal.categories.name')}</label>
                     <input 
                         type="text" 
                         value={editLabel}
@@ -219,7 +214,7 @@ const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
                 </div>
 
                 <div>
-                    <label className="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Color Theme</label>
+                    <label className="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">{t('modal.categories.theme')}</label>
                     <div className="grid grid-cols-5 gap-3">
                         {COLOR_THEMES.map((c) => (
                             <button
@@ -242,7 +237,7 @@ const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
                         disabled={isProcessing}
                         className="flex-1 py-3 rounded-xl font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 disabled:opacity-50"
                     >
-                        Cancel
+                        {t('modal.categories.cancel')}
                     </button>
                     <button 
                         onClick={handleSave}
@@ -250,7 +245,7 @@ const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
                         className="flex-1 py-3 rounded-xl font-bold text-white bg-primary hover:brightness-110 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                         {isProcessing && <Loader2 size={18} className="animate-spin" />}
-                        <span>Save</span>
+                        <span>{t('modal.categories.save')}</span>
                     </button>
                 </div>
             </div>

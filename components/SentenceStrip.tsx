@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Play, RotateCcw, X, Volume2, Delete } from 'lucide-react';
+import { Play, RotateCcw, X, Volume2, Delete, Clock } from 'lucide-react';
 import { AACItem, Category } from '../types';
 
 interface SentenceStripProps {
@@ -10,8 +9,10 @@ interface SentenceStripProps {
   onRemoveLastItem: () => void;
   onClear: () => void;
   onPlay: () => void;
+  onShowHistory: () => void;
   isPlaying: boolean;
   activeIndex: number | null;
+  t: (key: any) => string;
 }
 
 const THEME_COLORS: Record<string, string> = {
@@ -33,8 +34,10 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
   onRemoveLastItem,
   onClear, 
   onPlay,
+  onShowHistory,
   isPlaying,
-  activeIndex
+  activeIndex,
+  t
 }) => {
   const getItemColor = (categoryId: string) => {
       const cat = categories.find(c => c.id === categoryId);
@@ -46,16 +49,18 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
   return (
     <div className="bg-white flex flex-col z-30 relative border-b border-slate-200">
       
-      <div className="h-36 sm:h-44 w-full bg-slate-100/50 relative flex items-center">
+      {/* Reduced height slightly (h-32) for better landscape fit on mobile */}
+      <div className="h-32 sm:h-44 w-full bg-slate-100/50 relative flex items-center">
         {items.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center text-slate-300 pointer-events-none select-none">
                 <span className="text-lg sm:text-xl font-bold tracking-tight border-2 border-dashed border-slate-200 px-6 py-3 rounded-xl">
-                    Tap cards to speak
+                    {t('strip.tap_instruction')}
                 </span>
             </div>
         )}
         
-        <div className="flex-1 flex items-center overflow-x-auto px-4 sm:px-6 space-x-2 sm:space-x-4 no-scrollbar h-full py-2 sm:py-4">
+        {/* Added w-0 (min-w-0 behavior in flex) to ensure horizontal scrolling works */}
+        <div className="flex-1 w-0 flex items-center overflow-x-auto px-4 sm:px-6 space-x-2 sm:space-x-4 no-scrollbar h-full py-2 sm:py-4">
             {items.map((item, idx) => (
             <div 
                 key={`${item.id}-${idx}`}
@@ -67,8 +72,9 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
                         : 'hover:-translate-y-1 z-10'}
                 `}
             >
+                {/* Adjusted card size for the new container height */}
                 <div 
-                    className="h-24 w-20 sm:h-32 sm:w-28 rounded-2xl border-b-4 border-r-4 border-black/10 overflow-hidden shadow-md bg-white flex flex-col items-center"
+                    className="h-20 w-16 sm:h-32 sm:w-28 rounded-2xl border-b-4 border-r-4 border-black/10 overflow-hidden shadow-md bg-white flex flex-col items-center"
                     style={{ backgroundColor: getItemColor(item.category) }}
                 >
                     <div className="flex-1 w-full p-1.5 bg-transparent">
@@ -78,7 +84,7 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
                             className="w-full h-full object-cover rounded-xl bg-white" 
                          />
                     </div>
-                    <div className="h-8 w-full flex items-center justify-center text-xs sm:text-sm font-black text-slate-800 leading-none">
+                    <div className="h-6 sm:h-8 w-full flex items-center justify-center text-[10px] sm:text-sm font-black text-slate-800 leading-none">
                         {item.label}
                     </div>
                 </div>
@@ -91,14 +97,21 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
       </div>
 
       <div className="h-16 bg-white flex items-center justify-between px-4 sm:px-6 border-t border-slate-100">
-        <div className="flex-1 flex justify-start">
+        <div className="flex-1 flex justify-start gap-2">
             <button 
                 onClick={onClear}
                 disabled={items.length === 0}
                 className="text-slate-400 hover:text-red-500 hover:bg-red-50 font-bold text-sm flex items-center space-x-2 px-3 py-2 rounded-xl transition-all disabled:opacity-30"
+                title={t('strip.clear')}
             >
                 <RotateCcw size={20} strokeWidth={2.5} />
-                <span className="hidden sm:inline">Clear</span>
+            </button>
+            <button 
+                onClick={onShowHistory}
+                className="text-slate-400 hover:text-blue-500 hover:bg-blue-50 font-bold text-sm flex items-center space-x-2 px-3 py-2 rounded-xl transition-all"
+                title={t('strip.history')}
+            >
+                <Clock size={20} strokeWidth={2.5} />
             </button>
         </div>
 
@@ -116,7 +129,7 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
             `}
             >
                 {isPlaying ? <Volume2 size={24} className="animate-bounce" /> : <Play size={24} fill="currentColor" />}
-                <span>SPEAK</span>
+                <span>{t('strip.speak')}</span>
             </button>
         </div>
         
@@ -126,7 +139,7 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
                 disabled={items.length === 0}
                 className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 font-bold text-sm flex items-center space-x-2 px-3 py-2 rounded-xl transition-all disabled:opacity-30"
             >
-                <span className="hidden sm:inline">Backspace</span>
+                <span className="hidden sm:inline">{t('strip.backspace')}</span>
                 <Delete size={20} strokeWidth={2.5} />
             </button>
         </div>
