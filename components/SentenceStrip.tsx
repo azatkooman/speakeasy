@@ -59,8 +59,11 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
             </div>
         )}
         
-        {/* Added w-0 (min-w-0 behavior in flex) to ensure horizontal scrolling works */}
-        <div className="flex-1 w-0 flex items-center overflow-x-auto px-4 sm:px-6 space-x-2 sm:space-x-4 no-scrollbar h-full py-2 sm:py-4">
+        {/* Adjusted container for reliable mobile scrolling: min-w-0 prevents flex blowout, overflow-touch enables momentum */}
+        <div 
+          className="flex-1 min-w-0 flex items-center overflow-x-auto overflow-y-hidden px-4 sm:px-6 space-x-2 sm:space-x-4 no-scrollbar h-full py-2 sm:py-4 overscroll-x-contain"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
             {items.map((item, idx) => (
             <div 
                 key={`${item.id}-${idx}`}

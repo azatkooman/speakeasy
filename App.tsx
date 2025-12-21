@@ -3,6 +3,7 @@ import { Plus, Lock, Unlock, Image as ImageIcon, Search, X, Pencil, Settings2, L
 import { AACItem, Category, ColorTheme, AppSettings, AppLanguage } from './types';
 import { saveItem, getAllItems, deleteItem, getAllCategories, saveCategory, deleteCategory } from './services/storage';
 import { getTranslation, TranslationKey } from './services/translations';
+import { voiceService } from './services/voice';
 import SentenceStrip from './components/SentenceStrip';
 import CreateCardModal from './components/CreateCardModal';
 import ConfirmationModal from './components/ConfirmationModal';
@@ -164,23 +165,12 @@ function App() {
     }
   };
 
-  const speakText = (text: string) => {
-    window.speechSynthesis.cancel(); 
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    // Set Language for TTS
-    if (settings.language === 'ru') {
-        utterance.lang = 'ru-RU';
-    } else {
-        utterance.lang = 'en-US';
-    }
-
-    utterance.rate = settings.voiceRate;
-    utterance.pitch = settings.voicePitch;
-    window.speechSynthesis.speak(utterance);
-    return new Promise<void>((resolve) => {
-      utterance.onend = () => resolve();
-      utterance.onerror = () => resolve();
+  const speakText = async (text: string) => {
+    await voiceService.speak({
+      text,
+      language: settings.language,
+      rate: settings.voiceRate,
+      pitch: settings.voicePitch,
     });
   };
 
@@ -217,7 +207,6 @@ function App() {
         await loadData();
     } catch (error) {
         console.error("Failed to delete category", error);
-        alert("Could not delete category. Please try again.");
     }
   };
 
@@ -506,7 +495,10 @@ function App() {
       <div className="relative shrink-0 bg-white/50 border-b border-slate-200/60 z-20 backdrop-blur-md">
         <div className={`flex items-center ${isCategoryExpanded ? 'opacity-0 pointer-events-none h-0' : 'opacity-100 h-auto'}`}>
              {/* Added min-w-0 to ensure flex child scrolls correctly */}
-             <div className="flex-1 min-w-0 overflow-x-auto no-scrollbar flex space-x-2 px-4 py-3 relative">
+             <div 
+                className="flex-1 min-w-0 overflow-x-auto overflow-y-hidden no-scrollbar flex space-x-2 px-4 py-3 relative overscroll-x-contain"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+             >
                 <CategoryButton isAll isSelected={searchQuery ? true : selectedCategory === 'ALL'} onClick={() => { if(searchQuery){setSearchQuery(''); setIsSearchActive(false);} setSelectedCategory('ALL'); setIsCategoryExpanded(false); }} t={t} />
                 {categories.map(cat => (
                     <CategoryButton key={cat.id} cat={cat} isSelected={!searchQuery && selectedCategory === cat.id} onClick={() => { if(searchQuery){setSearchQuery(''); setIsSearchActive(false);} setSelectedCategory(cat.id); setIsCategoryExpanded(false); }} t={t} />

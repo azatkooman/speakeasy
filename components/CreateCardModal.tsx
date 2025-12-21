@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Image as ImageIcon, Check, Mic, Keyboard, Play, RotateCcw, Camera, RefreshCcw, Eye, EyeOff } from 'lucide-react';
 import { AACItem, Category, AppLanguage } from '../types';
+import { voiceService } from '../services/voice';
 import AudioRecorder from './AudioRecorder';
 
 interface CreateCardModalProps {
@@ -82,7 +83,6 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
         setIsCameraActive(true);
     } catch (err) {
         console.error("Error accessing camera:", err);
-        alert("Could not access the camera. Please check permissions.");
         setIsCameraActive(false);
     }
   };
@@ -125,7 +125,6 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                 setTimeout(() => stopCamera(), 100);
               } catch (e) {
                 console.error("Capture failed", e);
-                alert("Failed to capture photo.");
               }
           }
       }
@@ -157,7 +156,6 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
   useEffect(() => {
     if (isCameraActive && videoRef.current && streamRef.current) {
         videoRef.current.srcObject = streamRef.current;
-        videoRef.current.play().catch(err => console.log("Play error (handled by autoplay):", err));
     }
   }, [isCameraActive, streamRef.current]);
 
@@ -199,13 +197,6 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
     }
   }, [isOpen, editItem, categories]);
 
-  // Ensure Default Category
-  useEffect(() => {
-    if (isOpen && !selectedCategoryId && categories.length > 0) {
-        setSelectedCategoryId(categories[0].id);
-    }
-  }, [isOpen, categories, selectedCategoryId]);
-
   // Cleanup
   useEffect(() => {
       return () => {
@@ -245,43 +236,19 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
     }
   };
 
-  const startDictation = () => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        alert("Speech recognition is not supported in this browser.");
-        return;
-    }
-
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = language === 'ru' ? 'ru-RU' : 'en-US';
-
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => setIsListening(false);
-    recognition.onerror = () => setIsListening(false);
-    recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setTextToSpeak(transcript);
-    };
-
-    recognition.start();
-  };
-
-  const previewTTS = () => {
+  const previewTTS = async () => {
       const text = textToSpeak || label;
       if (!text) return;
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = language === 'ru' ? 'ru-RU' : 'en-US';
       
       const savedSettings = localStorage.getItem('aac_settings');
-      if (savedSettings) {
-          const s = JSON.parse(savedSettings);
-          u.rate = s.voiceRate || 0.9;
-          u.pitch = s.voicePitch || 1.0;
-      }
-      window.speechSynthesis.speak(u);
+      const s = savedSettings ? JSON.parse(savedSettings) : { voiceRate: 0.9, voicePitch: 1.0 };
+      
+      await voiceService.speak({
+        text,
+        language,
+        rate: s.voiceRate,
+        pitch: s.voicePitch
+      });
   };
 
   const handleSave = async () => {
@@ -534,15 +501,6 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                             placeholder={label || t('modal.create.tts_placeholder')}
                             className="w-full p-3 pr-12 bg-white rounded-xl border-2 border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none text-slate-800 font-bold resize-none h-24"
                         />
-                        <div className="absolute right-2 bottom-2 flex flex-col gap-2">
-                            <button
-                                onClick={startDictation}
-                                className={`p-2 rounded-lg transition-colors ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
-                                title="Dictate (Voice to Text)"
-                            >
-                                <Mic size={18} />
-                            </button>
-                        </div>
                      </div>
                      <div className="flex justify-between items-center mt-3">
                          <p className="text-xs text-slate-400 font-medium">

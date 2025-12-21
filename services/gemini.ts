@@ -1,6 +1,15 @@
 import { GoogleGenAI } from "@google/genai";
 
-const apiKey = process.env.API_KEY || '';
+// Safe access to environment variables
+const getApiKey = () => {
+    try {
+        return (typeof process !== 'undefined' && process.env && process.env.API_KEY) ? process.env.API_KEY : '';
+    } catch (e) {
+        return '';
+    }
+};
+
+const apiKey = getApiKey();
 
 export const suggestLabelFromImage = async (base64Image: string, mimeType: string): Promise<string> => {
   if (!apiKey) {
