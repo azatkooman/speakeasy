@@ -12,7 +12,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.0.0"),
-        .package(name: "CapacitorCommunityTextToSpeech", path: "../../../node_modules/@capacitor-community/text-to-speech")
+        .package(name: "CapgoCapacitorSpeechSynthesis", path: "../../../node_modules/@capgo/capacitor-speech-synthesis")
     ],
     targets: [
         .target(
@@ -20,7 +20,7 @@ let package = Package(
             dependencies: [
                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
                 .product(name: "Cordova", package: "capacitor-swift-pm"),
-                .product(name: "CapacitorCommunityTextToSpeech", package: "CapacitorCommunityTextToSpeech")
+                .product(name: "CapgoCapacitorSpeechSynthesis", package: "CapgoCapacitorSpeechSynthesis")
             ]
         )
     ]

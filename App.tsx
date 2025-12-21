@@ -22,12 +22,25 @@ const DEFAULT_SETTINGS: AppSettings = {
 
 const playAudio = (audioUrl: string): Promise<void> => {
   return new Promise((resolve, reject) => {
+    // 10s watchdog for custom audio recording playback
+    const timeout = setTimeout(() => {
+      resolve();
+    }, 10000);
+
     const audio = new Audio(audioUrl);
-    // Important for iOS: load audio before playing
     audio.load();
-    audio.onended = () => resolve();
-    audio.onerror = (e) => reject(e);
-    audio.play().catch(reject);
+    audio.onended = () => {
+      clearTimeout(timeout);
+      resolve();
+    };
+    audio.onerror = (e) => {
+      clearTimeout(timeout);
+      reject(e);
+    };
+    audio.play().catch((err) => {
+      clearTimeout(timeout);
+      reject(err);
+    });
   });
 };
 
@@ -90,7 +103,6 @@ function App() {
   // Settings State
   const [settings, setSettings] = useState<AppSettings>(() => {
     const saved = localStorage.getItem('aac_settings');
-    // Migration for existing users who don't have language set
     const parsed = saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
     if (!parsed.language) parsed.language = 'en';
     return parsed;
@@ -202,7 +214,6 @@ function App() {
   const handleDeleteCategory = async (id: string) => {
     try {
         await deleteCategory(id);
-        // Reset selection if current was deleted
         if (selectedCategory === id) setSelectedCategory('ALL');
         await loadData();
     } catch (error) {
@@ -230,24 +241,46 @@ function App() {
 
   const confirmDelete = async () => {
     if (itemToDelete) {
-      await deleteItem(itemToDelete);
-      await loadData();
-      setItemToDelete(null);
+      try {
+        await deleteItem(itemToDelete);
+        
+        // 1. Synchronize current sentence strip (remove deleted item)
+        setSentence(prev => prev.filter(item => item.id !== itemToDelete));
+        
+        // 2. Synchronize history (remove deleted item from all phrases)
+        setHistory(prev => {
+            const updatedHistory = prev
+                .map(sentenceArr => sentenceArr.filter(item => item.id !== itemToDelete))
+                .filter(sentenceArr => sentenceArr.length > 0); // Cleanup now-empty history items
+                
+            localStorage.setItem('aac_history', JSON.stringify(updatedHistory));
+            return updatedHistory;
+        });
+
+        await loadData();
+      } catch (error) {
+        console.error("Failed to delete item", error);
+      } finally {
+        setItemToDelete(null);
+      }
     }
   };
 
   const addToSentence = (item: AACItem) => {
+    if (isPlaying) return; // Prevent adding during playback
     setSentence([...sentence, item]);
     playItemSound(item);
   };
 
   const removeFromSentence = (index: number) => {
+    if (isPlaying) return;
     const newSentence = [...sentence];
     newSentence.splice(index, 1);
     setSentence(newSentence);
   };
 
   const removeLastFromSentence = () => {
+    if (isPlaying) return;
     setSentence((prev) => {
       if (prev.length === 0) return prev;
       const newSentence = [...prev];
@@ -256,7 +289,10 @@ function App() {
     });
   };
 
-  const clearSentence = () => setSentence([]);
+  const clearSentence = () => {
+    if (isPlaying) return;
+    setSentence([]);
+  };
 
   const playItemSound = async (item: AACItem) => {
     try {
@@ -273,7 +309,7 @@ function App() {
 
   const addToHistory = (items: AACItem[]) => {
       if (items.length === 0) return;
-      const newHistory = [items, ...history].slice(0, 10); // Keep last 10
+      const newHistory = [items, ...history].slice(0, 10);
       setHistory(newHistory);
       localStorage.setItem('aac_history', JSON.stringify(newHistory));
   };
@@ -281,17 +317,27 @@ function App() {
   const playSentence = async () => {
     if (sentence.length === 0 || isPlaying) return;
     
-    // Add to history when played
     addToHistory(sentence);
-
     setIsPlaying(true);
-    for (let i = 0; i < sentence.length; i++) {
-      setActiveIndex(i);
-      await playItemSound(sentence[i]);
-      await new Promise(r => setTimeout(r, 200));
+    
+    try {
+      for (let i = 0; i < sentence.length; i++) {
+        setActiveIndex(i);
+        // Individual item timeout race to ensure the loop never gets stuck
+        await Promise.race([
+          playItemSound(sentence[i]),
+          new Promise(resolve => setTimeout(resolve, 11000))
+        ]);
+        // Short pause between words
+        await new Promise(r => setTimeout(r, 150));
+      }
+    } catch (err) {
+      console.error("Sentence playback failed", err);
+    } finally {
+      // Crucial: Always reset state to re-enable the button
+      setActiveIndex(null);
+      setIsPlaying(false);
     }
-    setActiveIndex(null);
-    setIsPlaying(false);
   };
 
   const handleModalClose = () => {
@@ -494,7 +540,6 @@ function App() {
       {/* Category Navigation */}
       <div className="relative shrink-0 bg-white/50 border-b border-slate-200/60 z-20 backdrop-blur-md">
         <div className={`flex items-center ${isCategoryExpanded ? 'opacity-0 pointer-events-none h-0' : 'opacity-100 h-auto'}`}>
-             {/* Added min-w-0 to ensure flex child scrolls correctly */}
              <div 
                 className="flex-1 min-w-0 overflow-x-auto overflow-y-hidden no-scrollbar flex space-x-2 px-4 py-3 relative overscroll-x-contain"
                 style={{ WebkitOverflowScrolling: 'touch' }}
@@ -743,7 +788,7 @@ function App() {
       <ParentGateModal 
         isOpen={isParentGateOpen}
         onClose={() => setIsParentGateOpen(false)}
-        onSuccess={() => {/* logic moved to long press, keeping for completeness if needed */}}
+        onSuccess={() => {}}
         t={t}
       />
     </div>

@@ -2,5 +2,5 @@
 include ':capacitor-android'
 project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/android/capacitor')
 
-include ':capacitor-community-text-to-speech'
-project(':capacitor-community-text-to-speech').projectDir = new File('../node_modules/@capacitor-community/text-to-speech/android')
+include ':capgo-capacitor-speech-synthesis'
+project(':capgo-capacitor-speech-synthesis').projectDir = new File('../node_modules/@capgo/capacitor-speech-synthesis/android')

@@ -9,43 +9,46 @@ export interface SpeakOptions {
 
 /**
  * VoiceService handles text-to-speech across different environments.
- * It is optimized for @capgo/capacitor-speech-synthesis but maintains 
- * standard Web Speech API support for browser environments.
+ * Optimized for @capgo/capacitor-speech-synthesis with robust hang protection.
  */
 class VoiceService {
+  private activeUtterance: SpeechSynthesisUtterance | null = null;
+
   constructor() {}
 
-  /**
-   * Helper to get the Capgo SpeechSynthesis plugin via the global Capacitor object.
-   * This avoids static import errors that cause white screens in browsers.
-   */
   private getCapgoPlugin() {
     const win = window as any;
     return win.Capacitor?.Plugins?.SpeechSynthesis;
   }
 
   /**
-   * Stops any currently playing speech.
+   * Stops any currently playing speech and resets the engine state.
    */
   async stop(): Promise<void> {
-    // 1. Stop Native Capgo Plugin
+    // 1. Reset Web Speech API
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      this.activeUtterance = null;
+    }
+
+    // 2. Stop Native Capgo Plugin
     const capgo = this.getCapgoPlugin();
     if (capgo) {
       try {
-        await capgo.stop();
+        // We use a race to ensure stop doesn't hang the main thread
+        await Promise.race([
+          capgo.stop(),
+          new Promise(resolve => setTimeout(resolve, 500))
+        ]);
       } catch (e) {
         console.warn('Capgo stop failed', e);
       }
-    }
-    
-    // 2. Stop Web Speech API
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
     }
   }
 
   /**
    * Speaks the provided text using the best available engine.
+   * Includes a 10s watchdog timeout to prevent UI lockup.
    */
   async speak(options: SpeakOptions): Promise<void> {
     const { text, language, rate = 0.9, pitch = 1.0 } = options;
@@ -54,54 +57,74 @@ class VoiceService {
 
     const langCode = language === 'ru' ? 'ru-RU' : 'en-US';
 
-    // 1. Attempt Native @capgo/capacitor-speech-synthesis
-    const capgo = this.getCapgoPlugin();
-    if (capgo) {
-      try {
-        await this.stop();
-        // @capgo plugin uses 'value' for the text string
-        await capgo.speak({
-          value: text,
-          lang: langCode,
-          rate: rate,
-          pitch: pitch,
-          volume: 1.0,
-        });
-        return;
-      } catch (e) {
-        console.warn('Capgo speak failed, falling back to web', e);
-      }
-    }
-
-    // 2. Web Speech API Fallback (Standard Browser)
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      return new Promise((resolve) => {
-        // Stop current speech
+    return new Promise(async (resolve) => {
+      // 10 second watchdog timeout: speech should never take longer than this for a single card
+      const timeoutId = setTimeout(() => {
+        console.warn('Speech timeout reached, forcing resolve');
         this.stop();
+        resolve();
+      }, 10000);
 
-        // Small delay to allow the browser's speech engine to clear its state
+      const onDone = () => {
+        clearTimeout(timeoutId);
+        resolve();
+      };
+
+      // 1. Attempt Native @capgo/capacitor-speech-synthesis
+      const capgo = this.getCapgoPlugin();
+      if (capgo) {
+        try {
+          await this.stop();
+          await capgo.speak({
+            value: text,
+            lang: langCode,
+            rate: rate,
+            pitch: pitch,
+            volume: 1.0,
+          });
+          onDone();
+          return;
+        } catch (e) {
+          console.warn('Capgo speak failed, falling back to web', e);
+        }
+      }
+
+      // 2. Web Speech API Fallback
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        await this.stop();
+
+        // Small delay ensures the engine is ready after cancel()
         setTimeout(() => {
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.lang = langCode;
-          utterance.rate = rate;
-          utterance.pitch = pitch;
-          
-          utterance.onend = () => {
-            resolve();
-          };
+          try {
+            const utterance = new SpeechSynthesisUtterance(text);
+            this.activeUtterance = utterance; // Keep reference to prevent GC
+            utterance.lang = langCode;
+            utterance.rate = rate;
+            utterance.pitch = pitch;
+            
+            utterance.onend = () => {
+              this.activeUtterance = null;
+              onDone();
+            };
 
-          utterance.onerror = (e: any) => {
-            // Ignore interruption errors as they are expected when skipping cards
-            if (e.error !== 'interrupted' && e.error !== 'canceled') {
-              console.error('Web Speech Error:', e.error || e);
-            }
-            resolve();
-          };
+            utterance.onerror = (e: any) => {
+              this.activeUtterance = null;
+              if (e.error !== 'interrupted' && e.error !== 'canceled') {
+                console.error('Web Speech Error:', e.error || e);
+              }
+              onDone();
+            };
 
-          window.speechSynthesis.speak(utterance);
-        }, 50);
-      });
-    }
+            window.speechSynthesis.speak(utterance);
+          } catch (err) {
+            console.error('Speech synthesis initiation failed', err);
+            onDone();
+          }
+        }, 60);
+      } else {
+        onDone();
+      }
+    });
   }
 }
 
