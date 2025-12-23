@@ -2,6 +2,6 @@
 <resources>
     <string name="app_name">SpeakEasy AAC</string>
     <string name="title_activity_main">SpeakEasy AAC</string>
-    <string name="package_name">com.example.speakeasy</string>
-    <string name="custom_url_scheme">com.example.speakeasy</string>
+    <string name="package_name">com.azatkooman.speakeasy</string>
+    <string name="custom_url_scheme">com.azatkooman.speakeasy</string>
 </resources>
