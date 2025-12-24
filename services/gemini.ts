@@ -1,26 +1,24 @@
 import { GoogleGenAI } from "@google/genai";
 
-// Safe access to environment variables
-const getApiKey = () => {
-    try {
-        return (typeof process !== 'undefined' && process.env && process.env.API_KEY) ? process.env.API_KEY : '';
-    } catch (e) {
-        return '';
-    }
-};
-
-const apiKey = getApiKey();
-
+/**
+ * Suggests a label for an image using the Gemini API.
+ * Uses gemini-3-flash-preview as recommended for basic multimodal tasks.
+ */
 export const suggestLabelFromImage = async (base64Image: string, mimeType: string): Promise<string> => {
+  // Always use the API key directly from process.env.API_KEY as per instructions.
+  const apiKey = process.env.API_KEY;
   if (!apiKey) {
     console.warn("No API Key available for Gemini");
     return "";
   }
 
   try {
+    // Initialize the Gemini API client using the named parameter apiKey.
     const ai = new GoogleGenAI({ apiKey });
+    
+    // Generate content using the recommended gemini-3-flash-preview model.
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: {
         parts: [
           {
@@ -36,7 +34,9 @@ export const suggestLabelFromImage = async (base64Image: string, mimeType: strin
       },
     });
 
-    return response.text?.trim() || "";
+    // Access the .text property directly from the GenerateContentResponse object.
+    const text = response.text;
+    return text?.trim() || "";
   } catch (error) {
     console.error("Error calling Gemini:", error);
     return "";

@@ -1,10 +1,17 @@
-
 import { AACItem, Category } from '../types';
 
 const DB_NAME = 'speakeasy_aac_db';
-const DB_VERSION = 2; // Incremented for categories
+const DB_VERSION = 2; 
 const STORE_ITEMS = 'aac_items';
 const STORE_CATEGORIES = 'aac_categories';
+
+// Helper to clear old heavy history from localStorage to prevent QuotaExceededError
+export const clearLegacyStorage = () => {
+    if (localStorage.getItem('aac_history')) {
+        localStorage.removeItem('aac_history');
+        console.log("Cleared legacy bloated history storage");
+    }
+};
 
 const DEFAULT_CATEGORIES: Category[] = [
   { id: 'NOUN', label: 'Things', colorTheme: 'yellow' },
@@ -22,15 +29,12 @@ const openDB = (): Promise<IDBDatabase> => {
       const db = (event.target as IDBOpenDBRequest).result;
       const transaction = (event.target as IDBOpenDBRequest).transaction;
 
-      // Create Items Store
       if (!db.objectStoreNames.contains(STORE_ITEMS)) {
         db.createObjectStore(STORE_ITEMS, { keyPath: 'id' });
       }
 
-      // Create Categories Store
       if (!db.objectStoreNames.contains(STORE_CATEGORIES)) {
         const catStore = db.createObjectStore(STORE_CATEGORIES, { keyPath: 'id' });
-        // Seed defaults immediately during upgrade
         DEFAULT_CATEGORIES.forEach(cat => catStore.put(cat));
       }
     };
@@ -44,8 +48,6 @@ const openDB = (): Promise<IDBDatabase> => {
     };
   });
 };
-
-// --- ITEMS ---
 
 export const saveItem = async (item: AACItem): Promise<void> => {
   const db = await openDB();
@@ -84,8 +86,6 @@ export const deleteItem = async (id: string): Promise<void> => {
     request.onerror = () => reject(request.error);
   });
 };
-
-// --- CATEGORIES ---
 
 export const saveCategory = async (category: Category): Promise<void> => {
   const db = await openDB();

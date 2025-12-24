@@ -13,6 +13,7 @@ export interface SpeakOptions {
  */
 class VoiceService {
   private activeUtterance: SpeechSynthesisUtterance | null = null;
+  private isBusy: boolean = false;
 
   constructor() {}
 
@@ -25,9 +26,16 @@ class VoiceService {
    * Stops any currently playing speech and resets the engine state.
    */
   async stop(): Promise<void> {
+    this.isBusy = false;
+    
     // 1. Reset Web Speech API
     if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
+      try {
+        window.speechSynthesis.pause();
+        window.speechSynthesis.cancel();
+      } catch (e) {
+        console.warn('Web Speech cancel failed', e);
+      }
       this.activeUtterance = null;
     }
 
@@ -35,15 +43,17 @@ class VoiceService {
     const capgo = this.getCapgoPlugin();
     if (capgo) {
       try {
-        // We use a race to ensure stop doesn't hang the main thread
         await Promise.race([
           capgo.stop(),
-          new Promise(resolve => setTimeout(resolve, 500))
+          new Promise(resolve => setTimeout(resolve, 800))
         ]);
       } catch (e) {
         console.warn('Capgo stop failed', e);
       }
     }
+    
+    // Crucial for iOS: Wait a moment for the audio session to actually close
+    return new Promise(resolve => setTimeout(resolve, 100));
   }
 
   /**
@@ -53,19 +63,30 @@ class VoiceService {
   async speak(options: SpeakOptions): Promise<void> {
     const { text, language, rate = 0.9, pitch = 1.0 } = options;
     
-    if (!text || text.trim().length === 0) return;
+    // Robust validation to prevent "Text is required" native errors
+    if (!text || typeof text !== 'string' || text.trim().length === 0) {
+      console.warn('VoiceService: Cancelled - No valid text to speak');
+      return;
+    }
 
+    // Sanitize text to prevent SSML parsing errors (strip < > & etc)
+    const sanitizedText = text.replace(/[<>&]/g, '').trim();
+    if (!sanitizedText) return;
+
+    if (this.isBusy) await this.stop();
+    
+    this.isBusy = true;
     const langCode = language === 'ru' ? 'ru-RU' : 'en-US';
 
     return new Promise(async (resolve) => {
-      // 10 second watchdog timeout: speech should never take longer than this for a single card
+      // Watchdog timeout
       const timeoutId = setTimeout(() => {
         console.warn('Speech timeout reached, forcing resolve');
-        this.stop();
-        resolve();
+        this.stop().then(resolve);
       }, 10000);
 
       const onDone = () => {
+        this.isBusy = false;
         clearTimeout(timeoutId);
         resolve();
       };
@@ -76,7 +97,7 @@ class VoiceService {
         try {
           await this.stop();
           await capgo.speak({
-            value: text,
+            value: sanitizedText,
             lang: langCode,
             rate: rate,
             pitch: pitch,
@@ -93,11 +114,11 @@ class VoiceService {
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         await this.stop();
 
-        // Small delay ensures the engine is ready after cancel()
+        // Small delay ensures the engine is ready after cancel() - especially on mobile
         setTimeout(() => {
           try {
-            const utterance = new SpeechSynthesisUtterance(text);
-            this.activeUtterance = utterance; // Keep reference to prevent GC
+            const utterance = new SpeechSynthesisUtterance(sanitizedText);
+            this.activeUtterance = utterance;
             utterance.lang = langCode;
             utterance.rate = rate;
             utterance.pitch = pitch;
@@ -120,7 +141,7 @@ class VoiceService {
             console.error('Speech synthesis initiation failed', err);
             onDone();
           }
-        }, 60);
+        }, 150); 
       } else {
         onDone();
       }

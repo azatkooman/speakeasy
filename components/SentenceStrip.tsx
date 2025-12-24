@@ -41,7 +41,6 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
 }) => {
   const getItemColor = (categoryId: string) => {
       const cat = categories.find(c => c.id === categoryId);
-      // Safe fallback: if category deleted, return slate/gray
       if (!cat) return '#f1f5f9'; 
       return THEME_COLORS[cat.colorTheme] || '#f1f5f9';
   };
@@ -49,7 +48,6 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
   return (
     <div className="bg-white flex flex-col z-30 relative border-b border-slate-200">
       
-      {/* Reduced height slightly (h-32) for better landscape fit on mobile */}
       <div className="h-32 sm:h-44 w-full bg-slate-100/50 relative flex items-center">
         {items.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center text-slate-300 pointer-events-none select-none">
@@ -59,43 +57,45 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
             </div>
         )}
         
-        {/* Adjusted container for reliable mobile scrolling: min-w-0 prevents flex blowout, overflow-touch enables momentum */}
         <div 
           className="flex-1 min-w-0 flex items-center overflow-x-auto overflow-y-hidden px-4 sm:px-6 space-x-2 sm:space-x-4 no-scrollbar h-full py-2 sm:py-4 overscroll-x-contain"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
-            {items.map((item, idx) => (
-            <div 
-                key={`${item.id}-${idx}`}
-                onClick={() => onRemoveItem(idx)}
-                className={`
-                    flex-shrink-0 relative group cursor-pointer transition-all duration-300 transform
-                    ${activeIndex === idx 
-                        ? 'scale-110 -translate-y-2 z-20 ring-4 ring-primary ring-offset-4 rounded-2xl shadow-2xl' 
-                        : 'hover:-translate-y-1 z-10'}
-                `}
-            >
-                {/* Adjusted card size for the new container height */}
-                <div 
-                    className="h-20 w-16 sm:h-32 sm:w-28 rounded-2xl border-b-4 border-r-4 border-black/10 overflow-hidden shadow-md bg-white flex flex-col items-center"
-                    style={{ backgroundColor: getItemColor(item.category) }}
-                >
-                    <div className="flex-1 w-full p-1.5 bg-transparent">
-                         <img 
-                            src={item.imageUrl} 
-                            alt={item.label} 
-                            className="w-full h-full object-cover rounded-xl bg-white" 
-                         />
+            {items.map((item, idx) => {
+                if (!item) return null; // CRITICAL: Skip invalid items to prevent white screen
+                
+                return (
+                    <div 
+                        key={`${item.id}-${idx}`}
+                        onClick={() => onRemoveItem(idx)}
+                        className={`
+                            flex-shrink-0 relative group cursor-pointer transition-all duration-300 transform
+                            ${activeIndex === idx 
+                                ? 'scale-110 -translate-y-2 z-20 ring-4 ring-primary ring-offset-4 rounded-2xl shadow-2xl' 
+                                : 'hover:-translate-y-1 z-10'}
+                        `}
+                    >
+                        <div 
+                            className="h-20 w-16 sm:h-32 sm:w-28 rounded-2xl border-b-4 border-r-4 border-black/10 overflow-hidden shadow-md bg-white flex flex-col items-center"
+                            style={{ backgroundColor: getItemColor(item.category) }}
+                        >
+                            <div className="flex-1 w-full p-1.5 bg-transparent">
+                                <img 
+                                    src={item.imageUrl} 
+                                    alt={item.label} 
+                                    className="w-full h-full object-cover rounded-xl bg-white" 
+                                />
+                            </div>
+                            <div className="h-6 sm:h-8 w-full flex items-center justify-center text-[10px] sm:text-sm font-black text-slate-800 leading-none">
+                                {item.label}
+                            </div>
+                        </div>
+                        <div className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md transition-transform scale-90 hover:scale-110 z-30">
+                            <X size={14} strokeWidth={3} />
+                        </div>
                     </div>
-                    <div className="h-6 sm:h-8 w-full flex items-center justify-center text-[10px] sm:text-sm font-black text-slate-800 leading-none">
-                        {item.label}
-                    </div>
-                </div>
-                <div className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md transition-transform scale-90 hover:scale-110 z-30">
-                    <X size={14} strokeWidth={3} />
-                </div>
-            </div>
-            ))}
+                );
+            })}
         </div>
       </div>
 
