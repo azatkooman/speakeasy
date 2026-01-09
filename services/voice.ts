@@ -18,8 +18,21 @@ export interface SpeakOptions {
 class VoiceService {
   private activeUtterance: SpeechSynthesisUtterance | null = null;
   private isBusy: boolean = false;
+  private emulationTimeout: number | null = null;
 
-  constructor() {}
+  constructor() {
+    // Attempt to preload voices on Web
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+        // Some browsers load voices asynchronously
+        const loadVoices = () => {
+             window.speechSynthesis.getVoices();
+        };
+        loadVoices();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+             window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+    }
+  }
 
   /**
    * Stops any currently playing speech.
@@ -27,10 +40,15 @@ class VoiceService {
   async stop(): Promise<void> {
     this.isBusy = false;
     
+    // Clear any artificial delay timer
+    if (this.emulationTimeout) {
+        clearTimeout(this.emulationTimeout);
+        this.emulationTimeout = null;
+    }
+
     // 1. Reset Web Speech API
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       try {
-        window.speechSynthesis.pause();
         window.speechSynthesis.cancel();
       } catch (e) {
         console.warn('Web Speech cancel failed', e);
@@ -46,11 +64,11 @@ class VoiceService {
         await SpeechSynthesis.cancel();
       } catch (e) {
         // Ignore errors if plugin missing or nothing playing
-        console.debug('Native TTS stop ignored:', e);
       }
     }
     
-    return new Promise(resolve => setTimeout(resolve, 100));
+    // Short delay to ensure cancellation processes, but short enough to not block Web interactions
+    return new Promise(resolve => setTimeout(resolve, 10));
   }
 
   /**
@@ -63,35 +81,47 @@ class VoiceService {
       return;
     }
 
-    // Sanitize text
     const sanitizedText = text.replace(/[<>&]/g, '').trim();
     if (!sanitizedText) return;
 
+    // Stop previous speech if any
     if (this.isBusy) await this.stop();
     
     this.isBusy = true;
     const langCode = language === 'ru' ? 'ru-RU' : 'en-US';
+    
+    // Explicitly identify Android native environment
+    const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 
     return new Promise(async (resolve) => {
-      // Watchdog timeout to ensure we don't get stuck in busy state
-      const timeoutId = setTimeout(() => {
-        this.stop().then(resolve);
+      let hasResolved = false;
+
+      // 1. Safety watchdog
+      // If for any reason TTS hangs (no callback), we force resolve after 10s
+      const safetyTimeout = setTimeout(() => {
+        if (!hasResolved) {
+            hasResolved = true;
+            this.isBusy = false;
+            resolve();
+        }
       }, 10000);
 
-      const onDone = () => {
-        this.isBusy = false;
-        clearTimeout(timeoutId);
-        resolve();
+      const finish = () => {
+        if (!hasResolved) {
+            hasResolved = true;
+            clearTimeout(safetyTimeout);
+            this.isBusy = false;
+            resolve();
+        }
       };
 
-      // 1. Attempt Native Plugin (Dynamic Import)
-      // CRITICAL: We skip the native plugin on iOS because it currently causes a crash 
-      // (NSUnknownKeyException) due to internal key-value coding issues in the plugin.
-      // iOS WebKit TTS is excellent and stable, so this is a safe fallback.
-      if (Capacitor.isNativePlatform() && Capacitor.getPlatform() !== 'ios') {
+      // 2. Android Native Path
+      if (isNativeAndroid) {
         try {
           const { SpeechSynthesis } = await import('@capgo/capacitor-speech-synthesis');
-          // Cast options to any to avoid TS errors with dynamic import types
+          
+          const startTime = Date.now();
+          
           await SpeechSynthesis.speak({
             text: sanitizedText,
             lang: langCode,
@@ -100,46 +130,84 @@ class VoiceService {
             volume: 1.0,
             category: 'ambient',
           } as any);
-          onDone();
+
+          const elapsed = Date.now() - startTime;
+
+          // FIX: If the native call resolves immediately (fire-and-forget), we wait manually.
+          if (elapsed < 100) {
+             const calculatedDuration = (sanitizedText.length * 100) / (rate || 1);
+             const waitTime = Math.max(800, Math.min(5000, calculatedDuration));
+             
+             this.emulationTimeout = window.setTimeout(() => {
+                 this.emulationTimeout = null;
+                 finish();
+             }, waitTime);
+          } else {
+              finish();
+          }
           return;
         } catch (e) {
-          console.warn('Native TTS failed or module not found, falling back to web', e);
-          // Fall through to web speech
+          console.warn('Native Android TTS failed, falling back to Web Speech', e);
+          // Fall through to Web Speech logic below
         }
       }
 
-      // 2. Web Speech API Fallback (Primary for iOS/Web)
+      // 3. Web Speech API Path (iOS, Web, or Android fallback)
       if (typeof window !== 'undefined' && window.speechSynthesis) {
-        // Small delay ensures the engine is ready
-        setTimeout(() => {
-          try {
+        try {
+            // Cancel any pending utterance to clear queue immediately
+            window.speechSynthesis.cancel();
+
             const utterance = new SpeechSynthesisUtterance(sanitizedText);
             this.activeUtterance = utterance;
+            
             utterance.lang = langCode;
             utterance.rate = rate;
             utterance.pitch = pitch;
-            
+
+            // Try to select a specific voice if available
+            const voices = window.speechSynthesis.getVoices();
+            // Match language prefix (e.g. 'en' matches 'en-US', 'en-GB')
+            const voice = voices.find(v => v.lang.replace('_', '-').startsWith(langCode.split('-')[0]));
+            if (voice) {
+                utterance.voice = voice;
+            }
+
             utterance.onend = () => {
-              this.activeUtterance = null;
-              onDone();
+              // Ensure we don't clear if a new utterance has already started
+              if (this.activeUtterance === utterance) {
+                  this.activeUtterance = null;
+              }
+              finish();
             };
 
             utterance.onerror = (e: any) => {
-              this.activeUtterance = null;
+              if (this.activeUtterance === utterance) {
+                  this.activeUtterance = null;
+              }
               if (e.error !== 'interrupted' && e.error !== 'canceled') {
                 console.error('Web Speech Error:', e.error || e);
               }
-              onDone();
+              // Even on error, we resolve to unblock the queue
+              finish();
             };
 
+            // Backup timer for Web Speech reliability (often 'onend' doesn't fire on mobile web)
+            const backupDuration = Math.min(8000, Math.max(1000, sanitizedText.length * 150));
+            setTimeout(() => {
+                if (this.activeUtterance === utterance) {
+                    finish();
+                }
+            }, backupDuration);
+
             window.speechSynthesis.speak(utterance);
-          } catch (err) {
+        } catch (err) {
             console.error('Speech synthesis initiation failed', err);
-            onDone();
-          }
-        }, 50); 
+            finish();
+        }
       } else {
-        onDone();
+        // No TTS available
+        finish();
       }
     });
   }
