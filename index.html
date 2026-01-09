@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>SpeakEasy AAC</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#8b5cf6', // Violet
+              secondary: '#ec4899', // Pink
+              success: '#22c55e', // Green
+              warning: '#f59e0b', // Amber
+              background: '#f0f4f8',
+              'card-yellow': '#fef9c3',
+              'card-green': '#dcfce7',
+              'card-blue': '#dbeafe',
+              'card-pink': '#fce7f3',
+              'card-orange': '#ffedd5',
+              'card-purple': '#f3e8ff',
+              'card-teal': '#ccfbf1',
+              'card-red': '#fee2e2',
+              'card-slate': '#f1f5f9',
+            },
+            fontFamily: {
+              sans: ['Nunito', 'sans-serif'],
+            },
+            boxShadow: {
+              'card': '0 4px 0 0 rgba(0,0,0,0.1)',
+              'card-hover': '0 6px 0 0 rgba(0,0,0,0.1)',
+              'card-active': '0 0 0 0 rgba(0,0,0,0.1)',
+              'btn': '0 4px 0 0 rgba(0,0,0,0.2)',
+              'btn-active': '0 0 0 0 rgba(0,0,0,0.2)',
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      body {
+        background-color: #f0f4f8;
+        overscroll-behavior-y: none;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+        margin: 0;
+      }
+      input, textarea {
+        -webkit-user-select: text;
+        user-select: text;
+      }
+      .pattern-grid {
+        background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+        background-size: 20px 20px;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react/": "https://esm.sh/react@18.2.0/",
+    "react-dom": "https://esm.sh/react-dom@18.2.0",
+    "react-dom/": "https://esm.sh/react-dom@18.2.0/",
+    "lucide-react": "https://esm.sh/lucide-react@0.400.0?external=react,react-dom&deps=react@18.2.0,react-dom@18.2.0",
+    "@google/genai": "https://esm.sh/@google/genai@0.14.0",
+    "@capacitor/core": "https://esm.sh/@capacitor/core@8.0.0",
+    "@capacitor/filesystem": "https://esm.sh/@capacitor/filesystem@8.0.0?deps=@capacitor/core@8.0.0",
+    "@capacitor-community/text-to-speech": "https://esm.sh/@capacitor-community/text-to-speech@^6.1.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
