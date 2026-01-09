@@ -1,6 +1,6 @@
-import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
 import { AACItem, Category, Board, ChildProfile } from '../types';
+import * as CapacitorFilesystem from '@capacitor/filesystem';
 
 const DB_NAME = 'speakeasy_aac_db';
 const DB_VERSION = 5;
@@ -13,6 +13,18 @@ export const ROOT_FOLDER = 'root';
 export const DEFAULT_BOARD_ID = 'default-board';
 
 // --- FILESYSTEM HELPERS ---
+
+// Safe access to Filesystem and Directory
+const Filesystem = CapacitorFilesystem.Filesystem;
+
+// Directory might be missing or undefined in some web ESM builds
+// We provide a fallback object so code execution doesn't halt at import time
+const Directory = (CapacitorFilesystem as any).Directory || {
+    Data: 'DATA',
+    Documents: 'DOCUMENTS',
+    Cache: 'CACHE',
+    External: 'EXTERNAL'
+};
 
 // Robust check for Native Platform to prevent crashes if Capacitor global is undefined
 const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform ? Capacitor.isNativePlatform() : false;
@@ -32,7 +44,7 @@ const saveAssetToFile = async (dataUrl: string | undefined): Promise<string | un
         const mimeType = matches[1];
         const base64Data = matches[2];
         
-        // Fix: Sanitize extension (remove ;codecs=... stuff)
+        // Fix: Sanitize extension
         let ext = mimeType.split('/')[1] || 'bin';
         if (ext.includes(';')) {
             ext = ext.split(';')[0];
@@ -40,13 +52,13 @@ const saveAssetToFile = async (dataUrl: string | undefined): Promise<string | un
         
         const fileName = `${crypto.randomUUID()}.${ext}`;
 
-        // Robust directory access: Directory might be undefined in some ESM imports on web
-        const targetDirectory = (Directory && Directory.Data) ? Directory.Data : ('DATA' as Directory);
+        // Robust directory access
+        const targetDirectory = (Directory && Directory.Data) ? Directory.Data : 'DATA';
 
         const savedFile = await Filesystem.writeFile({
             path: fileName,
             data: base64Data,
-            directory: targetDirectory,
+            directory: targetDirectory as any, // Cast to any to avoid TS errors with fallback object
             recursive: true
         });
 
@@ -64,19 +76,19 @@ const deleteAssetFile = async (path: string | undefined) => {
     if (!path || !isNative) return;
     
     // 1. Strip the file:// prefix to get just the filename
-    // The plugin expects "image.jpg", NOT "file:///.../image.jpg"
     let cleanPath = path;
     if (path.startsWith('file://')) {
-        // This is a hacky way to find the filename at the end
         cleanPath = path.substring(path.lastIndexOf('/') + 1);
     } else if (path.includes('_capacitor_file_')) {
         cleanPath = path.substring(path.lastIndexOf('/') + 1);
     }
 
     try {
+        const targetDirectory = (Directory && Directory.Data) ? Directory.Data : 'DATA';
+        
         await Filesystem.deleteFile({ 
             path: cleanPath,
-            directory: Directory.Data // <--- MUST BE EXPLICIT
+            directory: targetDirectory as any
         });
     } catch (e) {
         // Ignore file not found errors
@@ -91,11 +103,10 @@ const getDisplayUrl = (path: string | undefined): string | undefined => {
     if (!path) return undefined;
     if (!isNative) return path;
     
-    // Fix: If it's a data URL, Http URL, or a simple string (built-in icon name like 'folder'), return as is.
     // Only convert if it starts with file:// or looks like a file path
     if (path.startsWith('data:') || path.startsWith('http') || !path.includes('/')) return path;
     
-    // Convert native file path to Webview-friendly URL (http://localhost/_capacitor_file_/...)
+    // Convert native file path to Webview-friendly URL
     if (Capacitor && Capacitor.convertFileSrc) {
         return Capacitor.convertFileSrc(path);
     }

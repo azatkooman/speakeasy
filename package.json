@@ -9,16 +9,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@capacitor-community/text-to-speech": "^6.1.0",
     "@capacitor/android": "^8.0.0",
     "@capacitor/cli": "^8.0.0",
     "@capacitor/core": "^8.0.0",
     "@capacitor/filesystem": "^8.0.0",
     "@capacitor/ios": "^8.0.0",
+    "@capgo/capacitor-speech-synthesis": "^8.0.6",
     "@google/genai": "0.14.0",
     "lucide-react": "0.400.0",
-    "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
