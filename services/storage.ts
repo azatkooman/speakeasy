@@ -205,26 +205,33 @@ export const saveProfile = async (profile: ChildProfile): Promise<void> => {
 
 export const deleteProfile = async (profileId: string): Promise<void> => {
     try {
+        // 1. Fetch all related data FIRST to avoid async calls inside transaction
         const allItems = await getAllItems(profileId);
+        const allBoards = await getAllBoards(profileId);
+        const allCats = await getAllCategories(profileId);
+
+        // 2. Delete Items (Files + DB entries)
+        // We use deleteItem for each so it cleans up audio/image files properly
+        // This is safe to do before the main DB transaction as they are independent records
+        await Promise.all(allItems.map(i => deleteItem(i.id)));
         
-        const ids = allItems.map(i => i.id);
-        for (const id of ids) {
-            await deleteItem(id);
-        }
-        
+        // 3. Clean up Category Icon files
+        // deleteBoard handles this for boards, but we need to do it here for the profile deletion
+        await Promise.all(allCats.map(cat => deleteAssetFile(cat.icon)));
+
+        // 4. Start Transaction for DB cleanup
         const db = await openDB();
-        return new Promise(async (resolve, reject) => {
-            const transaction = db.transaction([STORE_PROFILES, STORE_BOARDS, STORE_ITEMS, STORE_CATEGORIES], 'readwrite');
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction([STORE_PROFILES, STORE_BOARDS, STORE_CATEGORIES], 'readwrite');
             
+            // Delete Profile
             transaction.objectStore(STORE_PROFILES).delete(profileId);
             
-            // Note: getAllBoards returns items with Display URLs usually, but delete relies on IDs.
-            const allBoards = await getAllBoards(profileId);
-            const allCats = await getAllCategories(profileId);
-            
+            // Delete Boards
             const boardStore = transaction.objectStore(STORE_BOARDS);
             allBoards.forEach(b => boardStore.delete(b.id));
 
+            // Delete Categories
             const catStore = transaction.objectStore(STORE_CATEGORIES);
             allCats.forEach(c => catStore.delete(c.id));
 

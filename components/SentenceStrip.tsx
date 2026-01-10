@@ -76,13 +76,13 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
   };
 
   return (
-    <div className="bg-white flex flex-col z-30 relative shadow-md">
+    <div className="bg-white flex flex-col z-30 relative shadow-sm border-b border-slate-200">
       
-      {/* Main Strip Area - Significantly Larger */}
-      <div className="h-52 sm:h-72 w-full bg-slate-50 relative flex items-center border-b border-slate-200">
+      {/* 1. The Strip Area - Compact Height */}
+      <div className="h-32 sm:h-40 w-full bg-slate-50/50 relative flex items-center">
         {items.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center text-slate-300 pointer-events-none select-none">
-                <span className="text-xl sm:text-3xl font-black tracking-tight border-4 border-dashed border-slate-200 px-8 py-4 rounded-3xl opacity-60">
+                <span className="text-lg sm:text-xl font-bold tracking-tight border-2 border-dashed border-slate-200 px-6 py-3 rounded-2xl opacity-60">
                     {t('strip.tap_instruction')}
                 </span>
             </div>
@@ -90,7 +90,7 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
         
         <div 
           ref={scrollContainerRef}
-          className="flex-1 min-w-0 flex items-center overflow-x-auto overflow-y-hidden px-4 sm:px-8 space-x-3 sm:space-x-6 no-scrollbar h-full py-6 overscroll-x-contain"
+          className="flex-1 min-w-0 flex items-center overflow-x-auto overflow-y-hidden px-4 space-x-3 no-scrollbar h-full py-4 overscroll-x-contain"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
             {items.map((item, idx) => {
@@ -104,98 +104,102 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
                         className={`
                             flex-shrink-0 relative group cursor-pointer transition-all duration-300 transform select-none
                             ${activeIndex === idx 
-                                ? 'scale-110 -translate-y-2 z-20 ring-4 ring-primary ring-offset-4 rounded-3xl shadow-2xl' 
+                                ? 'scale-105 z-20 ring-4 ring-primary ring-offset-2 rounded-2xl shadow-xl' 
                                 : 'hover:-translate-y-1 z-10 active:scale-95'}
                         `}
                     >
-                        {/* Card Container - Large Dimensions */}
+                        {/* Card Container - WIDER for better text fit */}
                         <div 
-                            className="h-36 w-32 sm:h-52 sm:w-44 rounded-3xl border-b-[6px] border-r-[6px] border-black/10 overflow-hidden shadow-lg bg-white flex flex-col items-center transition-colors"
+                            className="h-24 w-24 sm:h-32 sm:w-32 rounded-2xl border-b-4 border-r-4 border-black/10 overflow-hidden shadow-sm bg-white flex flex-col items-center transition-colors"
                             style={{ backgroundColor: getItemColor(item) }}
                         >
-                            <div className="flex-1 w-full p-2 bg-transparent">
+                            <div className="flex-1 w-full p-1 bg-transparent flex items-center justify-center overflow-hidden">
                                 <img 
                                     src={item.imageUrl} 
                                     alt={item.label} 
-                                    className="w-full h-full object-cover rounded-2xl bg-white border-2 border-white/60 pointer-events-none" 
+                                    className="w-full h-full object-contain rounded-xl bg-white border border-white/60 pointer-events-none" 
                                 />
                             </div>
-                            <div className="h-10 sm:h-14 w-full flex items-center justify-center px-1 overflow-hidden pb-1">
-                                <span className="text-sm sm:text-lg font-black text-slate-800 leading-tight text-center line-clamp-2 break-words w-full px-0.5">
+                            <div className="h-8 sm:h-10 w-full flex items-center justify-center px-1 overflow-hidden pb-1">
+                                <span className="text-[10px] sm:text-xs font-black text-slate-800 leading-[1.1] text-center line-clamp-2 break-words w-full px-0.5">
                                     {item.label}
                                 </span>
                             </div>
                         </div>
 
-                        {/* Remove Icon - Top Right (Larger touch target) */}
-                        <div className="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-2 shadow-md scale-0 group-hover:scale-100 transition-transform duration-200 z-30 border-4 border-white">
-                            <X size={20} strokeWidth={4} />
+                        {/* Remove Icon */}
+                        <div className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-sm scale-0 group-hover:scale-100 transition-transform duration-200 z-30 border-2 border-white">
+                            <X size={12} strokeWidth={3} />
                         </div>
                     </div>
                 );
             })}
             
             {/* Spacer for centering the last item */}
-            <div className="w-1/2 flex-shrink-0 h-full pointer-events-none" />
+            <div className="w-8 flex-shrink-0 h-full pointer-events-none" />
         </div>
       </div>
 
-      {/* Control Bar - Taller, Icon Only */}
-      <div className="h-24 sm:h-28 bg-white flex items-center justify-between px-6 sm:px-10 border-t border-slate-100 relative z-40">
+      {/* 2. The Control Bar - Slim & Integrated */}
+      <div className="h-16 bg-white flex items-center gap-3 px-3 sm:px-4 py-2 relative z-40">
         
-        {/* Left Actions - Icons Only */}
-        <div className="flex-1 flex justify-start gap-4 sm:gap-6">
+        {/* Left: Clear & History */}
+        <div className="flex gap-2">
             <button 
                 onClick={onClear}
                 disabled={items.length === 0}
-                className="group flex items-center justify-center transition-all disabled:opacity-30 active:scale-90"
+                className="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all disabled:opacity-30 disabled:hover:bg-slate-100 disabled:hover:text-slate-500 active:scale-95"
                 title={t('strip.clear')}
             >
-                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-red-50 text-red-400 border-2 border-red-100 rounded-2xl flex items-center justify-center group-hover:bg-red-100 group-hover:border-red-200 group-hover:text-red-500 transition-colors shadow-sm">
-                    <RotateCcw size={28} strokeWidth={2.5} />
-                </div>
+                <RotateCcw size={20} strokeWidth={2.5} />
             </button>
             
             <button 
                 onClick={onShowHistory}
-                className="group flex items-center justify-center transition-all active:scale-90"
+                className="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 hover:bg-blue-50 hover:text-blue-500 flex items-center justify-center transition-all active:scale-95"
                 title={t('strip.history')}
             >
-                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-blue-50 text-blue-400 border-2 border-blue-100 rounded-2xl flex items-center justify-center group-hover:bg-blue-100 group-hover:border-blue-200 group-hover:text-blue-500 transition-colors shadow-sm">
-                    <Clock size={28} strokeWidth={2.5} />
-                </div>
+                <Clock size={20} strokeWidth={2.5} />
             </button>
         </div>
 
-        {/* Center Play Button - Massive Floating Button */}
-        <div className="flex-0 -mt-12 sm:-mt-16 pointer-events-auto">
+        {/* Center: Wide Play Button (Constrained Width) */}
+        <div className="flex-1 flex justify-center px-2">
             <button
-            onClick={onPlay}
-            disabled={isPlaying || items.length === 0}
-            className={`
-                w-24 h-24 sm:w-28 sm:h-28 rounded-full flex items-center justify-center shadow-2xl border-[8px] border-white transition-all transform duration-300
-                ${isPlaying 
-                    ? 'bg-white text-primary ring-4 ring-primary/20 scale-110' 
-                    : items.length === 0
-                        ? 'bg-slate-100 text-slate-300 border-slate-50 cursor-not-allowed shadow-none'
-                        : 'bg-primary text-white hover:brightness-110 hover:scale-105 active:scale-95 active:shadow-inner'}
-            `}
+                onClick={onPlay}
+                disabled={isPlaying || items.length === 0}
+                className={`
+                    w-full max-w-[220px] h-12 rounded-xl flex items-center justify-center gap-2 shadow-btn active:shadow-btn-active active:translate-y-[2px] transition-all
+                    ${isPlaying 
+                        ? 'bg-primary/10 text-primary border-2 border-primary/20' 
+                        : items.length === 0
+                            ? 'bg-slate-100 text-slate-300 cursor-not-allowed shadow-none'
+                            : 'bg-primary text-white hover:brightness-110'}
+                `}
             >
-                {isPlaying ? <Volume2 size={42} className="animate-bounce" strokeWidth={3} /> : <Play size={48} fill="currentColor" className="ml-2" />}
+                {isPlaying ? (
+                    <>
+                        <Volume2 size={24} className="animate-pulse flex-shrink-0" />
+                        <span className="font-bold uppercase tracking-wider text-sm hidden sm:inline truncate">{t('recorder.playing')}</span>
+                    </>
+                ) : (
+                    <>
+                        <Play size={24} fill="currentColor" className="flex-shrink-0" />
+                        <span className="font-black uppercase tracking-wider text-sm truncate">{t('strip.speak')}</span>
+                    </>
+                )}
             </button>
         </div>
         
-        {/* Right Actions - Icon Only */}
-        <div className="flex-1 flex justify-end">
+        {/* Right: Backspace */}
+        <div>
              <button 
                 onClick={onRemoveLastItem}
                 disabled={items.length === 0}
-                className="group flex items-center justify-center transition-all disabled:opacity-30 active:scale-90"
+                className="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 flex items-center justify-center transition-all disabled:opacity-30 disabled:hover:bg-slate-100 disabled:hover:text-slate-500 active:scale-95"
                 title={t('strip.backspace')}
             >
-                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-slate-100 text-slate-500 border-2 border-slate-200 rounded-2xl flex items-center justify-center group-hover:bg-slate-200 group-hover:border-slate-300 group-hover:text-slate-700 transition-colors shadow-sm">
-                    <Delete size={28} strokeWidth={2.5} />
-                </div>
+                <Delete size={20} strokeWidth={2.5} />
             </button>
         </div>
       </div>

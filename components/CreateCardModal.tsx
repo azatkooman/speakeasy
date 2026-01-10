@@ -409,7 +409,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                 {/* Image Preview Box */}
                 <div className="relative w-full h-48 sm:h-48 rounded-2xl overflow-hidden border-2 border-slate-200 bg-slate-100 shadow-inner flex items-center justify-center group">
                     {imagePreview ? (
-                        <img src={imagePreview} alt="Preview" className="w-full h-full object-cover bg-white" />
+                        <img src={imagePreview} alt="Preview" className="w-full h-full object-contain bg-white" />
                     ) : (
                         <div className="text-slate-300 flex flex-col items-center">
                             <ImageIcon size={48} className="opacity-50 mb-2" />

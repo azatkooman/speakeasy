@@ -505,7 +505,7 @@ function App() {
             ...itemData, 
             id: crypto.randomUUID(), 
             profileId: currentProfileId,
-            boardId: currentBoardId,
+            boardId: currentBoardId, 
             category: currentFolderId, 
             createdAt: Date.now(), 
             isVisible: itemData.isVisible ?? true,
@@ -963,7 +963,14 @@ function App() {
         {isSearchActive ? (
             <div className="flex-1 flex items-center gap-3">
                 <div className="relative flex-1">
-                    <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder={t('search.placeholder')} autoFocus className="w-full pl-10 pr-4 py-2.5 bg-slate-100 border-2 border-primary/20 rounded-xl outline-none font-bold" />
+                    <input 
+                        type="text" 
+                        value={searchQuery} 
+                        onChange={(e) => setSearchQuery(e.target.value)} 
+                        placeholder={t('search.placeholder')} 
+                        autoFocus 
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-100 border-2 border-primary/20 rounded-xl outline-none font-bold text-slate-800 placeholder:text-slate-400 text-base" 
+                    />
                     <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 </div>
                 <button onClick={() => { setIsSearchActive(false); setSearchQuery(''); }} className="p-2.5 bg-slate-100 text-slate-500 rounded-xl"><X size={20} /></button>
@@ -1081,8 +1088,8 @@ function App() {
                                 addToSentence(card);
                             }}
                         >
-                            <div className="flex-1 w-full bg-white rounded-2xl overflow-hidden border-2 border-white/50 relative group">
-                                <img src={card.imageUrl} alt={card.label} className="w-full h-full object-cover pointer-events-none" loading="lazy" />
+                            <div className="flex-1 w-full bg-white rounded-2xl overflow-hidden border-2 border-white/50 relative group flex items-center justify-center p-1">
+                                <img src={card.imageUrl} alt={card.label} className="w-full h-full object-contain pointer-events-none" loading="lazy" />
                                 
                                 {isLink && (
                                     <div className="absolute top-1 right-1 bg-purple-100 text-purple-600 p-1.5 rounded-full shadow-sm z-20">

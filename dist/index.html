@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
+        darkMode: 'class', // Disable system dark mode preference
         theme: {
           extend: {
             colors: {
@@ -41,6 +42,9 @@
       }
     </script>
     <style>
+      :root {
+        color-scheme: light; /* Force browser default styles to light mode */
+      }
       .no-scrollbar::-webkit-scrollbar {
         display: none;
       }
@@ -50,6 +54,7 @@
       }
       body {
         background-color: #f0f4f8;
+        color: #1e293b; /* slate-800 default text color */
         overscroll-behavior-y: none;
         -webkit-tap-highlight-color: transparent;
         -webkit-user-select: none;
@@ -88,7 +93,7 @@
   }
 }
 </script>
-  <script type="module" crossorigin src="/assets/index-C9Ccf4I4.js"></script>
+  <script type="module" crossorigin src="/assets/index-Bs9r2hsx.js"></script>
 </head>
   <body>
     <div id="root"></div>
