@@ -33,6 +33,7 @@ export interface AACItem {
   boardId: string; // Associated Board
   label: string;
   imageUrl: string; // Base64 or Blob URL
+  imageFit?: 'cover' | 'contain'; // 'cover' for photos (no strips), 'contain' for symbols (no crop)
   audioUrl?: string; // Base64 or Blob URL
   textToSpeak?: string; // Custom TTS text (optional)
   category: string; // References Category.id (Folder ID)

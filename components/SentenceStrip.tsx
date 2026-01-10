@@ -117,7 +117,7 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
                                 <img 
                                     src={item.imageUrl} 
                                     alt={item.label} 
-                                    className="w-full h-full object-contain rounded-xl bg-white border border-white/60 pointer-events-none" 
+                                    className={`w-full h-full rounded-xl bg-white border border-white/60 pointer-events-none ${item.imageFit === 'contain' ? 'object-contain' : 'object-cover'}`}
                                 />
                             </div>
                             <div className="h-8 sm:h-10 w-full flex items-center justify-center px-1 overflow-hidden pb-1">

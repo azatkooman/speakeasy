@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Image as ImageIcon, Check, Mic, Keyboard, Play, Camera, RefreshCcw, Eye, EyeOff, Search, Loader2, Globe, Palette, Info } from 'lucide-react';
+import { X, Image as ImageIcon, Check, Mic, Keyboard, Play, Camera, RefreshCcw, Eye, EyeOff, Search, Loader2, Globe, Palette, Info, Maximize2, Minimize2 } from 'lucide-react';
 import { AACItem, Category, AppLanguage, ColorTheme } from '../types';
 import { voiceService } from '../services/voice';
 import { searchArasaacSymbols, ArasaacSymbol } from '../services/arasaac';
@@ -34,6 +34,7 @@ const THEMES: { theme: ColorTheme; bg: string; border: string; labelKey: Transla
 const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSave, editItem, t, language, currentFolderName, defaultColorTheme }) => {
   const [label, setLabel] = useState('');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFit, setImageFit] = useState<'cover' | 'contain'>('cover');
   const [isVisible, setIsVisible] = useState(true);
   const [colorTheme, setColorTheme] = useState<ColorTheme>('slate');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -124,6 +125,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
               try {
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
                 setImagePreview(dataUrl);
+                setImageFit('cover'); // Photos default to cover
                 setTimeout(() => stopCamera(), 100);
               } catch (e) {
                 console.error("Capture failed", e);
@@ -135,6 +137,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
   const resetForm = () => {
     setLabel('');
     setImagePreview(null);
+    setImageFit('cover');
     setAudioBlob(null);
     if (previewAudioUrl && previewAudioUrl.startsWith('blob:')) {
         URL.revokeObjectURL(previewAudioUrl);
@@ -165,6 +168,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
       if (editItem) {
         setLabel(editItem.label);
         setImagePreview(editItem.imageUrl);
+        setImageFit(editItem.imageFit || 'cover'); // Load saved preference or default
         setIsVisible(editItem.isVisible !== false);
         setColorTheme(editItem.colorTheme || defaultColorTheme || 'slate');
         
@@ -244,6 +248,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
              ctx?.drawImage(img, 0, 0, width, height);
              const resizedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
              setImagePreview(resizedDataUrl);
+             setImageFit('cover'); // Uploads default to cover
         };
         img.src = rawBase64;
       };
@@ -259,6 +264,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
           const reader = new FileReader();
           reader.onloadend = () => {
              setImagePreview(reader.result as string);
+             setImageFit('contain'); // Symbols default to contain
              setShowSymbolSearch(false);
              setIsLoadingSymbols(false);
              setSymbolQuery('');
@@ -325,6 +331,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
     onSave({
         label,
         imageUrl: imagePreview,
+        imageFit,
         audioUrl: finalAudioUrl,
         textToSpeak: finalTextToSpeak,
         category: editItem ? editItem.category : '', 
@@ -409,7 +416,21 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                 {/* Image Preview Box */}
                 <div className="relative w-full h-48 sm:h-48 rounded-2xl overflow-hidden border-2 border-slate-200 bg-slate-100 shadow-inner flex items-center justify-center group">
                     {imagePreview ? (
-                        <img src={imagePreview} alt="Preview" className="w-full h-full object-contain bg-white" />
+                        <>
+                            <img 
+                                src={imagePreview} 
+                                alt="Preview" 
+                                className={`w-full h-full bg-white transition-all duration-300 ${imageFit === 'contain' ? 'object-contain' : 'object-cover'}`} 
+                            />
+                            {/* Toggle Fit Button */}
+                            <button
+                                onClick={() => setImageFit(prev => prev === 'cover' ? 'contain' : 'cover')}
+                                className="absolute bottom-2 right-2 bg-black/50 text-white p-1.5 rounded-lg hover:bg-black/70 backdrop-blur-sm transition-all"
+                                title={imageFit === 'cover' ? "Show full image (Fit)" : "Fill card (Cover)"}
+                            >
+                                {imageFit === 'cover' ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                            </button>
+                        </>
                     ) : (
                         <div className="text-slate-300 flex flex-col items-center">
                             <ImageIcon size={48} className="opacity-50 mb-2" />

@@ -1089,7 +1089,12 @@ function App() {
                             }}
                         >
                             <div className="flex-1 w-full bg-white rounded-2xl overflow-hidden border-2 border-white/50 relative group flex items-center justify-center p-1">
-                                <img src={card.imageUrl} alt={card.label} className="w-full h-full object-contain pointer-events-none" loading="lazy" />
+                                <img 
+                                    src={card.imageUrl} 
+                                    alt={card.label} 
+                                    className={`w-full h-full pointer-events-none ${card.imageFit === 'contain' ? 'object-contain' : 'object-cover'}`}
+                                    loading="lazy" 
+                                />
                                 
                                 {isLink && (
                                     <div className="absolute top-1 right-1 bg-purple-100 text-purple-600 p-1.5 rounded-full shadow-sm z-20">
