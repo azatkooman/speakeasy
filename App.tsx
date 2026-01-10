@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Plus, Lock, Unlock, Search, X, Pencil, Settings2, Home, ChevronRight, Eye, EyeOff, FolderPlus, FolderInput, ArrowLeft, ArrowRight, Layers, ArrowUpRight, ChevronLeft, User } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { AACItem, Category, ColorTheme, AppSettings, Board, ChildProfile } from './types';
 import { saveItem, getAllItems, deleteItem, getAllCategories, saveCategory, deleteCategory, clearLegacyStorage, ROOT_FOLDER, saveItemsBatch, saveCategoriesBatch, getAllBoards, saveBoard, deleteBoard, initializeBoards, createNewBoard, DEFAULT_BOARD_ID, getAllProfiles, saveProfile, deleteProfile, generateBackupData, saveBoardsBatch } from './services/storage';
 import { getTranslation, TranslationKey } from './services/translations';
@@ -228,6 +229,8 @@ function App() {
   const [isHoldingUnlock, setIsHoldingUnlock] = useState(false);
 
   const t = (key: TranslationKey) => getTranslation(settings.language, key);
+
+  const isAndroid = Capacitor.getPlatform() === 'android';
 
   // --- INITIALIZATION ---
   useEffect(() => {
@@ -879,9 +882,12 @@ function App() {
       }
     } catch (err) { console.error(err); } finally {
       if (playbackSessionRef.current === currentSession) {
+          // Add a small delay to ensure the last word finishes fully on Android before we force-stop
+          // We intentionally DO NOT call voiceService.stop() here to allow the tail of the audio to finish playing naturally.
+          await new Promise(r => setTimeout(r, 500));
+          
           setActiveIndex(null);
           setIsPlaying(false);
-          await voiceService.stop();
       }
     }
   };
@@ -953,7 +959,7 @@ function App() {
     <div className="h-screen w-full bg-background pattern-grid flex flex-col overflow-hidden font-sans select-none">
       
       {/* --- Header --- */}
-      <div className="flex justify-between items-center px-4 py-3 bg-white/90 backdrop-blur-sm border-b border-slate-200 z-20 shrink-0" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}>
+      <div className="flex justify-between items-center px-4 py-3 bg-white/90 backdrop-blur-sm border-b border-slate-200 z-20 shrink-0" style={{ paddingTop: isAndroid ? 'max(2rem, env(safe-area-inset-top))' : 'max(0.75rem, env(safe-area-inset-top))' }}>
         {isSearchActive ? (
             <div className="flex-1 flex items-center gap-3">
                 <div className="relative flex-1">

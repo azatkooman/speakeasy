@@ -133,8 +133,9 @@ class VoiceService {
 
           const elapsed = Date.now() - startTime;
 
-          // FIX: If the native call resolves immediately (fire-and-forget), we wait manually.
-          if (elapsed < 100) {
+          // FIX: If the native call resolves too quickly (fire-and-forget or early return), we wait manually.
+          // Increased threshold to 250ms to catch more potential early returns on slower devices.
+          if (elapsed < 250) {
              const calculatedDuration = (sanitizedText.length * 100) / (rate || 1);
              const waitTime = Math.max(800, Math.min(5000, calculatedDuration));
              
