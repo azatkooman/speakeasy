@@ -17,7 +17,7 @@ interface FolderCardProps {
 const FolderCard: React.FC<FolderCardProps> = ({ 
   folder, 
   onClick, 
-  onReorderLeft,
+  onReorderLeft, 
   onReorderRight,
   canMoveLeft,
   canMoveRight,
@@ -126,8 +126,8 @@ const FolderCard: React.FC<FolderCardProps> = ({
              </div>
         </div>
       
-        <div className="w-full text-center py-2 px-1 relative h-10 flex items-center justify-center">
-          <span className="font-black text-xs sm:text-sm uppercase tracking-wide line-clamp-2 leading-tight block px-1">
+        <div className="w-full text-center py-2 px-1 relative h-11 sm:h-12 flex items-center justify-center">
+          <span className="font-black text-sm sm:text-base uppercase tracking-wide line-clamp-2 leading-tight block px-1">
             {folder.label}
           </span>
         </div>

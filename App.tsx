@@ -937,8 +937,8 @@ function App() {
   };
   
   const getLabelSize = () => {
-     if (settings.gridColumns === 'small') return 'text-[10px] sm:text-xs leading-tight';
-     return 'text-xs sm:text-sm leading-tight';
+     if (settings.gridColumns === 'small') return 'text-xs sm:text-sm leading-tight';
+     return 'text-sm sm:text-base leading-tight';
   };
 
   const getCardStyle = (item: AACItem) => {
@@ -1143,7 +1143,7 @@ function App() {
                                     </>
                                 )}
                             </div>
-                            <div className="h-10 flex items-center justify-center">
+                            <div className="h-11 sm:h-12 flex items-center justify-center">
                                 <span className={`font-black text-center line-clamp-2 ${getLabelSize()} ${style.text}`}>
                                     {card.label}
                                 </span>

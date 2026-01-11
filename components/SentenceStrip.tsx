@@ -120,8 +120,8 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
                                     className={`w-full h-full rounded-xl bg-white border border-white/60 pointer-events-none ${item.imageFit === 'contain' ? 'object-contain' : 'object-cover'}`}
                                 />
                             </div>
-                            <div className="h-8 sm:h-10 w-full flex items-center justify-center px-1 overflow-hidden pb-1">
-                                <span className="text-[10px] sm:text-xs font-black text-slate-800 leading-[1.1] text-center line-clamp-2 break-words w-full px-0.5">
+                            <div className="h-9 sm:h-11 w-full flex items-center justify-center px-1 overflow-hidden pb-1">
+                                <span className="text-xs sm:text-sm font-black text-slate-800 leading-[1.1] text-center line-clamp-2 break-words w-full px-0.5">
                                     {item.label}
                                 </span>
                             </div>
