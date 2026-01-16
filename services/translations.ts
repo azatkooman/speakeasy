@@ -105,6 +105,14 @@ export type TranslationKey =
   | 'folder.no_icons'
   | 'folder.saving'
   | 'folder.save'
+  | 'folder.default.people'
+  | 'folder.default.actions'
+  | 'folder.default.things'
+  | 'folder.default.desc'
+  | 'folder.default.social'
+  | 'folder.default.places'
+  | 'folder.default.food'
+  | 'folder.default.time'
   | 'fitzgerald.people' | 'fitzgerald.people_desc'
   | 'fitzgerald.verbs' | 'fitzgerald.verbs_desc'
   | 'fitzgerald.nouns' | 'fitzgerald.nouns_desc'
@@ -169,7 +177,12 @@ export type TranslationKey =
   | 'modal.profile.change_language'
   | 'recorder.start_recording'
   | 'boards.delete_board_label'
-  | 'link.no_boards';
+  | 'link.no_boards'
+  | 'default.card.i_want'
+  | 'default.card.yes'
+  | 'default.card.no'
+  | 'default.card.stop'
+  | 'default.card.apple';
 
 const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
   en: {
@@ -277,6 +290,14 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'folder.no_icons': 'No icons found. Try searching for something else.',
     'folder.saving': 'Saving...',
     'folder.save': 'Save Folder',
+    'folder.default.people': 'People',
+    'folder.default.actions': 'Actions',
+    'folder.default.things': 'Things',
+    'folder.default.desc': 'Desc.',
+    'folder.default.social': 'Social',
+    'folder.default.places': 'Places',
+    'folder.default.food': 'Food',
+    'folder.default.time': 'Time',
     'fitzgerald.people': 'People / Pronouns',
     'fitzgerald.people_desc': 'Who',
     'fitzgerald.verbs': 'Verbs / Actions',
@@ -351,6 +372,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'recorder.start_recording': 'Start Recording',
     'boards.delete_board_label': 'Board',
     'link.no_boards': 'No other boards available.',
+    'default.card.i_want': 'I want',
+    'default.card.yes': 'Yes',
+    'default.card.no': 'No',
+    'default.card.stop': 'Stop',
+    'default.card.apple': 'Apple',
   },
   ru: {
     'app.title': 'SpeakEasy',
@@ -457,6 +483,14 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'folder.no_icons': 'Иконки не найдены.',
     'folder.saving': 'Сохранение...',
     'folder.save': 'Сохранить папку',
+    'folder.default.people': 'Люди',
+    'folder.default.actions': 'Действия',
+    'folder.default.things': 'Вещи',
+    'folder.default.desc': 'Признаки',
+    'folder.default.social': 'Общение',
+    'folder.default.places': 'Места',
+    'folder.default.food': 'Еда',
+    'folder.default.time': 'Время',
     'fitzgerald.people': 'Люди / Местоимения',
     'fitzgerald.people_desc': 'Кто',
     'fitzgerald.verbs': 'Глаголы / Действия',
@@ -531,6 +565,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'recorder.start_recording': 'Начать запись',
     'boards.delete_board_label': 'Доска',
     'link.no_boards': 'Нет доступных досок.',
+    'default.card.i_want': 'Я хочу',
+    'default.card.yes': 'Да',
+    'default.card.no': 'Нет',
+    'default.card.stop': 'Стоп',
+    'default.card.apple': 'Яблоко',
   }
 };
 

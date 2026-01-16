@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
-import { AACItem, Category, Board, ChildProfile } from '../types';
+import { AACItem, Category, Board, ChildProfile, ColorTheme } from '../types';
 import * as CapacitorFilesystem from '@capacitor/filesystem';
+import { TranslationKey } from './translations';
 
 const DB_NAME = 'speakeasy_aac_db';
 const DB_VERSION = 5;
@@ -137,15 +138,24 @@ export const clearLegacyStorage = () => {
     }
 };
 
-const DEFAULT_CATEGORIES_TEMPLATE = [
-  { id: 'PEOPLE', label: 'People', colorTheme: 'yellow', parentId: 'root', icon: 'people', order: 0 },
-  { id: 'VERB', label: 'Actions', colorTheme: 'green', parentId: 'root', icon: 'actions', order: 1 },
-  { id: 'NOUN', label: 'Things', colorTheme: 'orange', parentId: 'root', icon: 'things', order: 2 },
-  { id: 'ADJECTIVE', label: 'Desc.', colorTheme: 'blue', parentId: 'root', icon: 'desc', order: 3 },
-  { id: 'SOCIAL', label: 'Social', colorTheme: 'pink', parentId: 'root', icon: 'social', order: 4 },
-  { id: 'PLACES', label: 'Places', colorTheme: 'purple', parentId: 'root', icon: 'places', order: 5 },
-  { id: 'FOOD', label: 'Food', colorTheme: 'orange', parentId: 'root', icon: 'food', order: 6 }, 
-  { id: 'TIME', label: 'Time', colorTheme: 'teal', parentId: 'root', icon: 'time', order: 7 },
+// Default Categories with higher order indices so cards can come first (orders 0-9 reserved for cards)
+const DEFAULT_CATEGORIES_TEMPLATE: Array<{
+    id: string;
+    labelKey: TranslationKey;
+    fallback: string;
+    colorTheme: string;
+    parentId: string;
+    icon: string;
+    order: number;
+}> = [
+  { id: 'PEOPLE', labelKey: 'folder.default.people', fallback: 'People', colorTheme: 'yellow', parentId: 'root', icon: 'people', order: 10 },
+  { id: 'VERB', labelKey: 'folder.default.actions', fallback: 'Actions', colorTheme: 'green', parentId: 'root', icon: 'actions', order: 11 },
+  { id: 'NOUN', labelKey: 'folder.default.things', fallback: 'Things', colorTheme: 'orange', parentId: 'root', icon: 'things', order: 12 },
+  { id: 'ADJECTIVE', labelKey: 'folder.default.desc', fallback: 'Desc.', colorTheme: 'blue', parentId: 'root', icon: 'desc', order: 13 },
+  { id: 'SOCIAL', labelKey: 'folder.default.social', fallback: 'Social', colorTheme: 'pink', parentId: 'root', icon: 'social', order: 14 },
+  { id: 'PLACES', labelKey: 'folder.default.places', fallback: 'Places', colorTheme: 'purple', parentId: 'root', icon: 'places', order: 15 },
+  { id: 'FOOD', labelKey: 'folder.default.food', fallback: 'Food', colorTheme: 'orange', parentId: 'root', icon: 'food', order: 16 }, 
+  { id: 'TIME', labelKey: 'folder.default.time', fallback: 'Time', colorTheme: 'teal', parentId: 'root', icon: 'time', order: 17 },
 ];
 
 const openDB = (): Promise<IDBDatabase> => {
@@ -286,7 +296,7 @@ export const saveBoardsBatch = async (boards: Board[]): Promise<void> => {
   });
 };
 
-export const initializeBoards = async (defaultName: string, profileId: string): Promise<string> => {
+export const initializeBoards = async (defaultName: string, profileId: string, t?: (key: TranslationKey) => string): Promise<string> => {
     const boards = await getAllBoards(profileId);
     if (boards.length > 0) return boards[0].id;
 
@@ -298,19 +308,72 @@ export const initializeBoards = async (defaultName: string, profileId: string): 
     };
     await saveBoard(defaultBoard);
 
-    const catsToCreate = DEFAULT_CATEGORIES_TEMPLATE.map(c => ({
-        ...c, 
-        id: crypto.randomUUID(),
-        boardId: defaultBoard.id,
-        profileId,
-        colorTheme: c.colorTheme as any 
-    }));
+    let foodCategoryId = '';
+
+    const catsToCreate = DEFAULT_CATEGORIES_TEMPLATE.map(c => {
+        const newId = crypto.randomUUID();
+        if (c.id === 'FOOD') foodCategoryId = newId;
+        return {
+            ...c, 
+            id: newId,
+            boardId: defaultBoard.id,
+            profileId,
+            label: t ? t(c.labelKey) : c.fallback,
+            colorTheme: c.colorTheme as any 
+        };
+    });
     await saveCategoriesBatch(catsToCreate);
+
+    // Create Initial Cards for Onboarding
+    const iWantId = crypto.randomUUID();
+    const appleId = crypto.randomUUID();
+
+    const createDefaultCard = (id: string, labelKey: TranslationKey, fallback: string, iconUrl: string, catId: string, color: ColorTheme, order: number): AACItem => ({
+        id,
+        profileId,
+        boardId: defaultBoard.id,
+        label: t ? t(labelKey) : fallback,
+        imageUrl: iconUrl,
+        imageFit: 'contain',
+        category: catId,
+        colorTheme: color,
+        createdAt: Date.now(),
+        order,
+        isVisible: true
+    });
+
+    // UPDATED ICONS based on specific requests:
+    // I want: 5441 (Person pointing to self + want bubble)
+    // Yes: 5584 (Green Check)
+    // No: 5526 (Red Cross)
+    // Stop: 7196 (Stop Sign Hand)
+    // Apple: 2462 (Red Apple)
+    const defaultCards: AACItem[] = [
+        createDefaultCard(iWantId, 'default.card.i_want', 'I want', 'https://static.arasaac.org/pictograms/5441/5441_500.png', ROOT_FOLDER, 'green', 0),
+        createDefaultCard(crypto.randomUUID(), 'default.card.yes', 'Yes', 'https://static.arasaac.org/pictograms/5584/5584_500.png', ROOT_FOLDER, 'green', 1),
+        createDefaultCard(crypto.randomUUID(), 'default.card.no', 'No', 'https://static.arasaac.org/pictograms/5526/5526_500.png', ROOT_FOLDER, 'red', 2),
+        createDefaultCard(crypto.randomUUID(), 'default.card.stop', 'Stop', 'https://static.arasaac.org/pictograms/7196/7196_500.png', ROOT_FOLDER, 'red', 3),
+    ];
+
+    if (foodCategoryId) {
+        defaultCards.push(
+            createDefaultCard(appleId, 'default.card.apple', 'Apple', 'https://static.arasaac.org/pictograms/2462/2462_500.png', foodCategoryId, 'orange', 0)
+        );
+    }
+
+    await saveItemsBatch(defaultCards);
+
+    // Save ID pair to trigger auto-population of sentence strip in App.tsx
+    if (foodCategoryId) {
+        // Set local storage item to be picked up by App.tsx
+        // The App component will look for this key and if found, populate the sentence strip
+        localStorage.setItem('aac_onboarding_sentence', JSON.stringify([iWantId, appleId]));
+    }
 
     return defaultBoard.id;
 };
 
-export const createNewBoard = async (label: string, profileId: string): Promise<string> => {
+export const createNewBoard = async (label: string, profileId: string, t?: (key: TranslationKey) => string): Promise<string> => {
     const newId = crypto.randomUUID();
     const board: Board = {
         id: newId,
@@ -325,6 +388,7 @@ export const createNewBoard = async (label: string, profileId: string): Promise<
         id: crypto.randomUUID(),
         boardId: newId,
         profileId,
+        label: t ? t(c.labelKey) : c.fallback,
         colorTheme: c.colorTheme as any
     }));
     await saveCategoriesBatch(newCats);

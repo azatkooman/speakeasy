@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Plus, Lock, Unlock, Search, X, Pencil, Settings2, Home, ChevronRight, Eye, EyeOff, FolderPlus, FolderInput, ArrowLeft, ArrowRight, Layers, ArrowUpRight, ChevronLeft, User } from 'lucide-react';
+import { Plus, Lock, Unlock, Search, X, Pencil, Settings2, Home, ChevronRight, Eye, EyeOff, FolderPlus, FolderInput, ArrowLeft, ArrowRight, Layers, ArrowUpRight, ChevronLeft, User, CornerUpLeft } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { AACItem, Category, ColorTheme, AppSettings, Board, ChildProfile } from './types';
 import { saveItem, getAllItems, deleteItem, getAllCategories, saveCategory, deleteCategory, clearLegacyStorage, ROOT_FOLDER, saveItemsBatch, saveCategoriesBatch, getAllBoards, saveBoard, deleteBoard, initializeBoards, createNewBoard, DEFAULT_BOARD_ID, getAllProfiles, saveProfile, deleteProfile, generateBackupData, saveBoardsBatch } from './services/storage';
@@ -19,12 +19,18 @@ import BoardsModal from './components/BoardsModal';
 import LinkBoardModal from './components/LinkBoardModal';
 import ProfileSelectionModal from './components/ProfileSelectionModal';
 
+const detectLanguage = (): 'en' | 'ru' => {
+    if (typeof navigator === 'undefined') return 'en';
+    const lang = navigator.language.toLowerCase();
+    return lang.startsWith('ru') ? 'ru' : 'en';
+};
+
 // Default settings
 const DEFAULT_SETTINGS: AppSettings = {
   voicePitch: 1.0,
   voiceRate: 0.9,
   gridColumns: 'medium',
-  language: 'en',
+  language: detectLanguage(),
 };
 
 // Singleton AudioContext for efficient playback
@@ -158,9 +164,17 @@ const THEME_STYLES: Record<ColorTheme, { bg: string; border: string; text: strin
 const DEFAULT_CARD_STYLE = THEME_STYLES['slate'];
 
 const sortItems = (a: any, b: any) => {
+    // If both have explicit order, use it
     if (a.order !== undefined && b.order !== undefined) {
         return a.order - b.order;
     }
+    
+    // If one has order, prioritize it (assuming we want ordered items first, like default cards)
+    // If we wanted unordered items first, we'd flip this.
+    if (a.order !== undefined) return -1;
+    if (b.order !== undefined) return 1;
+
+    // Fallback: Newest first
     return b.createdAt - a.createdAt;
 };
 
@@ -190,7 +204,9 @@ function App() {
   const [settings, setSettings] = useState<AppSettings>(() => {
     const saved = localStorage.getItem('aac_settings');
     const parsed = saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
-    if (!parsed.language) parsed.language = 'en';
+    if (!parsed.language) {
+        parsed.language = detectLanguage();
+    }
     return parsed;
   });
 
@@ -373,7 +389,7 @@ function App() {
       let pFirstBoardId = '';
 
       if (pBoards.length === 0) {
-          pFirstBoardId = await initializeBoards(t('boards.default_name'), profileId);
+          pFirstBoardId = await initializeBoards(t('boards.default_name'), profileId, t);
           pBoards = await getAllBoards(profileId);
       } else {
           const lastBoardId = localStorage.getItem('aac_last_board');
@@ -394,7 +410,26 @@ function App() {
       setBoards(pBoards);
       setCurrentBoardId(pFirstBoardId);
       setCurrentFolderId(ROOT_FOLDER);
-      setSentence([]);
+      
+      // Check for onboarding sentence request from initializeBoards
+      const onboardingSentenceIds = localStorage.getItem('aac_onboarding_sentence');
+      if (onboardingSentenceIds) {
+          try {
+              const ids: string[] = JSON.parse(onboardingSentenceIds);
+              const sentenceItems = ids.map(id => pItems.find(item => item.id === id)).filter((item): item is AACItem => !!item);
+              if (sentenceItems.length > 0) {
+                  setSentence(sentenceItems);
+              } else {
+                  setSentence([]);
+              }
+              localStorage.removeItem('aac_onboarding_sentence');
+          } catch (e) {
+              setSentence([]);
+          }
+      } else {
+          setSentence([]);
+      }
+      
       setBoardHistory([]);
 
     } catch (error) {
@@ -627,7 +662,7 @@ function App() {
   };
 
   const handleCreateBoard = async (label: string) => {
-      const newId = await createNewBoard(label, currentProfileId);
+      const newId = await createNewBoard(label, currentProfileId, t);
       await loadData();
       setCurrentBoardId(newId);
       setBoardHistory([]); 
@@ -651,6 +686,14 @@ function App() {
       setBoardHistory(newHistory);
       setCurrentBoardId(prevBoardId);
       setCurrentFolderId(ROOT_FOLDER); 
+  };
+
+  const handleFolderBack = () => {
+      if (breadcrumbs.length > 1) {
+          setCurrentFolderId(breadcrumbs[breadcrumbs.length - 2].id);
+      } else {
+          setCurrentFolderId(ROOT_FOLDER);
+      }
   };
 
   const handleDeleteBoard = async (id: string) => {
@@ -1018,30 +1061,41 @@ function App() {
       <SentenceStrip items={sentence} categories={categories} onRemoveItem={removeFromSentence} onRemoveLastItem={removeLastFromSentence} onClear={clearSentence} onPlay={playSentence} onShowHistory={() => setIsHistoryOpen(true)} isPlaying={isPlaying} activeIndex={activeIndex} t={t} />
 
       {!isSearchActive && currentFolderId !== ROOT_FOLDER && (
-          <div ref={breadcrumbsScrollRef} className="relative shrink-0 bg-white/50 border-b border-slate-200/60 z-20 backdrop-blur-md px-4 py-3 flex items-center overflow-x-auto no-scrollbar">
-              <button 
-                  onClick={() => setCurrentFolderId(ROOT_FOLDER)}
-                  className={`
-                    flex items-center space-x-1 px-2 py-1.5 rounded-lg transition-all
-                    ${currentFolderId === ROOT_FOLDER ? 'text-slate-800 font-bold bg-slate-100' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}
-                  `}
-              >
-                  <Home size={18} />
-              </button>
-              {breadcrumbs.map((crumb, index) => (
-                  <React.Fragment key={crumb.id}>
-                      <ChevronRight size={16} className="text-slate-300 mx-1 flex-shrink-0" />
-                      <button 
-                          onClick={() => navigateToBreadcrumb(crumb.id)}
-                          className={`
-                            whitespace-nowrap px-3 py-1.5 rounded-lg text-sm font-bold transition-all
-                            ${index === breadcrumbs.length - 1 ? 'text-primary bg-primary/10' : 'text-slate-600 hover:bg-slate-100'}
-                          `}
-                      >
-                          {crumb.label}
-                      </button>
-                  </React.Fragment>
-              ))}
+          <div className="relative shrink-0 bg-white/50 border-b border-slate-200/60 z-20 backdrop-blur-md flex items-center justify-between pr-2">
+              <div ref={breadcrumbsScrollRef} className="flex-1 flex items-center overflow-x-auto no-scrollbar px-4 py-3">
+                  <button 
+                      onClick={() => setCurrentFolderId(ROOT_FOLDER)}
+                      className={`
+                        flex items-center space-x-1 px-2 py-1.5 rounded-lg transition-all
+                        ${currentFolderId === ROOT_FOLDER ? 'text-slate-800 font-bold bg-slate-100' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'}
+                      `}
+                  >
+                      <Home size={18} />
+                  </button>
+                  {breadcrumbs.map((crumb, index) => (
+                      <React.Fragment key={crumb.id}>
+                          <ChevronRight size={16} className="text-slate-300 mx-1 flex-shrink-0" />
+                          <button 
+                              onClick={() => navigateToBreadcrumb(crumb.id)}
+                              className={`
+                                whitespace-nowrap px-3 py-1.5 rounded-lg text-sm font-bold transition-all
+                                ${index === breadcrumbs.length - 1 ? 'text-primary bg-primary/10' : 'text-slate-600 hover:bg-slate-100'}
+                              `}
+                          >
+                              {crumb.label}
+                          </button>
+                      </React.Fragment>
+                  ))}
+              </div>
+              <div className="pl-2 border-l border-slate-200/50">
+                  <button 
+                      onClick={handleFolderBack}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-slate-200/80 rounded-xl text-slate-600 font-bold hover:bg-slate-50 hover:text-primary active:scale-95 transition-all text-sm shadow-sm whitespace-nowrap"
+                  >
+                      <CornerUpLeft size={18} strokeWidth={2.5} />
+                      <span className="hidden sm:inline">{t('header.back')}</span>
+                  </button>
+              </div>
           </div>
       )}
 

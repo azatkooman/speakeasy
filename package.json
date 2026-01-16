@@ -9,11 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@capacitor/android": "^8.0.0",
-    "@capacitor/cli": "^8.0.0",
+    "@capacitor/android": "^8.0.1",
+    "@capacitor/cli": "^8.0.1",
     "@capacitor/core": "^8.0.0",
     "@capacitor/filesystem": "^8.0.0",
-    "@capacitor/ios": "^8.0.0",
+    "@capacitor/ios": "^8.0.1",
     "@capgo/capacitor-speech-synthesis": "^8.0.6",
     "@google/genai": "0.14.0",
     "lucide-react": "0.400.0",
