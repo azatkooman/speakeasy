@@ -1,5 +1,6 @@
-import React, { useRef } from 'react';
-import { X, Download, Upload, Monitor, Volume2, Grid, Languages } from 'lucide-react';
+
+import React from 'react';
+import { X, Monitor, Volume2, Grid, Languages, Sparkles } from 'lucide-react';
 import { AppSettings } from '../types';
 
 interface SettingsModalProps {
@@ -7,8 +8,6 @@ interface SettingsModalProps {
   onClose: () => void;
   settings: AppSettings;
   onUpdateSettings: (newSettings: AppSettings) => void;
-  onExportData: () => void;
-  onImportData: (file: File) => void;
   t: (key: any) => string;
 }
 
@@ -17,20 +16,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
   settings,
   onUpdateSettings,
-  onExportData,
-  onImportData,
   t,
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   if (!isOpen) return null;
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onImportData(file);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -70,6 +58,50 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                  >
                     Русский
                  </button>
+             </div>
+          </section>
+
+          {/* Behavior Settings */}
+          <section className="space-y-4">
+             <div className="flex items-center space-x-2 text-slate-800 font-bold text-lg">
+                <Sparkles size={20} className="text-primary" />
+                <h3>{t('modal.settings.behavior')}</h3>
+             </div>
+             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-6">
+                
+                {/* Max Length */}
+                <div>
+                   <div className="flex justify-between mb-2">
+                       <label className="text-sm font-bold text-slate-500 uppercase">{t('modal.settings.max_length')}</label>
+                       <span className="text-sm font-bold text-slate-700">
+                           {settings.maxSentenceLength === 0 ? t('modal.settings.max_length_none') : settings.maxSentenceLength}
+                       </span>
+                   </div>
+                   <input 
+                       type="range" 
+                       min="0" 
+                       max="5" 
+                       step="1" 
+                       value={settings.maxSentenceLength}
+                       onChange={(e) => onUpdateSettings({...settings, maxSentenceLength: parseInt(e.target.value)})}
+                       className="w-full accent-primary h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                   />
+                </div>
+
+                {/* Auto Clear */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <p className="font-bold text-slate-700">{t('modal.settings.auto_clear')}</p>
+                        <p className="text-xs text-slate-400 font-medium">{t('modal.settings.auto_clear_desc')}</p>
+                    </div>
+                    <button 
+                        onClick={() => onUpdateSettings({...settings, autoClearSentence: !settings.autoClearSentence})}
+                        className={`relative inline-flex h-9 w-16 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none border-2 border-transparent ${settings.autoClearSentence ? 'bg-purple-600' : 'bg-slate-300'}`}
+                    >
+                        <span className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings.autoClearSentence ? 'translate-x-7' : 'translate-x-0'}`} />
+                    </button>
+                </div>
+
              </div>
           </section>
 
@@ -134,42 +166,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         {t(`modal.settings.grid_${size}`)}
                     </button>
                 ))}
-            </div>
-          </section>
-
-          {/* Data Management */}
-          <section className="space-y-4">
-            <div className="flex items-center space-x-2 text-slate-800 font-bold text-lg">
-                <Download size={20} className="text-primary" />
-                <h3>{t('modal.settings.backup')}</h3>
-            </div>
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-3">
-                <p className="text-xs text-slate-500 font-medium leading-relaxed">
-                    {t('modal.settings.backup_desc')}
-                </p>
-                <div className="flex space-x-3">
-                    <button 
-                        onClick={onExportData}
-                        className="flex-1 flex flex-col items-center justify-center p-3 bg-white border-2 border-slate-200 rounded-xl hover:border-slate-300 text-slate-700 font-bold transition-all active:scale-95"
-                    >
-                        <Download size={24} className="mb-1 text-blue-500" />
-                        <span className="text-xs">{t('modal.settings.export')}</span>
-                    </button>
-                    <button 
-                        onClick={() => fileInputRef.current?.click()}
-                        className="flex-1 flex flex-col items-center justify-center p-3 bg-white border-2 border-slate-200 rounded-xl hover:border-slate-300 text-slate-700 font-bold transition-all active:scale-95"
-                    >
-                        <Upload size={24} className="mb-1 text-green-500" />
-                        <span className="text-xs">{t('modal.settings.import')}</span>
-                    </button>
-                    <input 
-                        ref={fileInputRef}
-                        type="file" 
-                        accept=".json" 
-                        className="hidden" 
-                        onChange={handleFileChange}
-                    />
-                </div>
             </div>
           </section>
 

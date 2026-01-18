@@ -329,7 +329,7 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
                         className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2"
                      >
                         {isProcessing && <Loader2 size={20} className="animate-spin" />}
-                        {view === 'edit' ? t('modal.create.update') : t('modal.create.save')}
+                        {view === 'edit' ? t('modal.categories.save') : t('profile.create')}
                      </button>
                  </div>
             </form>

@@ -1,3 +1,4 @@
+
 import { AppLanguage } from '../types';
 import { Capacitor } from '@capacitor/core';
 
@@ -57,7 +58,7 @@ class VoiceService {
     }
 
     // 2. Stop Native Plugin (Dynamically imported)
-    // CRITICAL: Skip on iOS to avoid crashes
+    // CRITICAL: Skip on iOS to avoid crashes if plugin not present/configured
     if (Capacitor.isNativePlatform() && Capacitor.getPlatform() !== 'ios') {
       try {
         const { SpeechSynthesis } = await import('@capgo/capacitor-speech-synthesis');
@@ -122,14 +123,14 @@ class VoiceService {
           
           const startTime = Date.now();
           
+          // Removed 'category' property as it is not supported by standard Android TTS and can cause crashes
           await SpeechSynthesis.speak({
             text: sanitizedText,
             lang: langCode,
             rate: rate,
             pitch: pitch,
             volume: 1.0,
-            category: 'ambient',
-          } as any);
+          });
 
           const elapsed = Date.now() - startTime;
 

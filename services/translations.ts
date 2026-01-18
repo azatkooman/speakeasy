@@ -1,3 +1,4 @@
+
 import { AppLanguage } from '../types';
 
 export type TranslationKey = 
@@ -72,11 +73,12 @@ export type TranslationKey =
   | 'modal.settings.grid_large'
   | 'modal.settings.grid_medium'
   | 'modal.settings.grid_small'
-  | 'modal.settings.backup'
-  | 'modal.settings.backup_desc'
-  | 'modal.settings.export'
-  | 'modal.settings.import'
   | 'modal.settings.done'
+  | 'modal.settings.behavior'
+  | 'modal.settings.max_length'
+  | 'modal.settings.max_length_none'
+  | 'modal.settings.auto_clear'
+  | 'modal.settings.auto_clear_desc'
   | 'modal.categories.title'
   | 'modal.categories.add'
   | 'modal.categories.note'
@@ -182,7 +184,9 @@ export type TranslationKey =
   | 'default.card.yes'
   | 'default.card.no'
   | 'default.card.stop'
-  | 'default.card.apple';
+  | 'default.card.apple'
+  | 'onboarding.unlock_hint'
+  | 'onboarding.dismiss';
 
 const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
   en: {
@@ -257,11 +261,12 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.grid_large': 'Large',
     'modal.settings.grid_medium': 'Medium',
     'modal.settings.grid_small': 'Small',
-    'modal.settings.backup': 'Backup & Restore',
-    'modal.settings.backup_desc': 'Save your library to a file so you can transfer it to another device or restore it later.',
-    'modal.settings.export': 'Export',
-    'modal.settings.import': 'Import',
     'modal.settings.done': 'Done',
+    'modal.settings.behavior': 'Sentence Strip',
+    'modal.settings.max_length': 'Sentence Length Limit',
+    'modal.settings.max_length_none': 'Unlimited',
+    'modal.settings.auto_clear': 'Auto-clear after speaking',
+    'modal.settings.auto_clear_desc': 'Remove cards automatically after speech finishes.',
     'modal.categories.title': 'Manage Categories',
     'modal.categories.add': 'Add Custom Category',
     'modal.categories.note': 'Note: Deleting a category does <strong>not</strong> delete the cards inside it. They will turn gray and appear in the "All" tab until you reassign them.',
@@ -377,6 +382,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'default.card.no': 'No',
     'default.card.stop': 'Stop',
     'default.card.apple': 'Apple',
+    'onboarding.unlock_hint': 'Press & hold (3s) to unlock Parent Mode.',
+    'onboarding.dismiss': 'Got it',
   },
   ru: {
     'app.title': 'SpeakEasy',
@@ -450,11 +457,12 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.grid_large': 'Крупный',
     'modal.settings.grid_medium': 'Средний',
     'modal.settings.grid_small': 'Мелкий',
-    'modal.settings.backup': 'Резервное копирование',
-    'modal.settings.backup_desc': 'Сохраните библиотеку в файл для переноса на другое устройство.',
-    'modal.settings.export': 'Скачать',
-    'modal.settings.import': 'Загрузить',
     'modal.settings.done': 'Готово',
+    'modal.settings.behavior': 'Коммуникативная лента',
+    'modal.settings.max_length': 'Лимит длины фразы',
+    'modal.settings.max_length_none': 'Без ограничений',
+    'modal.settings.auto_clear': 'Авто-очистка',
+    'modal.settings.auto_clear_desc': 'Удалять карточки после произношения.',
     'modal.categories.title': 'Управление категориями',
     'modal.categories.add': 'Добавить категорию',
     'modal.categories.note': 'Примечание: Удаление категории <strong>не</strong> удаляет карточки. Они станут серыми, пока вы не назначите им новую категорию.',
@@ -570,6 +578,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'default.card.no': 'Нет',
     'default.card.stop': 'Стоп',
     'default.card.apple': 'Яблоко',
+    'onboarding.unlock_hint': 'Нажмите и удерживайте (3с), чтобы открыть режим родителя.',
+    'onboarding.dismiss': 'Понятно',
   }
 };
 

@@ -1,3 +1,4 @@
+
 import { Capacitor } from '@capacitor/core';
 import { AACItem, Category, Board, ChildProfile, ColorTheme } from '../types';
 import * as CapacitorFilesystem from '@capacitor/filesystem';
@@ -15,16 +16,21 @@ export const DEFAULT_BOARD_ID = 'default-board';
 
 // --- FILESYSTEM HELPERS ---
 
-// Safe access to Filesystem and Directory
-const Filesystem = CapacitorFilesystem.Filesystem;
+// Export safe access to Filesystem and Directory for use in App.tsx
+export const Filesystem = CapacitorFilesystem.Filesystem;
 
 // Directory might be missing or undefined in some web ESM builds
-// We provide a fallback object so code execution doesn't halt at import time
-const Directory = (CapacitorFilesystem as any).Directory || {
+export const Directory = (CapacitorFilesystem as any).Directory || {
     Data: 'DATA',
     Documents: 'DOCUMENTS',
     Cache: 'CACHE',
     External: 'EXTERNAL'
+};
+
+export const Encoding = (CapacitorFilesystem as any).Encoding || {
+    UTF8: 'utf8',
+    ASCII: 'ascii',
+    UTF16: 'utf16'
 };
 
 // Robust check for Native Platform to prevent crashes if Capacitor global is undefined
@@ -221,12 +227,9 @@ export const deleteProfile = async (profileId: string): Promise<void> => {
         const allCats = await getAllCategories(profileId);
 
         // 2. Delete Items (Files + DB entries)
-        // We use deleteItem for each so it cleans up audio/image files properly
-        // This is safe to do before the main DB transaction as they are independent records
         await Promise.all(allItems.map(i => deleteItem(i.id)));
         
         // 3. Clean up Category Icon files
-        // deleteBoard handles this for boards, but we need to do it here for the profile deletion
         await Promise.all(allCats.map(cat => deleteAssetFile(cat.icon)));
 
         // 4. Start Transaction for DB cleanup
@@ -324,7 +327,7 @@ export const initializeBoards = async (defaultName: string, profileId: string, t
     });
     await saveCategoriesBatch(catsToCreate);
 
-    // Create Initial Cards for Onboarding
+    // Create Initial Cards
     const iWantId = crypto.randomUUID();
     const appleId = crypto.randomUUID();
 
@@ -342,12 +345,6 @@ export const initializeBoards = async (defaultName: string, profileId: string, t
         isVisible: true
     });
 
-    // UPDATED ICONS based on specific requests:
-    // I want: 5441 (Person pointing to self + want bubble)
-    // Yes: 5584 (Green Check)
-    // No: 5526 (Red Cross)
-    // Stop: 7196 (Stop Sign Hand)
-    // Apple: 2462 (Red Apple)
     const defaultCards: AACItem[] = [
         createDefaultCard(iWantId, 'default.card.i_want', 'I want', 'https://static.arasaac.org/pictograms/5441/5441_500.png', ROOT_FOLDER, 'green', 0),
         createDefaultCard(crypto.randomUUID(), 'default.card.yes', 'Yes', 'https://static.arasaac.org/pictograms/5584/5584_500.png', ROOT_FOLDER, 'green', 1),
@@ -363,10 +360,7 @@ export const initializeBoards = async (defaultName: string, profileId: string, t
 
     await saveItemsBatch(defaultCards);
 
-    // Save ID pair to trigger auto-population of sentence strip in App.tsx
     if (foodCategoryId) {
-        // Set local storage item to be picked up by App.tsx
-        // The App component will look for this key and if found, populate the sentence strip
         localStorage.setItem('aac_onboarding_sentence', JSON.stringify([iWantId, appleId]));
     }
 
@@ -410,9 +404,7 @@ export const deleteBoard = async (boardId: string): Promise<void> => {
             const allReqCats = await getAllCategories();
             const catsToDelete = allReqCats.filter(c => c.boardId === boardId);
 
-            // Clean up category icons
             for (const cat of catsToDelete) {
-                // We need to fetch the raw cat to check for files
                 const rawCat = await getCategoryById(cat.id);
                 if (rawCat) await deleteAssetFile(rawCat.icon);
             }
@@ -442,7 +434,7 @@ const getItemById = async (id: string): Promise<AACItem | undefined> => {
         const t = db.transaction(STORE_ITEMS, 'readonly');
         const req = t.objectStore(STORE_ITEMS).get(id);
         req.onsuccess = () => resolve(req.result);
-        req.onerror = () => resolve(undefined); // Don't reject, just return undefined
+        req.onerror = () => resolve(undefined); 
     });
 };
 
@@ -488,16 +480,17 @@ export const saveItem = async (item: AACItem): Promise<void> => {
 };
 
 export const saveItemsBatch = async (items: AACItem[]): Promise<void> => {
-  // Note: Batch save doesn't do complex cleanup for simplicity, mainly used for imports/reorders
-  const processedItems = await Promise.all(items.map(async (item) => {
+  // Batch save processes file saving sequentially to prevent FS spamming, then does DB put
+  const processedItems = [];
+  for (const item of items) {
       let imageUrl = getStorageUrl(item.imageUrl) || item.imageUrl;
       let audioUrl = getStorageUrl(item.audioUrl);
       
       imageUrl = await saveAssetToFile(imageUrl) || imageUrl;
       audioUrl = await saveAssetToFile(audioUrl);
       
-      return { ...item, imageUrl, audioUrl: audioUrl || undefined };
-  }));
+      processedItems.push({ ...item, imageUrl, audioUrl: audioUrl || undefined });
+  }
 
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -538,7 +531,6 @@ export const getAllItems = async (profileId?: string): Promise<AACItem[]> => {
 export const deleteItem = async (id: string): Promise<void> => {
   const db = await openDB();
   
-  // 1. Get item to find file paths
   const item = await getItemById(id);
 
   if (item) {
@@ -546,7 +538,6 @@ export const deleteItem = async (id: string): Promise<void> => {
       await deleteAssetFile(item.audioUrl);
   }
 
-  // 2. Delete from DB
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE_ITEMS, 'readwrite');
     const store = transaction.objectStore(STORE_ITEMS);
@@ -573,10 +564,8 @@ const getCategoryById = async (id: string): Promise<Category | undefined> => {
 export const saveCategory = async (category: Category): Promise<void> => {
   const db = await openDB();
 
-  // 0. Cleanup check
   const existingCat = await getCategoryById(category.id);
 
-  // Categories also have 'icon' which can be a data URL
   let icon = getStorageUrl(category.icon);
   const newIcon = await saveAssetToFile(icon);
 
@@ -600,11 +589,12 @@ export const saveCategory = async (category: Category): Promise<void> => {
 };
 
 export const saveCategoriesBatch = async (categories: Category[]): Promise<void> => {
-  const processedCats = await Promise.all(categories.map(async (cat) => {
+  const processedCats = [];
+  for (const cat of categories) {
       let icon = getStorageUrl(cat.icon);
       icon = await saveAssetToFile(icon);
-      return { ...cat, icon: icon || cat.icon };
-  }));
+      processedCats.push({ ...cat, icon: icon || cat.icon });
+  }
 
   const db = await openDB();
   return new Promise((resolve, reject) => {
@@ -629,7 +619,6 @@ export const getAllCategories = async (profileId?: string): Promise<Category[]> 
             result = result.filter(c => c.profileId === profileId);
         }
 
-        // Convert Storage URLs to Display URLs
         const mappedResult = result.map(cat => ({
             ...cat,
             icon: getDisplayUrl(cat.icon)
@@ -659,60 +648,4 @@ export const deleteCategory = async (id: string): Promise<void> => {
     transaction.onerror = () => reject(transaction.error);
     request.onerror = () => reject(request.error);
   });
-};
-
-// --- BACKUP GENERATOR ---
-
-export const generateBackupData = async () => {
-    // 1. Get all data (these come with Display URLs from the getters)
-    const [items, cats, boards, profiles] = await Promise.all([
-        getAllItems(), 
-        getAllCategories(), 
-        getAllBoards(),
-        getAllProfiles()
-    ]);
-
-    // 2. Re-hydrate images back to Base64 for portable JSON
-    const hydratedItems = await Promise.all(items.map(async (item) => {
-        // If native, we need to read the file content
-        if (isNative && item.imageUrl && !item.imageUrl.startsWith('data:') && !item.imageUrl.startsWith('http')) {
-             try {
-                 const storagePath = getStorageUrl(item.imageUrl);
-                 if (storagePath) {
-                     // Using Filesystem.readFile requires non-null path.
-                     // On web, Filesystem might be mock, so check isNative first.
-                     const file = await Filesystem.readFile({ path: storagePath });
-                     // Filesystem.readFile returns data as string (base64) by default
-                     // We try to guess mime or use jpeg.
-                     return { ...item, imageUrl: `data:image/jpeg;base64,${file.data}` };
-                 }
-             } catch (e) {
-                 // If file missing, keep original URL
-             }
-        }
-        return item;
-    }));
-
-    const hydratedCats = await Promise.all(cats.map(async (cat) => {
-        if (isNative && cat.icon && !cat.icon.startsWith('data:') && !cat.icon.startsWith('http')) {
-             // Skip built-in icons
-             if (!cat.icon.includes('/')) return cat;
-
-             try {
-                 const storagePath = getStorageUrl(cat.icon);
-                 if (storagePath) {
-                    const file = await Filesystem.readFile({ path: storagePath });
-                    return { ...cat, icon: `data:image/png;base64,${file.data}` };
-                 }
-             } catch (e) {}
-        }
-        return cat;
-    }));
-
-    return {
-        items: hydratedItems,
-        categories: hydratedCats,
-        boards,
-        profiles
-    };
 };

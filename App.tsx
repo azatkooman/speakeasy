@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Plus, Lock, Unlock, Search, X, Pencil, Settings2, Home, ChevronRight, Eye, EyeOff, FolderPlus, FolderInput, ArrowLeft, ArrowRight, Layers, ArrowUpRight, ChevronLeft, User, CornerUpLeft } from 'lucide-react';
+import { Plus, Lock, Unlock, Search, X, Settings2, Home, ChevronRight, Eye, EyeOff, FolderPlus, ArrowLeft, ArrowRight, Layers, ArrowUpRight, ChevronLeft, User, CornerUpLeft, Hand } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { AACItem, Category, ColorTheme, AppSettings, Board, ChildProfile } from './types';
-import { saveItem, getAllItems, deleteItem, getAllCategories, saveCategory, deleteCategory, clearLegacyStorage, ROOT_FOLDER, saveItemsBatch, saveCategoriesBatch, getAllBoards, saveBoard, deleteBoard, initializeBoards, createNewBoard, DEFAULT_BOARD_ID, getAllProfiles, saveProfile, deleteProfile, generateBackupData, saveBoardsBatch } from './services/storage';
+import { saveItem, getAllItems, deleteItem, getAllCategories, saveCategory, deleteCategory, clearLegacyStorage, ROOT_FOLDER, saveItemsBatch, saveCategoriesBatch, getAllBoards, saveBoard, deleteBoard, initializeBoards, createNewBoard, getAllProfiles, saveProfile, deleteProfile, saveBoardsBatch } from './services/storage';
 import { getTranslation, TranslationKey } from './services/translations';
 import { voiceService } from './services/voice';
 import SentenceStrip from './components/SentenceStrip';
@@ -31,6 +31,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   voiceRate: 0.9,
   gridColumns: 'medium',
   language: detectLanguage(),
+  maxSentenceLength: 0, // 0 = unlimited
+  autoClearSentence: false
 };
 
 // Singleton AudioContext for efficient playback
@@ -204,6 +206,9 @@ function App() {
   const [settings, setSettings] = useState<AppSettings>(() => {
     const saved = localStorage.getItem('aac_settings');
     const parsed = saved ? JSON.parse(saved) : DEFAULT_SETTINGS;
+    // Ensure new settings fields exist for users upgrading from older versions
+    if (parsed.maxSentenceLength === undefined) parsed.maxSentenceLength = 0;
+    if (parsed.autoClearSentence === undefined) parsed.autoClearSentence = false;
     if (!parsed.language) {
         parsed.language = detectLanguage();
     }
@@ -243,6 +248,9 @@ function App() {
   const unlockTimerRef = useRef<number | null>(null);
   const ignoreNextClick = useRef(false);
   const [isHoldingUnlock, setIsHoldingUnlock] = useState(false);
+
+  // Onboarding Logic
+  const [showOnboardingHint, setShowOnboardingHint] = useState(false);
 
   const t = (key: TranslationKey) => getTranslation(settings.language, key);
 
@@ -316,6 +324,11 @@ function App() {
     const savedHistory = localStorage.getItem('aac_history_ids');
     if (savedHistory) {
         try { setHistoryIds(JSON.parse(savedHistory)); } catch (e) { console.error("History parse fail", e); }
+    }
+
+    const completedOnboarding = localStorage.getItem('aac_onboarding_completed');
+    if (!completedOnboarding) {
+        setShowOnboardingHint(true);
     }
 
     const handleFirstInteraction = () => {
@@ -688,14 +701,6 @@ function App() {
       setCurrentFolderId(ROOT_FOLDER); 
   };
 
-  const handleFolderBack = () => {
-      if (breadcrumbs.length > 1) {
-          setCurrentFolderId(breadcrumbs[breadcrumbs.length - 2].id);
-      } else {
-          setCurrentFolderId(ROOT_FOLDER);
-      }
-  };
-
   const handleDeleteBoard = async (id: string) => {
       await deleteBoard(id);
       await loadData();
@@ -767,83 +772,6 @@ function App() {
       }
   };
 
-  const handleExportData = async () => {
-    try {
-        const backupData = await generateBackupData();
-        
-        const finalBackup = {
-            version: 2,
-            timestamp: Date.now(),
-            settings,
-            ...backupData
-        };
-
-        const jsonString = JSON.stringify(finalBackup, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        const date = new Date().toISOString().split('T')[0];
-        a.download = `speakeasy-full-backup-${date}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    } catch (e) {
-        console.error("Export failed", e);
-        alert("Failed to create backup file.");
-    }
-  };
-
-  const handleImportData = async (file: File) => {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        try {
-            const json = e.target?.result as string;
-            const data = JSON.parse(json);
-
-            if (!data.items || !data.categories) {
-                alert("Invalid backup file format.");
-                return;
-            }
-
-            if (confirm("Importing will add/update data. Existing items will be preserved/merged. Continue?")) {
-                if (data.settings) setSettings(prev => ({...prev, ...data.settings}));
-                
-                if (data.profiles && Array.isArray(data.profiles)) {
-                    for (const p of data.profiles) {
-                        await saveProfile(p);
-                    }
-                }
-
-                if (data.boards && Array.isArray(data.boards)) await saveBoardsBatch(data.boards);
-
-                if (data.categories && Array.isArray(data.categories)) await saveCategoriesBatch(data.categories);
-
-                if (data.items && Array.isArray(data.items)) await saveItemsBatch(data.items);
-
-                const allP = await getAllProfiles();
-                setProfiles(allP);
-                if (allP.length > 0) {
-                    if (!allP.find(p => p.id === currentProfileId)) {
-                        await handleSwitchProfile(allP[0].id);
-                    } else {
-                        await loadData();
-                    }
-                }
-
-                alert("Import successful!");
-                setIsSettingsOpen(false);
-            }
-        } catch (err) {
-            console.error("Import error", err);
-            alert("Failed to parse backup file.");
-        }
-    };
-    reader.readAsText(file);
-  };
-
   const stopPlayback = async () => {
     playbackSessionRef.current += 1; 
     await voiceService.stop();
@@ -859,6 +787,12 @@ function App() {
         setBoardHistory(prev => [...prev, currentBoardId]);
         setCurrentBoardId(item.linkedBoardId);
         setCurrentFolderId(ROOT_FOLDER);
+        return;
+    }
+
+    // NEW: Check for sentence length limit
+    if (settings.maxSentenceLength > 0 && sentence.length >= settings.maxSentenceLength) {
+        // Just fail silently or maybe add a visual shake in the future
         return;
     }
 
@@ -919,7 +853,12 @@ function App() {
       for (let i = 0; i < validSentence.length; i++) {
         if (playbackSessionRef.current !== currentSession) break;
         setActiveIndex(i);
-        await Promise.race([playItemSound(validSentence[i]), new Promise(resolve => setTimeout(resolve, 8000))]);
+        try {
+            await Promise.race([playItemSound(validSentence[i]), new Promise(resolve => setTimeout(resolve, 8000))]);
+        } catch (e) {
+            console.error("Failed to play item", e);
+            // Continue to next item in the strip instead of stopping completely
+        }
         if (playbackSessionRef.current !== currentSession) break;
         await new Promise(r => setTimeout(r, 100));
       }
@@ -931,8 +870,18 @@ function App() {
           
           setActiveIndex(null);
           setIsPlaying(false);
+
+          // NEW: Auto-clear logic
+          if (settings.autoClearSentence) {
+             setSentence([]);
+          }
       }
     }
+  };
+
+  const completeOnboarding = () => {
+      localStorage.setItem('aac_onboarding_completed', 'true');
+      setShowOnboardingHint(false);
   };
 
   const startUnlock = () => {
@@ -946,10 +895,15 @@ function App() {
       ignoreNextClick.current = true;
       if (navigator.vibrate) navigator.vibrate([40, 40]);
       
+      // If user successfully unlocks, mark onboarding as complete
+      if (showOnboardingHint) {
+          completeOnboarding();
+      }
+      
       setTimeout(() => {
           if (ignoreNextClick.current) ignoreNextClick.current = false;
       }, 1000);
-    }, 2500);
+    }, 2500); // 2.5 seconds hold to unlock
   };
 
   const cancelUnlock = () => {
@@ -994,6 +948,16 @@ function App() {
       setCurrentFolderId(folder.id);
   };
 
+  const handleFolderBack = () => {
+    if (currentFolderId === ROOT_FOLDER) return;
+    const currentCategory = categories.find(c => c.id === currentFolderId);
+    if (currentCategory && currentCategory.parentId) {
+      setCurrentFolderId(currentCategory.parentId);
+    } else {
+      setCurrentFolderId(ROOT_FOLDER);
+    }
+  };
+
   const navigateToBreadcrumb = (id: string) => setCurrentFolderId(id);
 
   if (isInitializing) return <div className="h-screen w-full flex items-center justify-center bg-background"><div className="animate-spin text-primary rounded-full h-12 w-12 border-t-4 border-b-4 border-primary"></div></div>;
@@ -1002,7 +966,7 @@ function App() {
     <div className="h-screen w-full bg-background pattern-grid flex flex-col overflow-hidden font-sans select-none">
       
       {/* --- Header --- */}
-      <div className="flex justify-between items-center px-4 py-3 bg-white/90 backdrop-blur-sm border-b border-slate-200 z-20 shrink-0" style={{ paddingTop: isAndroid ? 'max(2rem, env(safe-area-inset-top))' : 'max(0.75rem, env(safe-area-inset-top))' }}>
+      <div className="flex justify-between items-center px-4 py-3 bg-white/90 backdrop-blur-sm border-b border-slate-200 z-40 shrink-0" style={{ paddingTop: isAndroid ? 'max(2rem, env(safe-area-inset-top))' : 'max(0.75rem, env(safe-area-inset-top))' }}>
         {isSearchActive ? (
             <div className="flex-1 flex items-center gap-3">
                 <div className="relative flex-1">
@@ -1037,22 +1001,51 @@ function App() {
                     )}
                 </div>
                 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 relative">
                     <button onClick={() => setIsSearchActive(true)} className="p-2.5 rounded-full bg-slate-100 text-slate-400"><Search size={20} /></button>
-                    <button 
-                        onMouseDown={startUnlock} 
-                        onMouseUp={cancelUnlock} 
-                        onMouseLeave={cancelUnlock}
-                        onTouchStart={startUnlock} 
-                        onTouchEnd={cancelUnlock}
-                        onTouchCancel={cancelUnlock}
-                        onClick={handleLockToggle}
-                        className={`relative overflow-hidden p-2 pr-4 rounded-full flex items-center space-x-2 border-2 ${isEditMode ? 'bg-red-50 text-red-600' : 'bg-white text-slate-400'}`}
-                    >
-                        {!isEditMode && <div className={`absolute inset-0 bg-slate-200/80 transition-transform ease-linear origin-left ${isHoldingUnlock ? 'scale-x-100 duration-[2500ms]' : 'scale-x-0'}`} />}
-                        <div className={`relative z-10 p-1.5 rounded-full ${isEditMode ? 'bg-red-100' : 'bg-slate-100'}`}>{isEditMode ? <Unlock size={16} /> : <Lock size={16} />}</div>
-                        <div className="relative z-10 flex flex-col items-start"><span className="text-xs font-bold uppercase">{isHoldingUnlock ? t('mode.holding') : (isEditMode ? t('mode.parent') : t('mode.child'))}</span></div>
-                    </button>
+                    
+                    {/* Lock Button */}
+                    <div className="relative z-20">
+                        <button 
+                            onMouseDown={startUnlock} 
+                            onMouseUp={cancelUnlock} 
+                            onMouseLeave={cancelUnlock}
+                            onTouchStart={startUnlock} 
+                            onTouchEnd={cancelUnlock}
+                            onTouchCancel={cancelUnlock}
+                            onClick={handleLockToggle}
+                            className={`relative overflow-hidden p-2 pr-4 rounded-full flex items-center space-x-2 border-2 transition-all ${isEditMode ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-slate-400 border-slate-200'} ${showOnboardingHint && !isEditMode ? 'ring-4 ring-blue-400/30' : ''}`}
+                        >
+                            {!isEditMode && <div className={`absolute inset-0 bg-slate-200/80 transition-transform ease-linear origin-left ${isHoldingUnlock ? 'scale-x-100 duration-[2500ms]' : 'scale-x-0'}`} />}
+                            <div className={`relative z-10 p-1.5 rounded-full ${isEditMode ? 'bg-red-100' : 'bg-slate-100'}`}>{isEditMode ? <Unlock size={16} /> : <Lock size={16} />}</div>
+                            <div className="relative z-10 flex flex-col items-start"><span className="text-xs font-bold uppercase">{isHoldingUnlock ? t('mode.holding') : (isEditMode ? t('mode.parent') : t('mode.child'))}</span></div>
+                        </button>
+
+                        {/* Onboarding Tooltip */}
+                        {showOnboardingHint && !isEditMode && (
+                            <div className="absolute top-full right-0 mt-4 w-72 bg-slate-900 text-white p-4 rounded-2xl shadow-2xl z-50 animate-in slide-in-from-top-2 duration-300 pointer-events-auto border border-slate-800">
+                                <div className="absolute -top-2 right-5 w-4 h-4 bg-slate-900 border-t border-l border-slate-800 rotate-45"></div>
+                                <div className="flex gap-4">
+                                    <div className="bg-indigo-500/20 p-3 rounded-full h-fit flex-shrink-0">
+                                        <Hand size={24} className="text-indigo-400" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-base text-white mb-1">{t('mode.parent')}</h3>
+                                        <p className="text-slate-300 text-sm leading-snug mb-3">
+                                            {t('onboarding.unlock_hint')}
+                                        </p>
+                                        <button 
+                                            onClick={completeOnboarding} 
+                                            className="py-2 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-colors w-full"
+                                        >
+                                            {t('onboarding.dismiss')}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                 </div>
             </>
         )}
@@ -1366,7 +1359,13 @@ function App() {
         isFolder={!!folderToDelete}
         t={t} 
       />
-      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} settings={settings} onUpdateSettings={setSettings} onExportData={handleExportData} onImportData={handleImportData} t={t} />
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+        settings={settings} 
+        onUpdateSettings={setSettings} 
+        t={t} 
+      />
       <HistoryModal isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} historyIds={historyIds} library={library} onSelectSentence={handleSelectHistorySentence} t={t} />
     </div>
   );

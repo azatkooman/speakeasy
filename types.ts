@@ -57,4 +57,6 @@ export interface AppSettings {
   voiceRate: number;
   gridColumns: 'small' | 'medium' | 'large';
   language: AppLanguage;
+  maxSentenceLength: number; // 0 = unlimited, 1-5 = limit
+  autoClearSentence: boolean;
 }
