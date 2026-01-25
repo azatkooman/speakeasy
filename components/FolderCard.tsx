@@ -1,7 +1,10 @@
+
 import React, { useState } from 'react';
 import { ArrowLeft, ArrowRight, Settings2, Folder } from 'lucide-react';
 import { Category } from '../types';
 import { getIconComponent } from '../utils/icons';
+import { useSpeakEasy } from '../contexts/SpeakEasyContext';
+import { TranslationKey } from '../services/translations';
 
 interface FolderCardProps {
   folder: Category;
@@ -14,6 +17,18 @@ interface FolderCardProps {
   onEdit?: () => void;
 }
 
+const FOLDER_THEMES: Record<string, { bg: string; border: string; shadow: string; tabBorder: string }> = {
+    'yellow': { bg: 'bg-yellow-100', border: 'border-yellow-400', shadow: 'shadow-yellow-700', tabBorder: 'border-yellow-400' },
+    'green':  { bg: 'bg-green-100',  border: 'border-green-500',  shadow: 'shadow-green-700',  tabBorder: 'border-green-500' },
+    'blue':   { bg: 'bg-blue-100',   border: 'border-blue-400',   shadow: 'shadow-blue-700',   tabBorder: 'border-blue-400' },
+    'pink':   { bg: 'bg-pink-100',   border: 'border-pink-400',   shadow: 'shadow-pink-700',   tabBorder: 'border-pink-400' },
+    'orange': { bg: 'bg-orange-100', border: 'border-orange-500', shadow: 'shadow-orange-700', tabBorder: 'border-orange-500' },
+    'purple': { bg: 'bg-purple-100', border: 'border-purple-400', shadow: 'shadow-purple-700', tabBorder: 'border-purple-400' },
+    'teal':   { bg: 'bg-teal-100',   border: 'border-teal-500',   shadow: 'shadow-teal-700',   tabBorder: 'border-teal-500' },
+    'red':    { bg: 'bg-red-100',    border: 'border-red-500',    shadow: 'shadow-red-700',    tabBorder: 'border-red-500' },
+    'slate':  { bg: 'bg-slate-100',  border: 'border-slate-400',  shadow: 'shadow-slate-600',  tabBorder: 'border-slate-400' },
+};
+
 const FolderCard: React.FC<FolderCardProps> = ({ 
   folder, 
   onClick, 
@@ -24,111 +39,93 @@ const FolderCard: React.FC<FolderCardProps> = ({
   isEditMode,
   onEdit
 }) => {
+  const { t } = useSpeakEasy();
   const [imageError, setImageError] = useState(false);
 
-  // Map themes to visual styles
-  const getThemeStyles = (theme: string) => {
-    switch(theme) {
-      case 'yellow': return 'bg-yellow-100 border-yellow-300 text-yellow-800';
-      case 'green': return 'bg-green-100 border-green-300 text-green-800';
-      case 'blue': return 'bg-blue-100 border-blue-300 text-blue-800';
-      case 'pink': return 'bg-pink-100 border-pink-300 text-pink-800';
-      case 'orange': return 'bg-orange-100 border-orange-300 text-orange-800';
-      case 'purple': return 'bg-purple-100 border-purple-300 text-purple-800';
-      case 'teal': return 'bg-teal-100 border-teal-300 text-teal-800';
-      case 'red': return 'bg-red-100 border-red-300 text-red-800';
-      default: return 'bg-slate-100 border-slate-300 text-slate-800';
-    }
-  };
-
-  const styleClass = getThemeStyles(folder.colorTheme);
+  const theme = FOLDER_THEMES[folder.colorTheme] || FOLDER_THEMES['slate'];
   
-  // Robustly detect if icon is a built-in Lucide icon name or an image URL (http/data/file/capacitor)
   const isSimpleIcon = folder.icon && !folder.icon.includes('/') && !folder.icon.startsWith('data:') && !folder.icon.startsWith('http');
   const isImageIcon = !isSimpleIcon;
-  
   const IconComponent = isSimpleIcon ? getIconComponent(folder.icon) : null;
+  const displayLabel = folder.labelKey ? t(folder.labelKey as TranslationKey) : folder.label;
 
   return (
-    <div className="relative aspect-[4/5] group select-none" onClick={onClick}>
-      {/* Visual Stack/Shadow Effect */}
-      <div className="absolute inset-0 bg-slate-800/10 rounded-3xl translate-x-2 translate-y-2 -z-20" />
-      <div className="absolute inset-0 bg-white rounded-3xl translate-x-1 translate-y-1 border-2 border-slate-100 -z-10" />
+    <div className="relative aspect-[4/5] group select-none flex flex-col pt-3" onClick={onClick}>
+      
+      {/* Folder Tab Effect */}
+      <div className={`
+        absolute top-0 left-0 w-1/2 h-8 rounded-t-xl z-0 border-t-2 border-l-2 border-r-2
+        ${theme.bg} ${theme.tabBorder}
+      `} />
 
-      {/* Main Folder Card */}
-      <div 
-        className={`
-          absolute inset-0 rounded-3xl flex flex-col
-          border-b-4 border-r-4 shadow-sm active:border-0 active:translate-y-1 active:translate-x-1 transition-all cursor-pointer overflow-hidden z-10
-          ${styleClass}
-        `}
-      >
-        {/* Tab Visual */}
-        <div className="h-6 w-full relative">
-            <div className="absolute top-0 left-0 w-1/3 h-full bg-black/10 rounded-br-2xl border-b border-r border-black/5" />
-            {isEditMode && (
+      {/* Main Folder Body */}
+      <div className={`
+          relative flex-1 rounded-b-3xl rounded-tr-3xl flex flex-col 
+          border-2 border-t-2 shadow-[0_4px_0_0] active:shadow-none active:translate-y-[4px] active:border-b-2
+          transition-all duration-100 z-10 cursor-pointer overflow-hidden
+          ${theme.bg} ${theme.border} ${theme.shadow}
+      `}>
+        
+        {/* Controls Overlay */}
+        {isEditMode && (
+             <div className="absolute top-0 left-0 right-0 h-8 z-30 flex justify-end p-1">
                  <button 
                      onClick={(e) => { e.stopPropagation(); onEdit?.(); }}
-                     className="absolute top-1 right-1 bg-white/90 backdrop-blur-sm rounded-full p-1.5 shadow-sm z-30 border border-slate-200 hover:bg-slate-50 active:scale-95 transition-all"
+                     className="bg-white/90 backdrop-blur-sm rounded-full p-1.5 shadow-sm border border-slate-200 hover:bg-slate-50 active:scale-95 transition-all"
                  >
                      <Settings2 size={14} className="text-slate-700" />
                  </button>
-            )}
-        </div>
+             </div>
+        )}
 
-        {/* Content Area */}
-        <div className="flex-1 w-full flex items-center justify-center overflow-hidden px-3 pb-0 relative">
-             <div className="w-full h-full bg-white/40 rounded-2xl flex items-center justify-center border border-white/40 p-2 shadow-inner relative">
+        {/* Content Area - Reduced Padding for larger icon */}
+        <div className="flex-1 w-full flex items-center justify-center p-2 relative min-h-0">
+             <div className="w-full h-full bg-white/40 rounded-xl flex items-center justify-center border border-black/5 p-1 shadow-sm relative overflow-hidden">
                 {isImageIcon && !imageError ? (
                     <img 
                       src={folder.icon} 
-                      alt={folder.label} 
-                      className="w-full h-full object-contain drop-shadow-sm"
+                      alt={displayLabel} 
+                      className="w-full h-full object-contain drop-shadow-sm opacity-90"
                       onError={() => setImageError(true)} 
                     />
                 ) : (
                     IconComponent ? (
-                      <IconComponent size={40} strokeWidth={1.5} className="opacity-80 drop-shadow-sm w-12 h-12 sm:w-16 sm:h-16" />
+                      <IconComponent 
+                        className="w-[80%] h-[80%] opacity-85 drop-shadow-sm text-slate-800" 
+                        strokeWidth={1.5} 
+                      />
                     ) : (
-                      <Folder size={40} strokeWidth={1.5} className="opacity-80 drop-shadow-sm w-12 h-12 sm:w-16 sm:h-16" />
+                      <Folder 
+                        className="w-[80%] h-[80%] opacity-85 drop-shadow-sm text-slate-800" 
+                        strokeWidth={1.5} 
+                      />
                     )
                 )}
                 
-                {/* Reorder Arrows - Overlaying the bottom of the image area for space efficiency */}
                 {isEditMode && (
-                    <div className="absolute bottom-2 inset-x-2 flex justify-between z-20">
+                    <div className="absolute bottom-1 inset-x-1 flex justify-between z-20 pointer-events-none">
                         <button 
                             onClick={(e) => { e.stopPropagation(); onReorderLeft(e); }}
                             disabled={!canMoveLeft}
-                            className={`
-                                w-9 h-9 flex items-center justify-center rounded-full shadow-lg border-2 transition-all active:scale-95 backdrop-blur-md
-                                ${!canMoveLeft 
-                                    ? 'bg-slate-100/50 border-slate-200/50 text-slate-300 cursor-not-allowed opacity-50' 
-                                    : 'bg-white border-slate-200 text-slate-700 hover:border-primary hover:text-primary hover:bg-slate-50'}
-                            `}
+                            className={`pointer-events-auto w-7 h-7 flex items-center justify-center rounded-full shadow-lg border-2 transition-all active:scale-95 backdrop-blur-md ${!canMoveLeft ? 'bg-slate-100/50 border-slate-200/50 text-slate-300 cursor-not-allowed opacity-50' : 'bg-white border-slate-200 text-slate-700 hover:border-primary hover:text-primary hover:bg-slate-50'}`}
                         >
-                            <ArrowLeft size={20} strokeWidth={2.5} />
+                            <ArrowLeft size={14} strokeWidth={2.5} />
                         </button>
                         <button 
                             onClick={(e) => { e.stopPropagation(); onReorderRight(e); }}
                             disabled={!canMoveRight}
-                            className={`
-                                w-9 h-9 flex items-center justify-center rounded-full shadow-lg border-2 transition-all active:scale-95 backdrop-blur-md
-                                ${!canMoveRight 
-                                    ? 'bg-slate-100/50 border-slate-200/50 text-slate-300 cursor-not-allowed opacity-50' 
-                                    : 'bg-white border-slate-200 text-slate-700 hover:border-primary hover:text-primary hover:bg-slate-50'}
-                            `}
+                            className={`pointer-events-auto w-7 h-7 flex items-center justify-center rounded-full shadow-lg border-2 transition-all active:scale-95 backdrop-blur-md ${!canMoveRight ? 'bg-slate-100/50 border-slate-200/50 text-slate-300 cursor-not-allowed opacity-50' : 'bg-white border-slate-200 text-slate-700 hover:border-primary hover:text-primary hover:bg-slate-50'}`}
                         >
-                            <ArrowRight size={20} strokeWidth={2.5} />
+                            <ArrowRight size={14} strokeWidth={2.5} />
                         </button>
                     </div>
                 )}
              </div>
         </div>
       
-        <div className="w-full text-center py-2 px-1 relative h-11 sm:h-12 flex items-center justify-center">
-          <span className="font-black text-sm sm:text-base uppercase tracking-wide line-clamp-2 leading-tight block px-1">
-            {folder.label}
+        <div className="w-full text-center py-2 px-1 relative min-h-[44px] sm:min-h-[48px] flex items-center justify-center bg-black/5 border-t border-black/5 shrink-0">
+          <span className="font-black text-sm sm:text-base uppercase tracking-wide line-clamp-2 leading-tight block px-1 drop-shadow-sm text-slate-900">
+            {displayLabel}
           </span>
         </div>
       </div>

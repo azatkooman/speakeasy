@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { X, Layers, Plus, Trash2, Check, Layout, Loader2, Pencil } from 'lucide-react';
 import { Board } from '../types';
@@ -44,6 +45,8 @@ const BoardsModal: React.FC<BoardsModalProps> = ({
         await onCreateBoard(newBoardName.trim());
         setIsCreating(false);
         setNewBoardName('');
+        // UX Improvement: Close modal immediately so user is on the new board
+        onClose();
     } finally {
         setIsProcessing(false);
     }
@@ -170,7 +173,12 @@ const BoardsModal: React.FC<BoardsModalProps> = ({
                 return (
                     <div 
                         key={board.id}
-                        onClick={() => !isProcessing && onSwitchBoard(board.id)}
+                        onClick={() => {
+                            if (!isProcessing) {
+                                onSwitchBoard(board.id);
+                                onClose(); // Close modal immediately on selection
+                            }
+                        }}
                         className={`
                             group flex items-center justify-between p-4 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden
                             ${isCurrent 

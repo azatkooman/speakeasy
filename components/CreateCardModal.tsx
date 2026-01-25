@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Image as ImageIcon, Check, Mic, Keyboard, Play, Camera, RefreshCcw, Eye, EyeOff, Search, Loader2, Globe, Palette, Info, Maximize2, Minimize2 } from 'lucide-react';
 import { AACItem, Category, AppLanguage, ColorTheme } from '../types';
@@ -33,6 +34,8 @@ const THEMES: { theme: ColorTheme; bg: string; border: string; labelKey: Transla
 
 const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSave, editItem, t, language, currentFolderName, defaultColorTheme }) => {
   const [label, setLabel] = useState('');
+  const [isLabelManuallyEdited, setIsLabelManuallyEdited] = useState(false);
+  
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFit, setImageFit] = useState<'cover' | 'contain'>('cover');
   const [isVisible, setIsVisible] = useState(true);
@@ -136,6 +139,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
 
   const resetForm = () => {
     setLabel('');
+    setIsLabelManuallyEdited(false);
     setImagePreview(null);
     setImageFit('cover');
     setAudioBlob(null);
@@ -166,7 +170,9 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
   useEffect(() => {
     if (isOpen) {
       if (editItem) {
-        setLabel(editItem.label);
+        // Use translated label if available, so user edits the current language version
+        setLabel(editItem.labelKey ? t(editItem.labelKey as TranslationKey) : editItem.label);
+        setIsLabelManuallyEdited(true); // Treat existing items as manually named
         setImagePreview(editItem.imageUrl);
         setImageFit(editItem.imageFit || 'cover'); // Load saved preference or default
         setIsVisible(editItem.isVisible !== false);
@@ -256,7 +262,10 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
     }
   };
 
-  const handleSymbolSelect = async (url: string) => {
+  const handleSymbolSelect = async (url: string, suggestedName?: string) => {
+      // Capture the search term before clearing it
+      const searchTerm = symbolQuery;
+      
       setIsLoadingSymbols(true);
       try {
           const response = await fetch(url);
@@ -268,6 +277,17 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
              setShowSymbolSearch(false);
              setIsLoadingSymbols(false);
              setSymbolQuery('');
+
+             // Auto-fill label if empty OR if it hasn't been manually edited
+             if (!label || !isLabelManuallyEdited) {
+                 const textToUse = searchTerm.trim() || suggestedName;
+                 if (textToUse) {
+                     const formattedName = textToUse.charAt(0).toUpperCase() + textToUse.slice(1);
+                     setLabel(formattedName);
+                     // Keep as not manually edited, so subsequent symbol picks can update it
+                     setIsLabelManuallyEdited(false);
+                 }
+             }
           };
           reader.readAsDataURL(blob);
       } catch (e) {
@@ -388,7 +408,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                       {isLoadingSymbols ? (
                           <div className="flex flex-col items-center justify-center h-40 space-y-4"><Loader2 size={40} className="animate-spin text-primary" /><p className="text-slate-400 font-bold">{t('folder.searching')}</p></div>
                       ) : symbols.length > 0 ? (
-                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">{symbols.map(s => <button key={s.id} onClick={() => handleSymbolSelect(s.url)} className="aspect-square bg-white rounded-xl border-2 border-slate-200 hover:border-primary hover:shadow-lg transition-all p-2 flex items-center justify-center active:scale-95 group"><img src={s.url} className="w-full h-full object-contain group-hover:scale-110 transition-transform" alt="" /></button>)}</div>
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">{symbols.map(s => <button key={s.id} onClick={() => handleSymbolSelect(s.url, s.keywords[0])} className="aspect-square bg-white rounded-xl border-2 border-slate-200 hover:border-primary hover:shadow-lg transition-all p-2 flex items-center justify-center active:scale-95 group"><img src={s.url} className="w-full h-full object-contain group-hover:scale-110 transition-transform" alt="" /></button>)}</div>
                       ) : (
                           <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-4 opacity-50"><Globe size={64} /><p className="font-bold text-center">{symbolQuery.length < 3 ? t('create.search_type_hint') : t('create.no_results')}</p></div>
                       )}
@@ -455,7 +475,10 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                         <span className="text-[9px] font-black text-slate-500 uppercase">{t('modal.create.upload')}</span>
                     </button>
                     <button 
-                        onClick={() => setShowSymbolSearch(true)} 
+                        onClick={() => {
+                            setSymbolQuery(label); // Pre-fill search with label
+                            setShowSymbolSearch(true);
+                        }} 
                         className="flex flex-col items-center justify-center p-2.5 bg-slate-50 rounded-xl border-2 border-slate-200 hover:border-orange-500 hover:bg-orange-50 active:scale-95 transition-all"
                     >
                         <Globe size={20} className="text-slate-600 mb-1" />
@@ -469,7 +492,16 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
             <div className="flex-1 space-y-4 min-w-0">
                <div>
                  <label className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-2 block">{t('modal.create.name_label')}</label>
-                 <input type="text" value={label} onChange={(e) => setLabel(e.target.value)} placeholder={t('modal.create.name_placeholder')} className="w-full px-4 py-3 bg-white rounded-xl border-2 border-slate-300 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-xl font-bold text-slate-900 placeholder:text-slate-400 transition-all" />
+                 <input 
+                    type="text" 
+                    value={label} 
+                    onChange={(e) => { 
+                        setLabel(e.target.value); 
+                        setIsLabelManuallyEdited(true); 
+                    }} 
+                    placeholder={t('modal.create.name_placeholder')} 
+                    className="w-full px-4 py-3 bg-white rounded-xl border-2 border-slate-300 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-xl font-bold text-slate-900 placeholder:text-slate-400 transition-all" 
+                 />
                </div>
 
                {/* Color Theme Selector */}

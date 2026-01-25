@@ -7,6 +7,7 @@ export type TranslationKey =
   | 'app.empty_folder'
   | 'app.switch_parent'
   | 'app.hint_tap'
+  | 'app.hint_create'
   | 'app.hint_move_rest'
   | 'app.home_folder'
   | 'mode.parent'
@@ -79,6 +80,13 @@ export type TranslationKey =
   | 'modal.settings.max_length_none'
   | 'modal.settings.auto_clear'
   | 'modal.settings.auto_clear_desc'
+  | 'modal.settings.test_voice'
+  | 'modal.settings.test_error'
+  | 'modal.settings.voice_engine'
+  | 'modal.settings.engine_auto'
+  | 'modal.settings.engine_native'
+  | 'modal.settings.engine_web'
+  | 'modal.settings.engine_desc'
   | 'modal.categories.title'
   | 'modal.categories.add'
   | 'modal.categories.note'
@@ -195,6 +203,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'app.empty_folder': 'Empty Folder',
     'app.switch_parent': 'Switch to Parent Mode to add folders or cards.',
     'app.hint_tap': 'Tap',
+    'app.hint_create': 'to create new folder or card',
     'app.hint_move_rest': 'to move items, or long press to reorder.',
     'app.home_folder': 'Home',
     'mode.parent': 'Parent Mode',
@@ -267,6 +276,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.max_length_none': 'Unlimited',
     'modal.settings.auto_clear': 'Auto-clear after speaking',
     'modal.settings.auto_clear_desc': 'Remove cards automatically after speech finishes.',
+    'modal.settings.test_voice': 'Test Voice',
+    'modal.settings.test_error': 'Error',
+    'modal.settings.voice_engine': 'Voice Engine',
+    'modal.settings.engine_auto': 'Auto',
+    'modal.settings.engine_native': 'System',
+    'modal.settings.engine_web': 'Web',
+    'modal.settings.engine_desc': 'Auto selects the best engine. Try others if sound fails.',
     'modal.categories.title': 'Manage Categories',
     'modal.categories.add': 'Add Custom Category',
     'modal.categories.note': 'Note: Deleting a category does <strong>not</strong> delete the cards inside it. They will turn gray and appear in the "All" tab until you reassign them.',
@@ -391,6 +407,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'app.empty_folder': 'Пустая папка',
     'app.switch_parent': 'Перейдите в режим родителя, чтобы добавить содержимое.',
     'app.hint_tap': 'Нажмите',
+    'app.hint_create': 'чтобы создать папку или карточку',
     'app.hint_move_rest': 'для перемещения, удерживайте для сортировки.',
     'app.home_folder': 'Главная',
     'mode.parent': 'Родитель',
@@ -463,6 +480,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.max_length_none': 'Без ограничений',
     'modal.settings.auto_clear': 'Авто-очистка',
     'modal.settings.auto_clear_desc': 'Удалять карточки после произношения.',
+    'modal.settings.test_voice': 'Проверить голос',
+    'modal.settings.test_error': 'Ошибка',
+    'modal.settings.voice_engine': 'Движок речи',
+    'modal.settings.engine_auto': 'Авто',
+    'modal.settings.engine_native': 'Система',
+    'modal.settings.engine_web': 'Веб',
+    'modal.settings.engine_desc': 'Авто выбирает лучший движок. Переключите, если нет звука.',
     'modal.categories.title': 'Управление категориями',
     'modal.categories.add': 'Добавить категорию',
     'modal.categories.note': 'Примечание: Удаление категории <strong>не</strong> удаляет карточки. Они станут серыми, пока вы не назначите им новую категорию.',

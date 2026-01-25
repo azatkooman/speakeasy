@@ -1,5 +1,5 @@
 {
-  "name": "SpeakEasy AAC",
+  "name": "SpeakEasy AAC Version 2",
   "description": "A modern, customizable Augmentative and Alternative Communication app designed for children. Create custom cards with photos, names, and recordings to build sentences.",
   "requestFramePermissions": [
     "camera",

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { User, Plus, Check, X, Trash2, Baby, Loader2, Globe, Pencil } from 'lucide-react';
 import { ChildProfile, ColorTheme, AppLanguage } from '../types';
@@ -96,10 +97,8 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
               setEditingProfile(null);
           } else {
               await onCreateProfile(newName.trim(), parseInt(newAge) || 0, newColor);
-              // If forced, the parent logic handles selection or closing
-              if (!forceCreate) {
-                  setView('list');
-              }
+              // UX Improvement: Close immediately on creation to start using the profile
+              onClose();
           }
       } catch (e) {
           console.error(e);
@@ -193,7 +192,10 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
                      return (
                          <div 
                             key={profile.id} 
-                            onClick={() => onSelectProfile(profile.id)}
+                            onClick={() => {
+                                onSelectProfile(profile.id);
+                                onClose(); // Close modal immediately on selection
+                            }}
                             className={`
                                 relative flex items-center justify-between p-3 rounded-2xl border-2 transition-all cursor-pointer group
                                 ${isCurrent 

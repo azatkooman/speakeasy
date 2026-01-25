@@ -1,7 +1,8 @@
 
-import React from 'react';
-import { X, Monitor, Volume2, Grid, Languages, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Monitor, Volume2, Grid, Languages, Sparkles, AlertTriangle, Settings } from 'lucide-react';
 import { AppSettings } from '../types';
+import { voiceService } from '../services/voice';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -18,7 +19,28 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onUpdateSettings,
   t,
 }) => {
+  const [testStatus, setTestStatus] = useState<'idle' | 'playing' | 'error'>('idle');
+
   if (!isOpen) return null;
+
+  const handleTestVoice = async () => {
+      setTestStatus('playing');
+      const text = settings.language === 'ru' ? 'Привет, это проверка голоса' : 'Hello, this is a voice test';
+      try {
+          await voiceService.speak({
+              text,
+              language: settings.language,
+              rate: settings.voiceRate,
+              pitch: settings.voicePitch,
+              engine: settings.voiceEngine
+          });
+          setTestStatus('idle');
+      } catch (e) {
+          console.error("Test failed", e);
+          setTestStatus('error');
+          setTimeout(() => setTestStatus('idle'), 3000);
+      }
+  };
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -27,7 +49,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Header */}
         <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50">
           <div className="flex items-center space-x-2">
-             <div className="p-2 bg-slate-200 rounded-xl text-slate-600">
+             <div className="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
                 <Monitor size={24} />
              </div>
              <h2 className="text-2xl font-black text-slate-800">{t('modal.settings.title')}</h2>
@@ -42,29 +64,131 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           {/* Language Settings */}
           <section className="space-y-4">
              <div className="flex items-center space-x-2 text-slate-800 font-bold text-lg">
-                <Languages size={20} className="text-primary" />
+                <Languages size={20} className="text-indigo-600" />
                 <h3>{t('modal.settings.language')}</h3>
              </div>
              <div className="grid grid-cols-2 gap-3">
                  <button 
                     onClick={() => onUpdateSettings({...settings, language: 'en'})}
-                    className={`py-3 rounded-xl border-2 font-bold transition-all ${settings.language === 'en' ? 'border-primary bg-primary/10 text-primary' : 'border-slate-200 text-slate-500'}`}
+                    className={`py-3 rounded-xl border-2 font-bold transition-all ${settings.language === 'en' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-500'}`}
                  >
                     English
                  </button>
                  <button 
                     onClick={() => onUpdateSettings({...settings, language: 'ru'})}
-                    className={`py-3 rounded-xl border-2 font-bold transition-all ${settings.language === 'ru' ? 'border-primary bg-primary/10 text-primary' : 'border-slate-200 text-slate-500'}`}
+                    className={`py-3 rounded-xl border-2 font-bold transition-all ${settings.language === 'ru' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-500'}`}
                  >
                     Русский
                  </button>
              </div>
           </section>
 
+          {/* Voice Settings */}
+          <section className="space-y-4">
+            <div className="flex items-center space-x-2 text-slate-800 font-bold text-lg">
+                <Volume2 size={20} className="text-indigo-600" />
+                <h3>{t('modal.settings.voice')}</h3>
+            </div>
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-4">
+                
+                {/* Sliders */}
+                <div className="space-y-4">
+                    <div>
+                        <div className="flex justify-between mb-2">
+                            <label className="text-sm font-bold text-slate-500 uppercase">{t('modal.settings.speed')}</label>
+                            <span className="text-sm font-bold text-slate-700">{settings.voiceRate.toFixed(1)}x</span>
+                        </div>
+                        <input 
+                            type="range" 
+                            min="0.5" 
+                            max="1.5" 
+                            step="0.1" 
+                            value={settings.voiceRate}
+                            onChange={(e) => onUpdateSettings({...settings, voiceRate: parseFloat(e.target.value)})}
+                            className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                    </div>
+                    <div>
+                        <div className="flex justify-between mb-2">
+                            <label className="text-sm font-bold text-slate-500 uppercase">{t('modal.settings.pitch')}</label>
+                            <span className="text-sm font-bold text-slate-700">{settings.voicePitch.toFixed(1)}</span>
+                        </div>
+                        <input 
+                            type="range" 
+                            min="0.5" 
+                            max="1.5" 
+                            step="0.1" 
+                            value={settings.voicePitch}
+                            onChange={(e) => onUpdateSettings({...settings, voicePitch: parseFloat(e.target.value)})}
+                            className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                    </div>
+                </div>
+
+                {/* Voice Engine (Advanced) */}
+                <div className="pt-2 border-t border-slate-200">
+                    <label className="flex items-center gap-2 text-sm font-bold text-slate-500 uppercase mb-3">
+                        <Settings size={14} />
+                        {t('modal.settings.voice_engine')}
+                    </label>
+                    <div className="grid grid-cols-3 gap-2 mb-2">
+                        {(['auto', 'native', 'web'] as const).map(mode => (
+                            <button
+                                key={mode}
+                                onClick={() => onUpdateSettings({...settings, voiceEngine: mode})}
+                                className={`
+                                    py-2 px-1 rounded-lg text-[10px] sm:text-xs font-bold border-2 transition-all capitalize
+                                    h-auto min-h-[36px] flex items-center justify-center text-center whitespace-normal leading-tight
+                                    ${settings.voiceEngine === mode 
+                                        ? 'bg-white border-indigo-500 text-indigo-700 shadow-sm' 
+                                        : 'bg-slate-100 border-transparent text-slate-500 hover:bg-slate-200'}
+                                `}
+                            >
+                                {t(`modal.settings.engine_${mode}`)}
+                            </button>
+                        ))}
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-medium leading-tight">
+                        {t('modal.settings.engine_desc')}
+                    </p>
+                </div>
+
+                {/* Test Button */}
+                <button 
+                    onClick={handleTestVoice}
+                    disabled={testStatus === 'playing'}
+                    className={`
+                        w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all
+                        ${testStatus === 'error' 
+                            ? 'bg-red-100 text-red-600' 
+                            : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-indigo-500 hover:text-indigo-600'}
+                    `}
+                >
+                    {testStatus === 'playing' ? (
+                        <div className="flex items-center gap-2">
+                           <Volume2 size={20} className="animate-pulse" />
+                           <span>{t('recorder.playing')}</span>
+                        </div>
+                    ) : testStatus === 'error' ? (
+                        <div className="flex items-center gap-2">
+                           <AlertTriangle size={20} />
+                           <span>{t('modal.settings.test_error')}</span>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                           <Volume2 size={20} />
+                           <span>{t('modal.settings.test_voice')}</span>
+                        </div>
+                    )}
+                </button>
+
+            </div>
+          </section>
+
           {/* Behavior Settings */}
           <section className="space-y-4">
              <div className="flex items-center space-x-2 text-slate-800 font-bold text-lg">
-                <Sparkles size={20} className="text-primary" />
+                <Sparkles size={20} className="text-indigo-600" />
                 <h3>{t('modal.settings.behavior')}</h3>
              </div>
              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-6">
@@ -84,7 +208,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                        step="1" 
                        value={settings.maxSentenceLength}
                        onChange={(e) => onUpdateSettings({...settings, maxSentenceLength: parseInt(e.target.value)})}
-                       className="w-full accent-primary h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                       className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
                    />
                 </div>
 
@@ -96,7 +220,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                     <button 
                         onClick={() => onUpdateSettings({...settings, autoClearSentence: !settings.autoClearSentence})}
-                        className={`relative inline-flex h-9 w-16 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none border-2 border-transparent ${settings.autoClearSentence ? 'bg-purple-600' : 'bg-slate-300'}`}
+                        className={`relative inline-flex h-9 w-16 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none border-2 border-transparent ${settings.autoClearSentence ? 'bg-indigo-600' : 'bg-slate-300'}`}
                     >
                         <span className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings.autoClearSentence ? 'translate-x-7' : 'translate-x-0'}`} />
                     </button>
@@ -105,50 +229,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
              </div>
           </section>
 
-          {/* Voice Settings */}
-          <section className="space-y-4">
-            <div className="flex items-center space-x-2 text-slate-800 font-bold text-lg">
-                <Volume2 size={20} className="text-primary" />
-                <h3>{t('modal.settings.voice')}</h3>
-            </div>
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-4">
-                <div>
-                    <div className="flex justify-between mb-2">
-                        <label className="text-sm font-bold text-slate-500 uppercase">{t('modal.settings.speed')}</label>
-                        <span className="text-sm font-bold text-slate-700">{settings.voiceRate.toFixed(1)}x</span>
-                    </div>
-                    <input 
-                        type="range" 
-                        min="0.5" 
-                        max="1.5" 
-                        step="0.1" 
-                        value={settings.voiceRate}
-                        onChange={(e) => onUpdateSettings({...settings, voiceRate: parseFloat(e.target.value)})}
-                        className="w-full accent-primary h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                </div>
-                <div>
-                    <div className="flex justify-between mb-2">
-                        <label className="text-sm font-bold text-slate-500 uppercase">{t('modal.settings.pitch')}</label>
-                        <span className="text-sm font-bold text-slate-700">{settings.voicePitch.toFixed(1)}</span>
-                    </div>
-                    <input 
-                        type="range" 
-                        min="0.5" 
-                        max="1.5" 
-                        step="0.1" 
-                        value={settings.voicePitch}
-                        onChange={(e) => onUpdateSettings({...settings, voicePitch: parseFloat(e.target.value)})}
-                        className="w-full accent-primary h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                </div>
-            </div>
-          </section>
-
           {/* Grid Settings */}
           <section className="space-y-4">
             <div className="flex items-center space-x-2 text-slate-800 font-bold text-lg">
-                <Grid size={20} className="text-primary" />
+                <Grid size={20} className="text-indigo-600" />
                 <h3>{t('modal.settings.grid')}</h3>
             </div>
             <div className="grid grid-cols-3 gap-3">
@@ -159,7 +243,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         className={`
                             py-3 px-2 rounded-xl border-2 font-bold capitalize transition-all
                             ${settings.gridColumns === size 
-                                ? 'border-primary bg-primary/5 text-primary shadow-sm' 
+                                ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm' 
                                 : 'border-slate-200 text-slate-400 hover:border-slate-300'}
                         `}
                     >
@@ -174,7 +258,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
         <div className="p-4 border-t border-slate-100 bg-white">
              <button 
                 onClick={onClose}
-                className="w-full py-3 bg-slate-800 text-white rounded-xl font-bold shadow-lg shadow-slate-200 active:scale-[0.98] transition-transform"
+                className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all"
              >
                 {t('modal.settings.done')}
              </button>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { X, Pencil, FolderInput, Trash2, Image as ImageIcon, Folder } from 'lucide-react';
 import { AACItem, Category } from '../types';
@@ -26,6 +27,8 @@ const EditOptionsModal: React.FC<EditOptionsModalProps> = ({
 }) => {
   if (!isOpen || !item) return null;
 
+  const displayLabel = (item as any).labelKey ? t((item as any).labelKey) : item.label;
+
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
       {/* Click outside to close */}
@@ -46,7 +49,7 @@ const EditOptionsModal: React.FC<EditOptionsModalProps> = ({
                  )}
              </div>
              <div className="flex-1 min-w-0">
-                 <h2 className="text-lg font-black text-slate-800 truncate">{item.label}</h2>
+                 <h2 className="text-lg font-black text-slate-800 truncate">{displayLabel}</h2>
                  <p className="text-xs text-slate-500 font-bold uppercase">{type === 'card' ? t('modal.create.title_edit') : t('folder.edit')}</p>
              </div>
              <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-400">

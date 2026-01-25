@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Folder, Check, Search, Info, Globe, Loader2, Image as ImageIcon } from 'lucide-react';
 import { Category, ColorTheme, AppLanguage } from '../types';
@@ -33,6 +34,9 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSave, edit
   const [iconSearch, setIconSearch] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   
+  // Track if user has manually edited the search field
+  const [isManualSearch, setIsManualSearch] = useState(false);
+  
   // Web Symbols State
   const [webSymbols, setWebSymbols] = useState<ArasaacSymbol[]>([]);
   const [isSearchingWeb, setIsSearchingWeb] = useState(false);
@@ -40,20 +44,24 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSave, edit
 
   useEffect(() => {
     if (isOpen) {
+      setIsManualSearch(false); // Reset manual search tracking
       if (editFolder) {
-        setLabel(editFolder.label);
+        // Use translated label if available
+        const folderLabel = editFolder.labelKey ? t(editFolder.labelKey as TranslationKey) : editFolder.label;
+        setLabel(folderLabel);
         setColorTheme(editFolder.colorTheme);
         setSelectedIcon(editFolder.icon || 'folder');
+        setIconSearch(folderLabel); // Auto-fill search with current name
       } else {
         setLabel('');
         setColorTheme('yellow');
         setSelectedIcon('folder');
+        setIconSearch('');
       }
-      setIconSearch('');
       setWebSymbols([]);
       setIsSaving(false);
     }
-  }, [isOpen, editFolder]);
+  }, [isOpen, editFolder, t]);
 
   // Handle Search Debounce
   useEffect(() => {
@@ -131,6 +139,7 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSave, edit
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border-4 border-white animate-in zoom-in-95 duration-200">
         
+        {/* Header */}
         <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50">
           <div className="flex items-center space-x-3">
              <div className={`w-10 h-10 rounded-xl transition-colors ${selectedTheme.bg} border-2 ${selectedTheme.border} flex items-center justify-center overflow-hidden`}>
@@ -156,7 +165,14 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSave, edit
               <input 
                 type="text"
                 value={label}
-                onChange={(e) => setLabel(e.target.value)}
+                onChange={(e) => {
+                    const val = e.target.value;
+                    setLabel(val);
+                    // Auto-update search if user hasn't manually typed in search box
+                    if (!isManualSearch) {
+                        setIconSearch(val);
+                    }
+                }}
                 placeholder={t('folder.name_placeholder')}
                 className="w-full px-4 py-3 bg-slate-50 rounded-xl border-2 border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-xl font-bold text-slate-800"
                 autoFocus
@@ -209,7 +225,10 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSave, edit
                      <input 
                         type="text" 
                         value={iconSearch}
-                        onChange={(e) => setIconSearch(e.target.value)}
+                        onChange={(e) => {
+                            setIconSearch(e.target.value);
+                            setIsManualSearch(true); // User manually edited search
+                        }}
                         placeholder={t('search.placeholder')}
                         className="w-full pl-10 pr-4 py-3 bg-slate-100 focus:bg-white border-2 border-slate-200 focus:border-primary rounded-xl text-lg font-bold text-slate-900 placeholder:text-slate-400 outline-none transition-all"
                      />

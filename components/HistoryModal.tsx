@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { X, Clock, RotateCcw } from 'lucide-react';
 import { AACItem } from '../types';
@@ -55,7 +56,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, historyIds
                   </div>
                   <div className="flex-1 min-w-0">
                       <p className="font-bold text-slate-700 truncate text-sm">
-                          {sentence.map(i => i.label).join(' ')}
+                          {sentence.map(i => i.labelKey ? t(i.labelKey) : i.label).join(' ')}
                       </p>
                   </div>
                   <div className="p-2 text-slate-300"><RotateCcw size={16} /></div>

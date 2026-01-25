@@ -21,6 +21,7 @@ export interface Category {
   profileId: string; // Associated Profile
   boardId: string; // Associated Board
   label: string;
+  labelKey?: string; // For localization of default folders
   colorTheme: ColorTheme;
   parentId?: string; // If undefined or 'root', it's a top-level folder
   icon?: string; // Key from ICON_MAP
@@ -32,6 +33,7 @@ export interface AACItem {
   profileId: string; // Associated Profile
   boardId: string; // Associated Board
   label: string;
+  labelKey?: string; // For localization of default cards
   imageUrl: string; // Base64 or Blob URL
   imageFit?: 'cover' | 'contain'; // 'cover' for photos (no strips), 'contain' for symbols (no crop)
   audioUrl?: string; // Base64 or Blob URL
@@ -59,4 +61,5 @@ export interface AppSettings {
   language: AppLanguage;
   maxSentenceLength: number; // 0 = unlimited, 1-5 = limit
   autoClearSentence: boolean;
+  voiceEngine: 'auto' | 'native' | 'web';
 }

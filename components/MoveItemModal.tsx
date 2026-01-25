@@ -1,8 +1,9 @@
+
 import React, { useMemo } from 'react';
 import { X, Folder, Home, ChevronRight, Check } from 'lucide-react';
-import { AACItem, Category } from '../types';
-import { ROOT_FOLDER } from '../services/storage';
-import { TranslationKey } from '../services/translations';
+import { AACItem, Category } from '../types.ts';
+import { ROOT_FOLDER } from '../services/storage.ts';
+import { TranslationKey } from '../services/translations.ts';
 
 interface MoveItemModalProps {
   isOpen: boolean;
@@ -56,7 +57,9 @@ const MoveItemModal: React.FC<MoveItemModalProps> = ({ isOpen, onClose, itemToMo
                 if (isDescendant(child.id, item.id)) return; // Can't move into children
             }
             
-            dests.push({ id: child.id, label: child.label, depth });
+            // Use localized label if available
+            const displayLabel = child.labelKey ? t(child.labelKey as TranslationKey) : child.label;
+            dests.push({ id: child.id, label: displayLabel, depth });
             addChildren(child.id, depth + 1);
         });
     };
@@ -64,6 +67,8 @@ const MoveItemModal: React.FC<MoveItemModalProps> = ({ isOpen, onClose, itemToMo
     addChildren(ROOT_FOLDER, 1);
     return dests;
   }, [categories, item, type, t]);
+
+  const movingItemLabel = (item as any).labelKey ? t((item as any).labelKey as TranslationKey) : item.label;
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -73,7 +78,7 @@ const MoveItemModal: React.FC<MoveItemModalProps> = ({ isOpen, onClose, itemToMo
           <div>
             <h2 className="text-xl font-black text-slate-800">{t('move.title')}</h2>
             <p className="text-xs text-slate-500 font-bold truncate max-w-[200px]">
-                {t('move.moving')} <span className="text-primary">{item.label}</span>
+                {t('move.moving')} <span className="text-primary">{movingItemLabel}</span>
             </p>
           </div>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-600 transition-colors">

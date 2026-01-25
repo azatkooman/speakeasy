@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 
 /**
@@ -6,7 +7,9 @@ import { GoogleGenAI } from "@google/genai";
  */
 export const suggestLabelFromImage = async (base64Image: string, mimeType: string): Promise<string> => {
   // Always use the API key directly from process.env.API_KEY as per instructions.
-  const apiKey = process.env.API_KEY;
+  // Safety check for process existence
+  const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : '';
+  
   if (!apiKey) {
     console.warn("No API Key available for Gemini");
     return "";

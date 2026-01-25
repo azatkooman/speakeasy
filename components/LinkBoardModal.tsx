@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { X, Check, Layout } from 'lucide-react';
 import { Board, AACItem } from '../types';
@@ -57,19 +58,49 @@ const LinkBoardModal: React.FC<LinkBoardModalProps> = ({
           ctx.strokeStyle = '#a855f7'; // Purple
           ctx.strokeRect(0, 0, 400, 400);
 
-          // Text (Board Name)
-          ctx.fillStyle = '#6b21a8';
-          ctx.font = 'bold 60px Nunito';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          
-          // Draw a layout icon shape roughly
-          ctx.fillStyle = '#d8b4fe';
+          // Draw a layout icon shape roughly in background
+          ctx.fillStyle = '#e9d5ff';
           ctx.fillRect(100, 100, 200, 200);
-          ctx.fillStyle = '#a855f7';
+          ctx.fillStyle = '#c084fc';
           ctx.fillRect(120, 120, 160, 40); // header
           ctx.fillRect(120, 180, 70, 100); // left col
           ctx.fillRect(210, 180, 70, 100); // right col
+
+          // Text (Board Name)
+          ctx.fillStyle = '#6b21a8';
+          ctx.font = 'bold 50px Nunito';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          
+          // Wrap text if too long
+          const words = label.split(' ');
+          let line = '';
+          const lines = [];
+          for (let n = 0; n < words.length; n++) {
+            const testLine = line + words[n] + ' ';
+            const metrics = ctx.measureText(testLine);
+            if (metrics.width > 360 && n > 0) {
+              lines.push(line);
+              line = words[n] + ' ';
+            } else {
+              line = testLine;
+            }
+          }
+          lines.push(line);
+
+          // Draw lines
+          const lineHeight = 60;
+          const startY = 200 - ((lines.length - 1) * lineHeight) / 2;
+          
+          // Add a semi-transparent white box behind text for readability
+          const boxHeight = lines.length * lineHeight;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.fillRect(20, startY - lineHeight/2 - 10, 360, boxHeight + 20);
+
+          ctx.fillStyle = '#6b21a8';
+          for (let k = 0; k < lines.length; k++) {
+              ctx.fillText(lines[k], 200, startY + (k * lineHeight));
+          }
 
           const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
           onSave(label, selectedBoardId, dataUrl);
