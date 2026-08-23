@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Plus, Check, X, Trash2, Baby, Loader2, Globe, Pencil } from 'lucide-react';
 import { ChildProfile, ColorTheme, AppLanguage } from '../types';
 import { TranslationKey } from '../services/translations';
+import { LANGUAGES } from '../utils/languages';
 
 interface ProfileSelectionModalProps {
   isOpen: boolean;
@@ -51,6 +52,7 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [profileToDelete, setProfileToDelete] = useState<string | null>(null);
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -66,6 +68,7 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
         setEditingProfile(null);
         setProfileToDelete(null);
         setIsProcessing(false);
+        setIsLanguageMenuOpen(false);
     }
   }, [isOpen, forceCreate, profiles.length]);
 
@@ -117,10 +120,6 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
       }
   };
 
-  const toggleLanguage = () => {
-      onUpdateLanguage(language === 'en' ? 'ru' : 'en');
-  };
-
   const getTitle = () => {
       if (view === 'create') return t('profile.create');
       if (view === 'edit') return t('profile.edit');
@@ -139,16 +138,57 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Language Toggle */}
-            <button 
-                onClick={toggleLanguage}
-                type="button"
-                className="flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600 font-bold transition-colors"
-                title={t('modal.profile.change_language')}
-            >
-                <Globe size={18} />
-                <span className="text-sm uppercase">{language}</span>
-            </button>
+            {/* Language Picker */}
+            <div className="relative">
+                <button
+                    onClick={() => setIsLanguageMenuOpen(o => !o)}
+                    type="button"
+                    aria-haspopup="listbox"
+                    aria-expanded={isLanguageMenuOpen}
+                    aria-label={t('modal.profile.change_language')}
+                    className="flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-600 font-bold transition-colors"
+                    title={t('modal.profile.change_language')}
+                >
+                    <Globe size={18} />
+                    <span className="text-sm uppercase">{language}</span>
+                </button>
+
+                {isLanguageMenuOpen && (
+                    <>
+                        {/* Click-outside catcher */}
+                        <div className="fixed inset-0 z-10" onClick={() => setIsLanguageMenuOpen(false)} />
+                        <ul
+                            role="listbox"
+                            aria-label={t('modal.profile.change_language')}
+                            className="absolute right-0 top-full mt-2 w-44 bg-white rounded-2xl shadow-2xl border-2 border-slate-100 overflow-hidden z-20 animate-in fade-in slide-in-from-top-1 duration-150"
+                        >
+                            {LANGUAGES.map(opt => {
+                                const isCurrent = opt.code === language;
+                                return (
+                                    <li key={opt.code} role="option" aria-selected={isCurrent}>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                onUpdateLanguage(opt.code);
+                                                setIsLanguageMenuOpen(false);
+                                            }}
+                                            className={`
+                                                w-full flex items-center justify-between px-4 py-3 text-left font-bold transition-colors
+                                                ${isCurrent
+                                                    ? 'bg-indigo-50 text-indigo-700'
+                                                    : 'text-slate-600 hover:bg-slate-50'}
+                                            `}
+                                        >
+                                            <span>{opt.nativeLabel}</span>
+                                            {isCurrent && <Check size={18} strokeWidth={3} />}
+                                        </button>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </>
+                )}
+            </div>
 
             {!forceCreate && (
                 <button onClick={onClose} disabled={isProcessing} className="p-2 rounded-full hover:bg-slate-200 text-slate-600 disabled:opacity-50">

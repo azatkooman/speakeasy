@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { X, Monitor, Volume2, Grid, Languages, Sparkles, AlertTriangle } from 'lucide-react';
 import { AppSettings } from '../types';
 import { voiceService } from '../services/voice';
+import { LANGUAGES, getLanguageOption } from '../utils/languages';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -25,13 +26,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleTestVoice = async () => {
       setTestStatus('playing');
-      const text = settings.language === 'ru' 
-            ? 'Привет, это проверка голоса' 
-            : settings.language === 'fr' 
-            ? 'Bonjour, ceci est un test vocal'
-            : settings.language === 'es'
-            ? 'Hola, esto es una prueba de voz'
-            : 'Hello, this is a voice test';
+      const text = getLanguageOption(settings.language).voiceTestPhrase;
       try {
           await voiceService.speak({
               text,
@@ -73,30 +68,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 <h3>{t('modal.settings.language')}</h3>
              </div>
              <div className="grid grid-cols-2 gap-3">
-                 <button 
-                    onClick={() => onUpdateSettings({...settings, language: 'en'})}
-                    className={`py-3 rounded-xl border-2 font-bold transition-all ${settings.language === 'en' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-500'}`}
-                 >
-                    English
-                 </button>
-                 <button 
-                    onClick={() => onUpdateSettings({...settings, language: 'ru'})}
-                    className={`py-3 rounded-xl border-2 font-bold transition-all ${settings.language === 'ru' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-500'}`}
-                 >
-                    Русский
-                 </button>
-                 <button 
-                    onClick={() => onUpdateSettings({...settings, language: 'fr'})}
-                    className={`py-3 rounded-xl border-2 font-bold transition-all ${settings.language === 'fr' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-500'}`}
-                 >
-                    Français
-                 </button>
-                 <button 
-                    onClick={() => onUpdateSettings({...settings, language: 'es'})}
-                    className={`py-3 rounded-xl border-2 font-bold transition-all ${settings.language === 'es' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-500'}`}
-                 >
-                    Español
-                 </button>
+                 {LANGUAGES.map(opt => (
+                     <button
+                        key={opt.code}
+                        onClick={() => onUpdateSettings({...settings, language: opt.code})}
+                        aria-pressed={settings.language === opt.code}
+                        className={`py-3 rounded-xl border-2 font-bold transition-all ${settings.language === opt.code ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-500'}`}
+                     >
+                        {opt.nativeLabel}
+                     </button>
+                 ))}
              </div>
           </section>
 

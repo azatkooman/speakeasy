@@ -2,6 +2,7 @@
 import { AppLanguage } from '../types';
 import { Capacitor } from '@capacitor/core';
 import { SpeechSynthesis } from '@capgo/capacitor-speech-synthesis';
+import { getLanguageOption } from '../utils/languages';
 
 export interface SpeakOptions {
   text: string;
@@ -55,7 +56,10 @@ class VoiceService {
     this.isBusy = true;
 
     const sanitizedText = text.replace(/[<>&]/g, '').trim();
-    const langCode = language === 'ru' ? 'ru-RU' : 'en-US';
+    // Region-qualified BCP 47 tag. A bare 'fr'/'es' resolves inconsistently
+    // across engines, and an unmapped language silently falls back to the
+    // device locale — which is what made fr/es speak with an English voice.
+    const langCode = getLanguageOption(language).bcp47;
     
     const platform = Capacitor.getPlatform(); // 'ios', 'android', 'web'
     const isAndroid = platform === 'android';
@@ -87,13 +91,18 @@ class VoiceService {
       // --- Android Native Path ---
       if (isAndroid) {
         try {
+          // The plugin's option is `language` (a BCP 47 tag), not `lang`.
+          // Passing the wrong key made the native engine fall back to the
+          // device locale and ignore the app's language setting entirely.
+          // 'Flush' so a new tap replaces the previous utterance instead of
+          // queueing behind it.
           await SpeechSynthesis.speak({
             text: sanitizedText,
-            lang: langCode,
+            language: langCode,
             rate: rate,
             pitch: pitch,
             volume: 1.0,
-            category: 'ambient'
+            queueStrategy: 'Flush'
           });
           
           // Android native plugin fires and returns immediately. 
@@ -132,16 +141,22 @@ class VoiceService {
         utterance.pitch = pitch;
         utterance.volume = 1.0;
 
-        // Attempt to find best voice
+        // Attempt to find best voice.
+        // Android WebView reports tags with an underscore ('fr_FR'), so normalise
+        // before comparing or the exact match never hits there.
         const voices = window.speechSynthesis.getVoices();
-        let voice = voices.find(v => v.lang === langCode);
-        
-        // Fallback voice logic
-        if (!voice) voice = voices.find(v => v.lang.startsWith(language));
-        
-        // Android WebView specific: Google voices often have names like "Google US English"
+        const normalise = (tag: string) => tag.replace('_', '-').toLowerCase();
+        const wanted = normalise(langCode);
+
+        // 1. Exact region match (e.g. 'fr-FR')
+        let voice = voices.find(v => normalise(v.lang) === wanted);
+
+        // 2. Same language, any region (e.g. 'fr-CA' for 'fr-FR')
+        if (!voice) voice = voices.find(v => normalise(v.lang).startsWith(`${language}-`) || normalise(v.lang) === language);
+
+        // 3. Android WebView specific: Google voices are usually the highest quality
         if (!voice && isAndroid) {
-            voice = voices.find(v => v.name.includes('Google') && v.lang.startsWith(language));
+            voice = voices.find(v => v.name.includes('Google') && normalise(v.lang).startsWith(language));
         }
 
         if (voice) utterance.voice = voice;
