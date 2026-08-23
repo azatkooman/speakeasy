@@ -11,6 +11,7 @@ import {
 } from '../services/storage.ts';
 import { voiceService } from '../services/voice.ts';
 import { audioPlayer } from '../services/audioPlayer.ts';
+import { detectDeviceLanguage } from '../utils/languages.ts';
 
 interface SpeakEasyContextType {
   profiles: ChildProfile[];
@@ -85,7 +86,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   voicePitch: 1.0,
   voiceRate: 0.9,
   gridColumns: 'medium',
-  language: typeof navigator !== 'undefined' && navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en',
+  language: detectDeviceLanguage(),
   maxSentenceLength: 0,
   autoClearSentence: false
 };
