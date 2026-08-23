@@ -24,6 +24,8 @@ export type TranslationKey =
   | 'strip.speak'
   | 'strip.backspace'
   | 'strip.remove_item'
+  | 'modal.create.core'
+  | 'modal.create.core_desc'
   | 'nav.categories'
   | 'nav.add_card'
   | 'nav.settings'
@@ -213,6 +215,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'strip.speak': 'Speak',
     'strip.backspace': 'Backspace',
     'strip.remove_item': 'Remove',
+    'modal.create.core': 'Always on screen',
+    'modal.create.core_desc': 'Stays visible in every folder',
     'nav.categories': 'Categories',
     'nav.add_card': 'Add Card',
     'nav.settings': 'Settings',
@@ -410,6 +414,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'strip.speak': 'Сказать',
     'strip.backspace': 'Удалить',
     'strip.remove_item': 'Убрать',
+    'modal.create.core': 'Всегда на экране',
+    'modal.create.core_desc': 'Видно в любой папке',
     'nav.categories': 'Категории',
     'nav.add_card': 'Добавить',
     'nav.settings': 'Настройки',
@@ -607,6 +613,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'strip.speak': 'Parler',
     'strip.backspace': 'Effacer',
     'strip.remove_item': 'Retirer',
+    'modal.create.core': 'Toujours visible',
+    'modal.create.core_desc': 'Reste affiché dans chaque dossier',
     'nav.categories': 'Catégories',
     'nav.add_card': 'Ajouter une Carte',
     'nav.settings': 'Paramètres',
@@ -804,6 +812,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'strip.speak': 'Hablar',
     'strip.backspace': 'Borrar',
     'strip.remove_item': 'Quitar',
+    'modal.create.core': 'Siempre visible',
+    'modal.create.core_desc': 'Se mantiene en todas las carpetas',
     'nav.categories': 'Categorías',
     'nav.add_card': 'Añadir',
     'nav.settings': 'Ajustes',

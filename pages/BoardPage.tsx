@@ -169,9 +169,46 @@ export const BoardPage: React.FC = () => {
           </div>
       )}
 
+      <div className="flex-1 flex min-h-0">
+
+      {/*
+        Persistent core-word rail. Core items are board-scoped, so this does not
+        change when the child opens a folder — which is the entire point.
+        Roughly 80% of what anyone says is core vocabulary, and before this it
+        disappeared on navigation, leaving the child unable to reach `want`,
+        `more` or `stop` without backing out first.
+        Hidden when empty, so a board that has not opted in looks unchanged.
+      */}
+      {coreItems.length > 0 && (
+        <nav
+          aria-label={t('modal.create.core')}
+          className="shrink-0 w-[5.5rem] sm:w-28 bg-white/70 border-r border-slate-200 overflow-y-auto no-scrollbar p-2 flex flex-col gap-2"
+        >
+          {coreItems.map(card => {
+              const style = getCardStyle(card);
+              const label = card.labelKey ? t(card.labelKey as TranslationKey) : card.label;
+              return (
+                <button
+                  key={card.id}
+                  type="button"
+                  onClick={() => addToSentence(card)}
+                  className={`shrink-0 h-[4.25rem] sm:h-20 rounded-2xl bg-white border-2 ${style.border} shadow-[0_3px_0_0] ${style.shadow} active:shadow-none active:translate-y-[3px] flex flex-col overflow-hidden focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2 ${card.isVisible === false ? 'opacity-50 grayscale' : ''}`}
+                >
+                  <span className="flex-1 min-h-0 w-full p-1 flex items-center justify-center bg-white">
+                    <img src={card.imageUrl} alt="" loading="lazy" className={`w-full h-full ${card.imageFit === 'contain' ? 'object-contain' : 'object-cover rounded-lg'}`} />
+                  </span>
+                  <span className={`shrink-0 w-full py-0.5 px-1 border-t-2 ${style.border} ${style.bg} ${style.text} text-[10px] sm:text-xs font-semibold text-center truncate`}>
+                    {label}
+                  </span>
+                </button>
+              );
+          })}
+        </nav>
+      )}
+
       <main 
         ref={mainRef} 
-        className="flex-1 overflow-y-auto p-4"
+        className="flex-1 min-w-0 overflow-y-auto p-4"
         style={{ paddingBottom: isEditMode ? 'calc(10rem + env(safe-area-inset-bottom))' : 'calc(8rem + env(safe-area-inset-bottom))' }}
       >
         {/*
@@ -332,6 +369,7 @@ export const BoardPage: React.FC = () => {
             </div>
         )}
       </main>
+      </div>
 
       {isEditMode && (
         <div 

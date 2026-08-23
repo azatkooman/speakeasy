@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Image as ImageIcon, Check, Mic, Keyboard, Play, Camera, RefreshCcw, Eye, EyeOff, Search, Loader2, Globe, Palette, Info, Maximize2, Minimize2 } from 'lucide-react';
+import { X, Image as ImageIcon, Check, Mic, Keyboard, Play, Camera, RefreshCcw, Eye, EyeOff, Search, Loader2, Globe, Palette, Info, Maximize2, Minimize2, Pin } from 'lucide-react';
 import { AACItem, Category, AppLanguage, ColorTheme } from '../types.ts';
 import { voiceService } from '../services/voice.ts';
 import { searchArasaacSymbols, ArasaacSymbol } from '../services/arasaac.ts';
@@ -41,6 +41,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageFit, setImageFit] = useState<'cover' | 'contain'>('cover');
   const [isVisible, setIsVisible] = useState(true);
+  const [isCore, setIsCore] = useState(false);
   const [colorTheme, setColorTheme] = useState<ColorTheme>('slate');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -154,6 +155,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
     setSoundMode('recording');
     setFacingMode('environment');
     setIsVisible(true);
+    setIsCore(false);
     setShowSymbolSearch(false);
     setSymbolQuery('');
     setSymbols([]);
@@ -178,6 +180,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
         setImagePreview(editItem.imageUrl);
         setImageFit(editItem.imageFit || 'cover'); // Load saved preference or default
         setIsVisible(editItem.isVisible !== false);
+        setIsCore(!!editItem.isCore);
         setColorTheme(editItem.colorTheme || defaultColorTheme || 'slate');
         
         if (editItem.audioUrl) {
@@ -358,6 +361,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
         category: editItem ? editItem.category : '', 
         colorTheme: colorTheme,
         isVisible,
+        isCore,
     });
     
     if (!editItem) resetForm();
@@ -547,6 +551,17 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                   </div>
                </div>
                
+               {/* Pin to the persistent core rail. Core vocabulary is most of what
+                   anyone says, and before the rail existed it vanished the moment
+                   the child opened a folder. */}
+               <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full ${isCore ? 'bg-primary/10 text-primary' : 'bg-slate-200 text-slate-400'}`}><Pin size={20} /></div>
+                        <div><p className="text-sm font-bold text-slate-700">{t('modal.create.core')}</p><p className="text-xs text-slate-400">{t('modal.create.core_desc')}</p></div>
+                    </div>
+                    <button type="button" role="switch" aria-checked={isCore} aria-label={t('modal.create.core')} onClick={() => setIsCore(!isCore)} className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${isCore ? 'bg-primary' : 'bg-slate-300'}`}><div className={`absolute top-1 left-1 bg-white w-5 h-5 rounded-full shadow-sm transition-transform duration-200 ${isCore ? 'translate-x-5' : 'translate-x-0'}`} /></button>
+               </div>
+
                <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
                     <div className="flex items-center gap-3">
                         <div className={`p-2 rounded-full ${isVisible ? 'bg-primary/10 text-primary' : 'bg-slate-200 text-slate-400'}`}>{isVisible ? <Eye size={20} /> : <EyeOff size={20} />}</div>

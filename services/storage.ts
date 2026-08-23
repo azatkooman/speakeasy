@@ -112,14 +112,14 @@ const DEFAULT_CATEGORIES_TEMPLATE: Array<{
     icon: string;
     slot: number;
 }> = [
-  { id: 'PEOPLE', labelKey: 'folder.default.people', fallback: 'People', colorTheme: 'yellow', parentId: 'root', icon: 'people', slot: 4 },
-  { id: 'VERB', labelKey: 'folder.default.actions', fallback: 'Actions', colorTheme: 'green', parentId: 'root', icon: 'actions', slot: 5 },
-  { id: 'NOUN', labelKey: 'folder.default.things', fallback: 'Things', colorTheme: 'orange', parentId: 'root', icon: 'things', slot: 6 },
-  { id: 'ADJECTIVE', labelKey: 'folder.default.desc', fallback: 'Desc.', colorTheme: 'blue', parentId: 'root', icon: 'desc', slot: 7 },
-  { id: 'SOCIAL', labelKey: 'folder.default.social', fallback: 'Social', colorTheme: 'pink', parentId: 'root', icon: 'social', slot: 8 },
-  { id: 'PLACES', labelKey: 'folder.default.places', fallback: 'Places', colorTheme: 'purple', parentId: 'root', icon: 'places', slot: 9 },
-  { id: 'FOOD', labelKey: 'folder.default.food', fallback: 'Food', colorTheme: 'orange', parentId: 'root', icon: 'food', slot: 10 }, 
-  { id: 'TIME', labelKey: 'folder.default.time', fallback: 'Time', colorTheme: 'teal', parentId: 'root', icon: 'time', slot: 11 },
+  { id: 'PEOPLE', labelKey: 'folder.default.people', fallback: 'People', colorTheme: 'yellow', parentId: 'root', icon: 'people', slot: 0 },
+  { id: 'VERB', labelKey: 'folder.default.actions', fallback: 'Actions', colorTheme: 'green', parentId: 'root', icon: 'actions', slot: 1 },
+  { id: 'NOUN', labelKey: 'folder.default.things', fallback: 'Things', colorTheme: 'orange', parentId: 'root', icon: 'things', slot: 2 },
+  { id: 'ADJECTIVE', labelKey: 'folder.default.desc', fallback: 'Desc.', colorTheme: 'blue', parentId: 'root', icon: 'desc', slot: 3 },
+  { id: 'SOCIAL', labelKey: 'folder.default.social', fallback: 'Social', colorTheme: 'pink', parentId: 'root', icon: 'social', slot: 4 },
+  { id: 'PLACES', labelKey: 'folder.default.places', fallback: 'Places', colorTheme: 'purple', parentId: 'root', icon: 'places', slot: 5 },
+  { id: 'FOOD', labelKey: 'folder.default.food', fallback: 'Food', colorTheme: 'orange', parentId: 'root', icon: 'food', slot: 6 }, 
+  { id: 'TIME', labelKey: 'folder.default.time', fallback: 'Time', colorTheme: 'teal', parentId: 'root', icon: 'time', slot: 7 },
 ];
 
 export const IDX_PROFILE = 'by_profile';
@@ -386,7 +386,7 @@ export const initializeBoards = async (defaultName: string, profileId: string, t
     // Use saveCategoriesBatch to ensure files (if any) are handled, though default icons are simple strings
     await saveCategoriesBatch(catsToCreate);
 
-    const createDefaultCard = (id: string, labelKey: TranslationKey, fallback: string, iconUrl: string, catId: string, color: ColorTheme, slot: number): AACItem => ({
+    const createDefaultCard = (id: string, labelKey: TranslationKey, fallback: string, iconUrl: string, catId: string, color: ColorTheme, slot: number, isCore = false): AACItem => ({
         id,
         profileId,
         boardId: defaultBoard.id,
@@ -398,14 +398,17 @@ export const initializeBoards = async (defaultName: string, profileId: string, t
         colorTheme: color,
         createdAt: Date.now(),
         slot,
+        isCore,
         isVisible: true
     });
 
     const defaultCards: AACItem[] = [
-        createDefaultCard(crypto.randomUUID(), 'default.card.i_want', 'I want', SEED_PICTOGRAMS.iWant, ROOT_FOLDER, 'green', 0),
-        createDefaultCard(crypto.randomUUID(), 'default.card.yes', 'Yes', SEED_PICTOGRAMS.yes, ROOT_FOLDER, 'green', 1),
-        createDefaultCard(crypto.randomUUID(), 'default.card.no', 'No', SEED_PICTOGRAMS.no, ROOT_FOLDER, 'red', 2),
-        createDefaultCard(crypto.randomUUID(), 'default.card.stop', 'Stop', SEED_PICTOGRAMS.stop, ROOT_FOLDER, 'red', 3),
+        // Seeded onto the core rail: board-scoped, so they stay reachable in
+        // every folder. `slot` here is the position in the rail, not the grid.
+        createDefaultCard(crypto.randomUUID(), 'default.card.i_want', 'I want', SEED_PICTOGRAMS.iWant, ROOT_FOLDER, 'green', 0, true),
+        createDefaultCard(crypto.randomUUID(), 'default.card.yes', 'Yes', SEED_PICTOGRAMS.yes, ROOT_FOLDER, 'green', 1, true),
+        createDefaultCard(crypto.randomUUID(), 'default.card.no', 'No', SEED_PICTOGRAMS.no, ROOT_FOLDER, 'red', 2, true),
+        createDefaultCard(crypto.randomUUID(), 'default.card.stop', 'Stop', SEED_PICTOGRAMS.stop, ROOT_FOLDER, 'red', 3, true),
     ];
 
     if (foodCategoryId) {
