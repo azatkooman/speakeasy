@@ -42,6 +42,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
   const [imageFit, setImageFit] = useState<'cover' | 'contain'>('cover');
   const [isVisible, setIsVisible] = useState(true);
   const [isCore, setIsCore] = useState(false);
+  const [formsText, setFormsText] = useState('');
   const [colorTheme, setColorTheme] = useState<ColorTheme>('slate');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -156,6 +157,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
     setFacingMode('environment');
     setIsVisible(true);
     setIsCore(false);
+    setFormsText('');
     setShowSymbolSearch(false);
     setSymbolQuery('');
     setSymbols([]);
@@ -181,6 +183,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
         setImageFit(editItem.imageFit || 'cover'); // Load saved preference or default
         setIsVisible(editItem.isVisible !== false);
         setIsCore(!!editItem.isCore);
+        setFormsText((editItem.forms || []).join('\n'));
         setColorTheme(editItem.colorTheme || defaultColorTheme || 'slate');
         
         if (editItem.audioUrl) {
@@ -362,6 +365,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
         colorTheme: colorTheme,
         isVisible,
         isCore,
+        forms: formsText.split('\n').map(f => f.trim()).filter(Boolean),
     });
     
     if (!editItem) resetForm();
@@ -589,6 +593,20 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                      <div className="flex justify-between items-center mt-3"><p className="text-xs text-slate-400 font-medium">{t('modal.create.tts_hint')}</p><button onClick={previewTTS} className="flex items-center space-x-2 px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-primary active:scale-95 transition-all"><Play size={12} fill="currentColor" /><span>{t('modal.create.preview')}</span></button></div>
                 </div>
             )}
+          </div>
+
+          {/* Alternative wordings. Typed by the parent, never generated: "want"
+              to "wanted" is a rule but "go" to "went" is not, and none of the
+              other three languages fit an English paradigm. */}
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-slate-700 uppercase tracking-wider block">{t('forms.edit_label')}</label>
+            <textarea
+              value={formsText}
+              onChange={(e) => setFormsText(e.target.value)}
+              rows={3}
+              className="w-full p-3 bg-white rounded-xl border-2 border-slate-200 focus:border-primary focus:ring-2 focus:ring-primary/10 outline-none text-slate-800 font-semibold resize-none"
+            />
+            <p className="text-xs text-slate-400 font-medium leading-snug">{t('forms.edit_hint')}</p>
           </div>
         </div>
 

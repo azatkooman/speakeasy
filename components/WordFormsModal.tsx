@@ -1,0 +1,61 @@
+import React from 'react';
+import { X, Type } from 'lucide-react';
+import { AACItem } from '../types';
+import { TranslationKey } from '../services/translations';
+
+interface WordFormsModalProps {
+  card: AACItem | null;
+  baseLabel: string;
+  onClose: () => void;
+  /** Chosen wording — the base label or one of the card's forms. */
+  onChoose: (text: string) => void;
+  t: (key: TranslationKey) => string;
+}
+
+/**
+ * Offers a card's alternative wordings. Reached from a badge on the card rather
+ * than a long press: holding a cell already means "select" when the user has
+ * chosen the dwell access method, and overloading it would break the input
+ * method for the users who most depend on it.
+ */
+const WordFormsModal: React.FC<WordFormsModalProps> = ({ card, baseLabel, onClose, onChoose, t }) => {
+  if (!card) return null;
+  const forms = card.forms || [];
+
+  return (
+    <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm p-0 sm:p-4">
+      <div className="absolute inset-0" onClick={onClose} />
+      <div
+        role="dialog"
+        aria-label={t('forms.title')}
+        className="relative z-10 bg-white w-full max-w-sm sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
+      >
+        <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 text-primary rounded-xl"><Type size={22} /></div>
+            <h2 className="text-lg font-bold text-slate-800">{t('forms.title')}</h2>
+          </div>
+          <button onClick={onClose} aria-label={t('modal.categories.cancel')} className="p-2 rounded-full hover:bg-slate-200 text-slate-500">
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="p-4 grid gap-2 max-h-[60vh] overflow-y-auto">
+          {[baseLabel, ...forms].map((text, i) => (
+            <button
+              key={`${text}-${i}`}
+              type="button"
+              onClick={() => { onChoose(text); onClose(); }}
+              className="w-full text-left px-4 py-3.5 rounded-2xl border-2 border-slate-200 font-semibold text-slate-800 hover:border-primary hover:bg-primary/5 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary"
+            >
+              {text}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default WordFormsModal;

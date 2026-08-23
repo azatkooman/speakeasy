@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useSpeakEasy } from '../contexts/SpeakEasyContext.tsx';
-import { Home, ChevronRight, CornerUpLeft, Plus, FolderPlus, ArrowLeft, ArrowRight, Settings2, ArrowUpRight, User, Layers } from 'lucide-react';
+import { Home, ChevronRight, CornerUpLeft, Plus, FolderPlus, ArrowLeft, ArrowRight, Settings2, ArrowUpRight, User, Layers, Type } from 'lucide-react';
 import SentenceStrip from '../components/SentenceStrip.tsx';
 import FolderCard from '../components/FolderCard.tsx';
 import { ROOT_FOLDER } from '../services/storage.ts';
@@ -22,6 +22,7 @@ import MoveItemModal from '../components/MoveItemModal.tsx';
 import ProfileSelectionModal from '../components/ProfileSelectionModal.tsx';
 import SettingsModal from '../components/SettingsModal.tsx';
 import BoardsModal from '../components/BoardsModal.tsx';
+import WordFormsModal from '../components/WordFormsModal.tsx';
 
 // Updated Color definitions for the "Framed" style
 const THEME_STYLES: Record<string, { bg: string; border: string; shadow: string; text: string; ring: string }> = {
@@ -66,6 +67,7 @@ export const BoardPage: React.FC = () => {
   const [moveModalItem, setMoveModalItem] = useState<{ item: AACItem | Category, type: 'card' | 'folder' } | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
+  const [formsCard, setFormsCard] = useState<AACItem | null>(null);
 
   const breadcrumbsScrollRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
@@ -115,7 +117,7 @@ export const BoardPage: React.FC = () => {
   const isAnyModalOpen =
       isHistoryOpen || isCreateSelectionOpen || isCreateModalOpen || isFolderModalOpen ||
       isLinkBoardModalOpen || isSettingsOpen || isBoardsModalOpen || isProfileModalOpen ||
-      !!editOptionsItem || !!moveModalItem || !!itemToDelete || !!folderToDelete;
+      !!editOptionsItem || !!moveModalItem || !!itemToDelete || !!folderToDelete || !!formsCard;
 
   const scanner = useScanner({
       settings: scanSettings,
@@ -234,15 +236,28 @@ export const BoardPage: React.FC = () => {
           {coreItems.map((card, railIdx) => {
               const style = getCardStyle(card);
               const label = card.labelKey ? t(card.labelKey as TranslationKey) : card.label;
+              const hasForms = (card.forms?.length ?? 0) > 0;
               return (
+                <div key={card.id} className="relative shrink-0">
+                {/* Core vocabulary is where verbs live, so the rail needs the
+                    grammar badge as much as the grid does. */}
+                {!isEditMode && hasForms && (
+                  <button
+                    type="button"
+                    aria-label={`${t('forms.title')}: ${label}`}
+                    onClick={() => setFormsCard(card)}
+                    className="absolute -top-1 -right-1 z-30 bg-white/95 rounded-full w-6 h-6 flex items-center justify-center shadow-sm border-2 border-slate-200 text-slate-600 hover:border-primary hover:text-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary"
+                  >
+                    <Type size={12} strokeWidth={2.5} />
+                  </button>
+                )}
                 <GridCellButton
-                  key={card.id}
                   onActivate={() => selectItem(card)}
                   selectionMode={settings.selectionMode || 'release'}
                   dwellMs={settings.dwellMs || DEFAULT_DWELL_MS}
                   isPreviewArmed={previewItemId === card.id}
                   isScanFocused={scanner.focusedCell === railIdx}
-                  className={`shrink-0 h-[4.25rem] sm:h-20 rounded-2xl bg-white border-2 ${style.border} shadow-[0_3px_0_0] ${style.shadow} flex flex-col overflow-hidden ${card.isVisible === false ? 'opacity-50 grayscale' : ''}`}
+                  className={`w-full h-[4.25rem] sm:h-20 rounded-2xl bg-white border-2 ${style.border} shadow-[0_3px_0_0] ${style.shadow} flex flex-col overflow-hidden ${card.isVisible === false ? 'opacity-50 grayscale' : ''}`}
                 >
                   <span className="flex-1 min-h-0 w-full p-1 flex items-center justify-center bg-white">
                     <img src={card.imageUrl} alt="" loading="lazy" className={`w-full h-full ${card.imageFit === 'contain' ? 'object-contain' : 'object-cover rounded-lg'}`} />
@@ -251,6 +266,7 @@ export const BoardPage: React.FC = () => {
                     {label}
                   </span>
                 </GridCellButton>
+                </div>
               );
           })}
         </nav>
@@ -372,6 +388,19 @@ export const BoardPage: React.FC = () => {
                                 </div>
                             </GridCellButton>
 
+                            {/* Grammar badge. A sibling of the cell button, not
+                                nested inside it, so both stay reachable. */}
+                            {!isEditMode && (card.forms?.length ?? 0) > 0 && (
+                                <button
+                                    type="button"
+                                    aria-label={`${t('forms.title')}: ${displayLabel}`}
+                                    onClick={() => setFormsCard(card)}
+                                    className="absolute top-1 right-1 z-30 bg-white/95 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center shadow-sm border-2 border-slate-200 text-slate-600 hover:border-primary hover:text-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary"
+                                >
+                                    <Type size={15} strokeWidth={2.5} />
+                                </button>
+                            )}
+
                             {isEditMode && (
                                 <>
                                     <button type="button" aria-label={t('modal.create.title_edit')} onClick={() => setEditOptionsItem({ item: card, type: 'card' })} className="absolute top-1 right-1 bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-sm z-30 border border-slate-200 hover:bg-slate-100 active:scale-95 transition-all"><Settings2 size={16} className="text-slate-700" /></button>
@@ -465,6 +494,18 @@ export const BoardPage: React.FC = () => {
       />
       <EditOptionsModal isOpen={!!editOptionsItem} onClose={() => setEditOptionsItem(null)} item={editOptionsItem?.item || null} type={editOptionsItem?.type || 'card'} onEdit={() => { if(editOptionsItem?.type==='card') { setEditingItem(editOptionsItem.item as AACItem); setIsCreateModalOpen(true); } else { setEditingFolder(editOptionsItem?.item as Category); setIsFolderModalOpen(true); } }} onMove={() => setMoveModalItem(editOptionsItem)} onDelete={() => { if(editOptionsItem?.type==='card') setItemToDelete(editOptionsItem.item.id); else setFolderToDelete(editOptionsItem?.item.id ?? null); }} t={t} />
       <MoveItemModal isOpen={!!moveModalItem} onClose={() => setMoveModalItem(null)} itemToMove={moveModalItem} categories={categories.filter(c => c.boardId === currentBoardId)} onMove={(target) => { if(moveModalItem) moveItemToFolder(moveModalItem.item, moveModalItem.type, target); setMoveModalItem(null); }} t={t} />
+      <WordFormsModal
+        card={formsCard}
+        baseLabel={formsCard ? (formsCard.labelKey ? t(formsCard.labelKey as TranslationKey) : formsCard.label) : ''}
+        onClose={() => setFormsCard(null)}
+        onChoose={(text) => {
+            if (!formsCard) return;
+            // Same id as the base card so later edits and deletes still reach it;
+            // only the spoken and displayed wording changes.
+            selectItem({ ...formsCard, label: text, labelKey: undefined, textToSpeak: text });
+        }}
+        t={t}
+      />
       <ConfirmationModal isOpen={!!itemToDelete || !!folderToDelete} onClose={() => { setItemToDelete(null); setFolderToDelete(null); }} onConfirm={() => { if(itemToDelete) deleteCard(itemToDelete).then(() => setItemToDelete(null)); else if(folderToDelete) deleteFolderObj(folderToDelete).then(() => setFolderToDelete(null)); }} isFolder={!!folderToDelete} t={t} />
     </>
   );

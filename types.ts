@@ -69,6 +69,22 @@ export interface AACItem {
    * child opened a folder.
    */
   isCore?: boolean;
+  /**
+   * Alternative wordings for this card — "wants", "wanted", "wanting" for a
+   * card labelled "want". Tapping the grammar badge on the card offers them,
+   * and the chosen one goes into the sentence in place of the base label.
+   *
+   * A plain list of strings rather than named grammatical slots (3rd person,
+   * past, progressive...) on purpose. Those slots are English-shaped, and this
+   * app ships in four languages: Russian verb aspect, French agreement and
+   * Spanish person endings do not map onto the same handful of boxes. A list
+   * the parent fills in makes no claim about anyone's grammar.
+   *
+   * Nothing is auto-generated for the same reason. "want" to "wanted" is a
+   * rule; "go" to "went" is not, and neither is anything in the other three
+   * languages.
+   */
+  forms?: string[];
 }
 
 export interface SavedSentence {

@@ -49,6 +49,9 @@ export type TranslationKey =
   | 'modal.settings.scan_rate'
   | 'modal.settings.scan_auto'
   | 'modal.settings.scan_auto_desc'
+  | 'forms.title'
+  | 'forms.edit_label'
+  | 'forms.edit_hint'
   | 'nav.categories'
   | 'nav.add_card'
   | 'nav.settings'
@@ -263,6 +266,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.scan_rate': 'Highlight speed',
     'modal.settings.scan_auto': 'Move on its own',
     'modal.settings.scan_auto_desc': 'Off means one switch moves the highlight and another selects',
+    'forms.title': 'Word forms',
+    'forms.edit_label': 'Other wordings',
+    'forms.edit_hint': 'One per line, e.g. wants, wanted, wanting. The child picks from these on the card.',
     'nav.categories': 'Categories',
     'nav.add_card': 'Add Card',
     'nav.settings': 'Settings',
@@ -485,6 +491,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.scan_rate': 'Скорость подсветки',
     'modal.settings.scan_auto': 'Двигается сама',
     'modal.settings.scan_auto_desc': 'Если выкл., один переключатель двигает подсветку, другой выбирает',
+    'forms.title': 'Формы слова',
+    'forms.edit_label': 'Другие формы',
+    'forms.edit_hint': 'По одной в строке, например: хочу, хотел, хочет. Ребёнок выбирает их на карточке.',
     'nav.categories': 'Категории',
     'nav.add_card': 'Добавить',
     'nav.settings': 'Настройки',
@@ -707,6 +716,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.scan_rate': 'Vitesse de la surbrillance',
     'modal.settings.scan_auto': 'Avance tout seul',
     'modal.settings.scan_auto_desc': 'Désactivé : un contacteur déplace, un autre sélectionne',
+    'forms.title': 'Formes du mot',
+    'forms.edit_label': 'Autres formulations',
+    'forms.edit_hint': 'Une par ligne, par exemple : veut, voulait, voulant. L\'enfant choisit parmi elles sur la carte.',
     'nav.categories': 'Catégories',
     'nav.add_card': 'Ajouter une Carte',
     'nav.settings': 'Paramètres',
@@ -929,6 +941,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.scan_rate': 'Velocidad del resaltado',
     'modal.settings.scan_auto': 'Avanza solo',
     'modal.settings.scan_auto_desc': 'Desactivado: un pulsador mueve y otro selecciona',
+    'forms.title': 'Formas de la palabra',
+    'forms.edit_label': 'Otras formas',
+    'forms.edit_hint': 'Una por línea, por ejemplo: quiere, quería, queriendo. El niño elige entre ellas en la tarjeta.',
     'nav.categories': 'Categorías',
     'nav.add_card': 'Añadir',
     'nav.settings': 'Ajustes',
