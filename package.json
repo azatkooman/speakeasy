@@ -9,21 +9,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@capacitor/android": "^8.0.1",
-    "@capacitor/assets": "^3.0.5",
-    "@capacitor/cli": "^8.0.1",
-    "@capacitor/core": "^8.0.1",
-    "@capacitor/filesystem": "^8.1.0",
-    "@capacitor/haptics": "^8.0.0",
-    "@capacitor/ios": "^8.0.1",
-    "@capacitor/splash-screen": "^8.0.0",
-    "@capgo/capacitor-speech-synthesis": "^8.0.7",
-    "@google/genai": "latest",
-    "@remix-run/router": "latest",
-    "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "react-router-dom": "latest"
+    "lucide-react": "latest",
+    "@google/genai": "latest",
+    "@capacitor/core": "latest",
+    "@capacitor/filesystem": "latest",
+    "@capacitor/haptics": "latest",
+    "@capacitor/splash-screen": "latest",
+    "@capgo/capacitor-speech-synthesis": "latest",
+    "react-router-dom": "latest",
+    "@remix-run/router": "latest"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

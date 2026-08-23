@@ -87,8 +87,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   gridColumns: 'medium',
   language: typeof navigator !== 'undefined' && navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en',
   maxSentenceLength: 0,
-  autoClearSentence: false,
-  voiceEngine: 'auto'
+  autoClearSentence: false
 };
 
 export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -120,23 +119,22 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const initData = async () => {
         setIsInitializing(true);
         
-        // Load settings
-        const saved = localStorage.getItem('aac_settings');
-        if (saved) {
-            const parsed = JSON.parse(saved);
-            setSettings({ ...DEFAULT_SETTINGS, ...parsed });
-        }
-
-        // Load Profiles
+        // 1. Load Profiles
         let allProfiles = await getAllProfiles();
-        let activePid = '';
 
+        // Migration: If items exist but no profiles, create a default migration profile
         if (allProfiles.length === 0) {
-             // Migration Check: If items exist but no profile, migrate them.
              const rawItems = await getAllItems();
              if (rawItems.length > 0) {
                  const migrationId = crypto.randomUUID();
-                 const migrationProfile: ChildProfile = { id: migrationId, name: 'My Child', age: 5, colorTheme: 'blue', createdAt: Date.now() };
+                 const migrationProfile: ChildProfile = { 
+                     id: migrationId, 
+                     name: 'My Child', 
+                     age: 5, 
+                     colorTheme: 'blue', 
+                     createdAt: Date.now(),
+                     settings: DEFAULT_SETTINGS 
+                 };
                  await saveProfile(migrationProfile);
                  
                  const allCats = await getAllCategories();
@@ -147,28 +145,50 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                      saveBoardsBatch(allBds.map(b => ({...b, profileId: migrationId})))
                  ]);
                  allProfiles = [migrationProfile];
-                 activePid = migrationId;
              } 
-        } else {
+        }
+
+        // 2. Determine Active Profile ID
+        let activePid = '';
+        if (allProfiles.length > 0) {
              const lastPid = localStorage.getItem('aac_last_profile');
              if (lastPid && allProfiles.find(p => p.id === lastPid)) activePid = lastPid;
              else activePid = allProfiles[0].id;
         }
 
         setProfiles(allProfiles);
+        
+        // 3. Load Active Profile Data & Settings
         if (activePid) {
-             setCurrentProfileId(activePid);
-             await loadProfileData(activePid);
+             const currentProfile = allProfiles.find(p => p.id === activePid);
+             
+             if (currentProfile) {
+                 // SETTINGS LOGIC
+                 if (currentProfile.settings) {
+                     setSettings(currentProfile.settings);
+                 } else {
+                     // Migration: Profile exists but has no settings (legacy).
+                     // Try to grab from localStorage (legacy global settings) or use defaults.
+                     const savedInfo = localStorage.getItem('aac_settings');
+                     const migrationSettings = savedInfo ? { ...DEFAULT_SETTINGS, ...JSON.parse(savedInfo) } : DEFAULT_SETTINGS;
+                     
+                     setSettings(migrationSettings);
+                     
+                     // Save back to profile immediately to complete migration
+                     const updatedProfile = { ...currentProfile, settings: migrationSettings };
+                     await saveProfile(updatedProfile);
+                     setProfiles(prev => prev.map(p => p.id === activePid ? updatedProfile : p));
+                 }
+                 
+                 setCurrentProfileId(activePid);
+                 await loadProfileData(activePid);
+             }
         }
         setIsInitializing(false);
     };
 
     initData();
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem('aac_settings', JSON.stringify(settings));
-  }, [settings]);
 
   useEffect(() => {
       if (currentProfileId) localStorage.setItem('aac_last_profile', currentProfileId);
@@ -239,13 +259,19 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       const currentItems = library.filter(item => {
           if (item.boardId !== currentBoardId) return false;
-          if (isSearchActive && searchQuery) return item.label.toLowerCase().includes(searchQuery.toLowerCase()) && (isEditMode || item.isVisible !== false);
+          if (isSearchActive && searchQuery) {
+              const displayLabel = item.labelKey ? t(item.labelKey as TranslationKey) : item.label;
+              return displayLabel.toLowerCase().includes(searchQuery.toLowerCase()) && (isEditMode || item.isVisible !== false);
+          }
           return item.category === currentFolderId && (isEditMode || item.isVisible !== false);
       }).map(i => ({ ...i, type: 'card' }));
 
       const currentFolders = categories.filter(cat => {
           if (cat.boardId !== currentBoardId) return false;
-          if (isSearchActive && searchQuery) return false;
+          if (isSearchActive && searchQuery) {
+              const displayLabel = cat.labelKey ? t(cat.labelKey as TranslationKey) : cat.label;
+              return displayLabel.toLowerCase().includes(searchQuery.toLowerCase());
+          }
           if (currentFolderId === ROOT_FOLDER) return !cat.parentId || cat.parentId === ROOT_FOLDER;
           return cat.parentId === currentFolderId;
       }).map(c => ({ ...c, type: 'folder' }));
@@ -253,8 +279,36 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return [...currentFolders, ...currentItems].sort(sortFn);
   }, [library, categories, currentBoardId, currentFolderId, isEditMode, isSearchActive, searchQuery]);
 
+  // Wrapper to update settings both in state and in the active profile
+  const handleSetSettings = async (newSettings: AppSettings) => {
+      setSettings(newSettings);
+      
+      if (currentProfileId) {
+          const profile = profiles.find(p => p.id === currentProfileId);
+          if (profile) {
+              const updatedProfile = { ...profile, settings: newSettings };
+              try {
+                  await saveProfile(updatedProfile);
+                  setProfiles(prev => prev.map(p => p.id === currentProfileId ? updatedProfile : p));
+              } catch (e) {
+                  console.error("Failed to save settings to profile", e);
+              }
+          }
+      }
+  };
+
   const switchProfile = async (id: string) => {
       if (id === currentProfileId) return;
+      
+      const targetProfile = profiles.find(p => p.id === id);
+      if (targetProfile) {
+          if (targetProfile.settings) {
+              setSettings(targetProfile.settings);
+          } else {
+              setSettings(DEFAULT_SETTINGS);
+          }
+      }
+
       setCurrentProfileId(id);
       await loadProfileData(id);
   };
@@ -284,13 +338,40 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const createProfile = async (name: string, age: number, color: ColorTheme) => {
       const id = crypto.randomUUID();
-      await saveProfile({ id, name, age, colorTheme: color, createdAt: Date.now() });
-      setProfiles(await getAllProfiles());
-      await switchProfile(id);
+      
+      // Initialize with settings, inheriting current language selection
+      const startingSettings = {
+          ...DEFAULT_SETTINGS,
+          language: settings.language
+      };
+
+      const newProfile: ChildProfile = { 
+          id, 
+          name, 
+          age, 
+          colorTheme: color, 
+          createdAt: Date.now(),
+          settings: startingSettings
+      };
+      
+      await saveProfile(newProfile);
+      
+      // Reload profiles list and switch to the new one
+      const updatedProfiles = await getAllProfiles();
+      setProfiles(updatedProfiles);
+      
+      // Manually trigger switch to ensure settings load correctly
+      setCurrentProfileId(id);
+      setSettings(startingSettings);
+      await loadProfileData(id);
   };
 
   const updateProfile = async (p: ChildProfile) => {
-      await saveProfile(p);
+      // Ensure we preserve existing settings when updating basic info
+      const existing = profiles.find(prof => prof.id === p.id);
+      const updated = { ...p, settings: existing?.settings || p.settings || DEFAULT_SETTINGS };
+      
+      await saveProfile(updated);
       setProfiles(await getAllProfiles());
   };
 
@@ -302,6 +383,8 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setCurrentProfileId('');
           setLibrary([]);
           setBoards([]);
+          // Optionally reset settings to default
+          setSettings(DEFAULT_SETTINGS);
       } else if (id === currentProfileId) {
           switchProfile(remaining[0].id);
       }
@@ -470,17 +553,17 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         await audioPlayer.play(item.audioUrl);
       } else {
         const txt = (item.textToSpeak || (item.labelKey ? t(item.labelKey as TranslationKey) : item.label) || '').trim();
-        if (txt) await voiceService.speak({ text: txt, language: settings.language, rate: settings.voiceRate, pitch: settings.voicePitch, engine: settings.voiceEngine });
+        if (txt) await voiceService.speak({ text: txt, language: settings.language, rate: settings.voiceRate, pitch: settings.voicePitch });
       }
     } catch (e) {
-      if (item.label) await voiceService.speak({ text: item.label, language: settings.language, rate: settings.voiceRate, pitch: settings.voicePitch, engine: settings.voiceEngine });
+      if (item.label) await voiceService.speak({ text: item.label, language: settings.language, rate: settings.voiceRate, pitch: settings.voicePitch });
     }
   };
 
   const addToSentence = (item: AACItem) => {
       if (isPlaying) return;
       if (item.linkedBoardId) {
-          voiceService.speak({ text: item.labelKey ? t(item.labelKey as TranslationKey) : item.label, language: settings.language, engine: settings.voiceEngine }).catch(()=>{});
+          voiceService.speak({ text: item.labelKey ? t(item.labelKey as TranslationKey) : item.label, language: settings.language }).catch(()=>{});
           setBoardHistory(prev => [...prev, currentBoardId]);
           setCurrentBoardId(item.linkedBoardId);
           setCurrentFolderId(ROOT_FOLDER);
@@ -545,7 +628,9 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const value = {
       profiles, currentProfileId, boards, currentBoardId, library, categories, sentence, settings, isEditMode,
       isInitializing, isPlaying, activeIndex, currentFolderId, searchQuery, isSearchActive, boardHistory,
-      gridItems, breadcrumbs, t, setSettings, setEditMode: setIsEditMode, setSearchQuery, setIsSearchActive,
+      gridItems, breadcrumbs, t, 
+      setSettings: handleSetSettings, 
+      setEditMode: setIsEditMode, setSearchQuery, setIsSearchActive,
       switchProfile, switchBoard, navigateToFolder, navigateBackFolder, navigateBackBoard,
       createProfile, updateProfile, removeProfile, createBoard, updateBoard, removeBoard,
       saveCard, saveFolderObj, saveLinkBoard, deleteCard, deleteFolderObj, reorderGrid, moveItemToFolder,

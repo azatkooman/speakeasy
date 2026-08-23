@@ -7,6 +7,7 @@ export interface ChildProfile {
   age: number;
   colorTheme: ColorTheme;
   createdAt: number;
+  settings?: AppSettings;
 }
 
 export interface Board {
@@ -52,7 +53,7 @@ export interface SavedSentence {
   createdAt: number;
 }
 
-export type AppLanguage = 'en' | 'ru';
+export type AppLanguage = 'en' | 'ru' | 'fr' | 'es';
 
 export interface AppSettings {
   voicePitch: number;
@@ -61,5 +62,4 @@ export interface AppSettings {
   language: AppLanguage;
   maxSentenceLength: number; // 0 = unlimited, 1-5 = limit
   autoClearSentence: boolean;
-  voiceEngine: 'auto' | 'native' | 'web';
 }

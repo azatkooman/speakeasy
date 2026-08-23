@@ -5,7 +5,7 @@ import { Home, ChevronRight, CornerUpLeft, Plus, FolderPlus, ArrowLeft, ArrowRig
 import SentenceStrip from '../components/SentenceStrip.tsx';
 import FolderCard from '../components/FolderCard.tsx';
 import { ROOT_FOLDER } from '../services/storage.ts';
-import { AACItem, Category, ColorTheme } from '../types.ts';
+import { AACItem, Category } from '../types.ts';
 import { TranslationKey } from '../services/translations.ts';
 import ConfirmationModal from '../components/ConfirmationModal.tsx';
 import CreateCardModal from '../components/CreateCardModal.tsx';
@@ -176,7 +176,11 @@ export const BoardPage: React.FC = () => {
           </div>
       )}
 
-      <main ref={mainRef} className={`flex-1 overflow-y-auto p-4 ${isEditMode ? 'pb-40' : 'pb-32'}`}>
+      <main 
+        ref={mainRef} 
+        className="flex-1 overflow-y-auto p-4"
+        style={{ paddingBottom: isEditMode ? 'calc(10rem + env(safe-area-inset-bottom))' : 'calc(8rem + env(safe-area-inset-bottom))' }}
+      >
         <div className={`grid gap-4 max-w-7xl mx-auto ${getGridClass()}`}>
             {gridItems.map((item, index) => {
                 const isFirst = index === 0;
@@ -291,7 +295,10 @@ export const BoardPage: React.FC = () => {
       </main>
 
       {isEditMode && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-200 p-4 z-50 flex items-center justify-between gap-4" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+        <div 
+            className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-200 p-4 z-50 flex items-center justify-between gap-4" 
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
+        >
             <div className="flex-1 flex justify-start gap-4 sm:gap-8 pl-2">
                 <button onClick={() => setIsProfileModalOpen(true)} className="flex flex-col items-center text-slate-500 group"><div className="p-2 rounded-2xl group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors"><User size={24} /></div><span className="text-[10px] font-bold group-hover:text-indigo-600">{t('nav.profiles')}</span></button>
                 <button onClick={() => setIsBoardsModalOpen(true)} className="flex flex-col items-center text-slate-500 group"><div className="p-2 rounded-2xl group-hover:bg-purple-50 group-hover:text-purple-600 transition-colors"><Layers size={24} /></div><span className="text-[10px] font-bold group-hover:text-purple-600">{t('nav.boards')}</span></button>

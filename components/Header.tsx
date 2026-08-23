@@ -1,14 +1,13 @@
 
 import React, { useRef, useState } from 'react';
-import { Search, X, ChevronLeft, Lock, Unlock, Hand, CornerUpLeft } from 'lucide-react';
-import { useSpeakEasy } from '../contexts/SpeakEasyContext';
-import { Capacitor } from '@capacitor/core';
+import { Search, X, ChevronLeft, Lock, Unlock, Hand } from 'lucide-react';
+import { useSpeakEasy } from '../contexts/SpeakEasyContext.tsx';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 export const Header: React.FC = () => {
   const { 
     isSearchActive, searchQuery, setSearchQuery, setIsSearchActive, 
-    boardHistory, navigateBackBoard, currentBoardId,
+    boardHistory, navigateBackBoard, 
     isEditMode, setEditMode, t 
   } = useSpeakEasy();
 
@@ -16,8 +15,6 @@ export const Header: React.FC = () => {
   const ignoreNextClick = useRef(false);
   const [isHoldingUnlock, setIsHoldingUnlock] = useState(false);
   const [showOnboardingHint, setShowOnboardingHint] = useState(!localStorage.getItem('aac_onboarding_completed'));
-
-  const isAndroid = Capacitor.getPlatform() === 'android';
 
   const triggerHaptic = async () => {
       try {
@@ -73,7 +70,10 @@ export const Header: React.FC = () => {
   };
 
   return (
-      <div className="flex justify-between items-center px-4 py-3 bg-white/90 backdrop-blur-sm border-b border-slate-200 z-40 shrink-0" style={{ paddingTop: isAndroid ? 'max(2rem, env(safe-area-inset-top))' : 'max(0.75rem, env(safe-area-inset-top))' }}>
+      <div 
+        className="flex justify-between items-center px-4 py-3 bg-white/90 backdrop-blur-sm border-b border-slate-200 z-40 shrink-0 transition-all" 
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
+      >
         {isSearchActive ? (
             <div className="flex-1 flex items-center gap-3">
                 <div className="relative flex-1">

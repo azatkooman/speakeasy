@@ -96,16 +96,17 @@
 </head>
   <body>
     <div id="root"></div>
-    <script type="text/babel" data-type="module" src="./index.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
+          // In some preview environments (iframe/sandbox), registration fails due to domain mismatch.
+          // We catch this to prevent scary console errors, but it will work in Production/Android.
           navigator.serviceWorker.register('./sw.js')
             .then(registration => {
-              console.log('SW registered: ', registration);
+              console.log('SW registered');
             })
             .catch(registrationError => {
-              console.log('SW registration failed: ', registrationError);
+              console.warn('SW registration skipped (expected in preview/sandbox):', registrationError.message);
             });
         });
       }

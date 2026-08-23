@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Folder, Check, Search, Info, Globe, Loader2, Image as ImageIcon } from 'lucide-react';
-import { Category, ColorTheme, AppLanguage } from '../types';
-import { getAvailableIcons, getIconComponent } from '../utils/icons';
-import { searchArasaacSymbols, ArasaacSymbol } from '../services/arasaac';
-import { TranslationKey } from '../services/translations';
+import { Category, ColorTheme, AppLanguage } from '../types.ts';
+import { getAvailableIcons, getIconComponent } from '../utils/icons.ts';
+import { searchArasaacSymbols, ArasaacSymbol } from '../services/arasaac.ts';
+import { TranslationKey } from '../services/translations.ts';
 
 interface FolderModalProps {
   isOpen: boolean;
@@ -70,8 +70,7 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSave, edit
     if (iconSearch.length >= 3) {
         setIsSearchingWeb(true);
         searchTimeoutRef.current = window.setTimeout(async () => {
-            const langCode = language === 'ru' ? 'ru' : 'en';
-            const results = await searchArasaacSymbols(iconSearch, langCode);
+            const results = await searchArasaacSymbols(iconSearch, language);
             setWebSymbols(results);
             setIsSearchingWeb(false);
         }, 600);
@@ -136,8 +135,8 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSave, edit
   const selectedTheme = FITZGERALD_THEMES.find(t => t.theme === colorTheme) || FITZGERALD_THEMES[0];
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border-4 border-white animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
+      <div className="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border-4 border-white animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-200">
         
         {/* Header */}
         <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50">
@@ -313,7 +312,7 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSave, edit
 
           <div 
             className="p-4 border-t border-slate-100 bg-white"
-            style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
           >
             <button
                 type="submit"

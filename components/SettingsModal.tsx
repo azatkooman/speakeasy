@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Monitor, Volume2, Grid, Languages, Sparkles, AlertTriangle, Settings } from 'lucide-react';
+import { X, Monitor, Volume2, Grid, Languages, Sparkles, AlertTriangle } from 'lucide-react';
 import { AppSettings } from '../types';
 import { voiceService } from '../services/voice';
 
@@ -25,14 +25,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleTestVoice = async () => {
       setTestStatus('playing');
-      const text = settings.language === 'ru' ? 'Привет, это проверка голоса' : 'Hello, this is a voice test';
+      const text = settings.language === 'ru' 
+            ? 'Привет, это проверка голоса' 
+            : settings.language === 'fr' 
+            ? 'Bonjour, ceci est un test vocal'
+            : settings.language === 'es'
+            ? 'Hola, esto es una prueba de voz'
+            : 'Hello, this is a voice test';
       try {
           await voiceService.speak({
               text,
               language: settings.language,
               rate: settings.voiceRate,
-              pitch: settings.voicePitch,
-              engine: settings.voiceEngine
+              pitch: settings.voicePitch
           });
           setTestStatus('idle');
       } catch (e) {
@@ -80,6 +85,18 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                  >
                     Русский
                  </button>
+                 <button 
+                    onClick={() => onUpdateSettings({...settings, language: 'fr'})}
+                    className={`py-3 rounded-xl border-2 font-bold transition-all ${settings.language === 'fr' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-500'}`}
+                 >
+                    Français
+                 </button>
+                 <button 
+                    onClick={() => onUpdateSettings({...settings, language: 'es'})}
+                    className={`py-3 rounded-xl border-2 font-bold transition-all ${settings.language === 'es' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-500'}`}
+                 >
+                    Español
+                 </button>
              </div>
           </section>
 
@@ -123,34 +140,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                             className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
                         />
                     </div>
-                </div>
-
-                {/* Voice Engine (Advanced) */}
-                <div className="pt-2 border-t border-slate-200">
-                    <label className="flex items-center gap-2 text-sm font-bold text-slate-500 uppercase mb-3">
-                        <Settings size={14} />
-                        {t('modal.settings.voice_engine')}
-                    </label>
-                    <div className="grid grid-cols-3 gap-2 mb-2">
-                        {(['auto', 'native', 'web'] as const).map(mode => (
-                            <button
-                                key={mode}
-                                onClick={() => onUpdateSettings({...settings, voiceEngine: mode})}
-                                className={`
-                                    py-2 px-1 rounded-lg text-[10px] sm:text-xs font-bold border-2 transition-all capitalize
-                                    h-auto min-h-[36px] flex items-center justify-center text-center whitespace-normal leading-tight
-                                    ${settings.voiceEngine === mode 
-                                        ? 'bg-white border-indigo-500 text-indigo-700 shadow-sm' 
-                                        : 'bg-slate-100 border-transparent text-slate-500 hover:bg-slate-200'}
-                                `}
-                            >
-                                {t(`modal.settings.engine_${mode}`)}
-                            </button>
-                        ))}
-                    </div>
-                    <p className="text-[10px] text-slate-400 font-medium leading-tight">
-                        {t('modal.settings.engine_desc')}
-                    </p>
                 </div>
 
                 {/* Test Button */}

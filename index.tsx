@@ -11,7 +11,11 @@ if (!rootElement) {
 }
 
 try {
-  const root = createRoot(rootElement);
+  let root = (rootElement as any)._reactRootContainer;
+  if (!root) {
+    root = createRoot(rootElement);
+    (rootElement as any)._reactRootContainer = root;
+  }
   root.render(
     <React.StrictMode>
       <App />

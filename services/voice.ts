@@ -8,20 +8,17 @@ export interface SpeakOptions {
   language: AppLanguage;
   rate?: number;
   pitch?: number;
-  engine?: 'auto' | 'native' | 'web';
 }
 
 class VoiceService {
   private isBusy: boolean = false;
   private currentUtterance: SpeechSynthesisUtterance | null = null; // Prevent GC on Android WebView
-  private emulationTimeout: number | null = null;
 
   constructor() {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
         // Trigger voice loading immediately
         const loadVoices = () => {
-             const voices = window.speechSynthesis.getVoices();
-             // console.log("Voices loaded:", voices.length);
+             window.speechSynthesis.getVoices();
         };
         loadVoices();
         if (window.speechSynthesis.onvoiceschanged !== undefined) {
@@ -32,10 +29,6 @@ class VoiceService {
 
   async stop(): Promise<void> {
     this.isBusy = false;
-    if (this.emulationTimeout) {
-        clearTimeout(this.emulationTimeout);
-        this.emulationTimeout = null;
-    }
     
     // Clear Web Speech reference
     this.currentUtterance = null;
@@ -51,41 +44,34 @@ class VoiceService {
     }
     
     // Small buffer to ensure engine clears
-    return new Promise(resolve => setTimeout(resolve, 100));
+    return new Promise(resolve => setTimeout(resolve, 50));
   }
 
   async speak(options: SpeakOptions): Promise<void> {
-    const { text, language, rate = 0.9, pitch = 1.0, engine = 'auto' } = options;
+    const { text, language, rate = 0.9, pitch = 1.0 } = options;
     if (!text || !text.trim()) return;
 
     await this.stop();
     this.isBusy = true;
 
     const sanitizedText = text.replace(/[<>&]/g, '').trim();
-    // Use full BCP 47 tags
     const langCode = language === 'ru' ? 'ru-RU' : 'en-US';
     
     const platform = Capacitor.getPlatform(); // 'ios', 'android', 'web'
-    const isNativePlatform = Capacitor.isNativePlatform();
-    const isAndroid = isNativePlatform && platform === 'android';
-    const isIOS = platform === 'ios'; // Strong check for iOS
+    const isAndroid = platform === 'android';
+    const isIOS = platform === 'ios';
 
-    let useNative = false;
-
-    // CRITICAL FIX: The Native TTS plugin crashes on iOS with NSUnknownKeyException.
-    // iOS WebKit's implementation of Web Speech API uses the system AVSpeechSynthesizer 
-    // and is very robust/high-quality, so we force the Web path on iOS even if "Native" is requested.
-    if (isIOS) {
-        useNative = false;
-    } else {
-        if (engine === 'native') useNative = true;
-        else if (engine === 'web') useNative = false;
-        else useNative = isAndroid; // Auto: Native on Android (to fix bugs), Web on other platforms
-    }
+    // STRATEGY:
+    // 1. iOS: Always use Web Speech API. It maps to AVSpeechSynthesizer natively and is excellent. 
+    //    Native plugins often break on iOS due to audio session conflicts.
+    // 2. Android: Always try Native Plugin first. The WebView TTS is unreliable (GC bugs).
+    //    Fallback to Web Speech API if native fails.
+    // 3. Web: Use Web Speech API.
 
     return new Promise(async (resolve, reject) => {
       let hasResolved = false;
-      const resolveOnce = () => {
+
+      const finish = () => {
           if (!hasResolved) {
               hasResolved = true;
               this.isBusy = false;
@@ -96,12 +82,11 @@ class VoiceService {
 
       // Safety timeout: Ensure we resolve eventually even if TTS hangs
       const estimatedDuration = (sanitizedText.length * 100) / rate; 
-      const safetyTimeout = setTimeout(resolveOnce, Math.max(3000, estimatedDuration + 2000));
+      const safetyTimeout = setTimeout(finish, Math.max(3000, estimatedDuration + 2000));
 
-      // --- 1. Native Path (Android Only in practice) ---
-      if (useNative && isNativePlatform) {
+      // --- Android Native Path ---
+      if (isAndroid) {
         try {
-          // Attempt to use the native plugin
           await SpeechSynthesis.speak({
             text: sanitizedText,
             lang: langCode,
@@ -109,39 +94,31 @@ class VoiceService {
             pitch: pitch,
             volume: 1.0,
             category: 'ambient'
-          } as any);
-
-          // Android native plugin often returns immediately (fire-and-forget).
-          this.emulationTimeout = window.setTimeout(resolveOnce, Math.max(1000, estimatedDuration));
-          return; // Success on native path
+          });
+          
+          // Android native plugin fires and returns immediately. 
+          // We emulate a wait time based on text length so we don't clear the sentence too fast.
+          setTimeout(finish, Math.max(1000, estimatedDuration));
+          return;
         } catch (e) {
-          console.warn('Native TTS failed', e);
-          if (engine === 'native') {
-              // Forced native failed
-              clearTimeout(safetyTimeout);
-              hasResolved = true; 
-              reject(e); // Propagate error
-              return;
-          }
+          console.warn('Android Native TTS failed, falling back to Web API', e);
           // Fall through to Web Speech API...
         }
       }
 
-      // --- 2. Web Speech API Path (iOS, Web, Android Fallback) ---
+      // --- Web Speech API Path (iOS, Web, Android Fallback) ---
       if (typeof window !== 'undefined' && window.speechSynthesis) {
-        // Attempt to wait for voices if they haven't loaded yet (common on Android WebView startup)
+        
+        // Ensure voices are loaded
         if (window.speechSynthesis.getVoices().length === 0) {
              await new Promise<void>(r => {
-                 let hasTimedOut = false;
-                 const t = setTimeout(() => { hasTimedOut = true; r(); }, 1000); // 1s wait max
+                 let tOut: number;
                  const onVoices = () => {
-                     if (!hasTimedOut) {
-                         clearTimeout(t);
-                         window.speechSynthesis.removeEventListener('voiceschanged', onVoices);
-                         r();
-                     }
+                     clearTimeout(tOut);
+                     r();
                  };
-                 window.speechSynthesis.addEventListener('voiceschanged', onVoices);
+                 window.speechSynthesis.addEventListener('voiceschanged', onVoices, { once: true });
+                 tOut = window.setTimeout(r, 500); // Don't wait forever
              });
         }
 
@@ -157,45 +134,49 @@ class VoiceService {
 
         // Attempt to find best voice
         const voices = window.speechSynthesis.getVoices();
-        
-        // 1. Exact Match (e.g. 'en-US')
         let voice = voices.find(v => v.lang === langCode);
         
-        // 2. Prefix Match (e.g. 'en-GB' for 'en')
-        if (!voice) {
-            voice = voices.find(v => v.lang.startsWith(language));
-        }
+        // Fallback voice logic
+        if (!voice) voice = voices.find(v => v.lang.startsWith(language));
         
-        // 3. Android specific: Google voices often have names like "Google US English"
+        // Android WebView specific: Google voices often have names like "Google US English"
         if (!voice && isAndroid) {
             voice = voices.find(v => v.name.includes('Google') && v.lang.startsWith(language));
         }
 
-        if (voice) {
-            utterance.voice = voice;
-        }
+        if (voice) utterance.voice = voice;
 
         utterance.onend = () => {
             clearTimeout(safetyTimeout);
-            resolveOnce();
+            finish();
         };
 
         utterance.onerror = (e) => {
-            console.error("SpeechSynthesis Error:", e);
+            // Cast to any to access error property safely
+            const val = (e as any).error;
+            
+            // Ignore interruption/cancellation errors which happen frequently when tapping quickly
+            if (val === 'canceled' || val === 'interrupted') {
+                clearTimeout(safetyTimeout);
+                finish();
+                return;
+            }
+
+            console.error("SpeechSynthesis Error:", val, e);
             clearTimeout(safetyTimeout);
-            resolveOnce();
+            finish();
         };
 
-        // Some Android WebViews require onstart to be present to prevent GC
-        utterance.onstart = () => {
-             // console.log("Started speaking");
-        };
+        // iOS sometimes needs a forced resume if audio session was interrupted
+        if (isIOS && window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+        }
 
         window.speechSynthesis.speak(utterance);
       } else {
         // No TTS available
         clearTimeout(safetyTimeout);
-        resolveOnce();
+        finish();
       }
     });
   }

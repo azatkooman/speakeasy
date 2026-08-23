@@ -1,11 +1,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { X, Image as ImageIcon, Check, Mic, Keyboard, Play, Camera, RefreshCcw, Eye, EyeOff, Search, Loader2, Globe, Palette, Info, Maximize2, Minimize2 } from 'lucide-react';
-import { AACItem, Category, AppLanguage, ColorTheme } from '../types';
-import { voiceService } from '../services/voice';
-import { searchArasaacSymbols, ArasaacSymbol } from '../services/arasaac';
-import AudioRecorder from './AudioRecorder';
-import { TranslationKey } from '../services/translations';
+import { AACItem, Category, AppLanguage, ColorTheme } from '../types.ts';
+import { voiceService } from '../services/voice.ts';
+import { searchArasaacSymbols, ArasaacSymbol } from '../services/arasaac.ts';
+import AudioRecorder from './AudioRecorder.tsx';
+import { TranslationKey } from '../services/translations.ts';
 
 interface CreateCardModalProps {
   isOpen: boolean;
@@ -205,8 +205,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
     if (symbolQuery.length >= 3) {
         setIsLoadingSymbols(true);
         symbolDebounceRef.current = window.setTimeout(async () => {
-             const lang = language === 'ru' ? 'ru' : 'en';
-             const results = await searchArasaacSymbols(symbolQuery, lang);
+             const results = await searchArasaacSymbols(symbolQuery, language);
              setSymbols(results);
              setIsLoadingSymbols(false);
         }, 600);
@@ -576,7 +575,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
           </div>
         </div>
 
-        <div className="p-6 border-t border-slate-100 bg-white" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+        <div className="p-6 border-t border-slate-100 bg-white" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}>
           <button onClick={handleSave} disabled={!label || !imagePreview} className={`w-full py-4 rounded-2xl font-black text-xl flex items-center justify-center space-x-2 transition-all ${!label || !imagePreview ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-primary text-white shadow-btn active:shadow-btn-active active:translate-y-[4px] hover:brightness-110'}`}><span>{editItem ? t('modal.create.update') : t('modal.create.save')}</span><Check size={24} strokeWidth={3} /></button>
         </div>
       </div>

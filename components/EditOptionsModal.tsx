@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { X, Pencil, FolderInput, Trash2, Image as ImageIcon, Folder } from 'lucide-react';
-import { AACItem, Category } from '../types';
-import { TranslationKey } from '../services/translations';
+import { AACItem, Category } from '../types.ts';
+import { TranslationKey } from '../services/translations.ts';
 
 interface EditOptionsModalProps {
   isOpen: boolean;
@@ -36,7 +36,7 @@ const EditOptionsModal: React.FC<EditOptionsModalProps> = ({
       
       <div 
         className="bg-white w-full max-w-sm sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-10 duration-200 relative z-10 border-t-4 sm:border-4 border-white"
-        style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
       >
         
         {/* Header with Preview */}
