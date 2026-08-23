@@ -211,59 +211,68 @@ export const BoardPage: React.FC = () => {
                     const displayLabel = card.labelKey ? t(card.labelKey as TranslationKey) : card.label;
                     
                     return (
-                        <div 
-                            key={card.id} 
-                            onClick={() => {
-                                addToSentence(card);
-                                if (isSearchActive) {
-                                    navigateToFolder(card.category);
-                                    setIsSearchActive(false);
-                                    setSearchQuery('');
-                                }
-                            }}
-                            className={`
-                                relative aspect-[4/5] rounded-3xl cursor-pointer
-                                bg-white
-                                flex flex-col items-center overflow-hidden
-                                border-2 ${style.border}
-                                shadow-[0_4px_0_0] ${style.shadow}
-                                active:shadow-none active:translate-y-[4px] active:border-b-2
-                                transition-all duration-100
-                                group
-                                ${isHidden ? 'opacity-50 grayscale' : ''}
-                            `}
-                        >
-                            {/* Image Container - Always White for clean photo display */}
-                            <div className="w-full flex-1 p-2 flex items-center justify-center bg-white relative min-h-0">
-                                <img 
-                                    src={card.imageUrl} 
-                                    alt={displayLabel} 
-                                    className={`
-                                        w-full h-full pointer-events-none transition-transform duration-200 group-hover:scale-105
-                                        ${card.imageFit === 'contain' ? 'object-contain' : 'object-cover rounded-xl'}
-                                    `} 
-                                    loading="lazy" 
-                                />
-                                
-                                {isLink && <div className="absolute top-2 right-2 bg-purple-100 text-purple-600 p-1 rounded-full shadow-sm z-20"><ArrowUpRight size={16} strokeWidth={3} /></div>}
-                                
-                                {isEditMode && (
-                                    <>
-                                        <button onClick={(e) => { e.stopPropagation(); setEditOptionsItem({ item: card, type: 'card' }); }} className="absolute top-1 right-1 bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-sm z-30 border border-slate-200 hover:bg-slate-100 active:scale-95 transition-all"><Settings2 size={16} className="text-slate-700" /></button>
-                                        <div className="absolute bottom-1 inset-x-2 flex justify-between z-10 pointer-events-none">
-                                            <button onClick={(e) => { e.stopPropagation(); reorderGrid(card.id, -1); }} disabled={isFirst} className={`pointer-events-auto w-8 h-8 flex items-center justify-center rounded-full shadow-lg border-2 transition-all active:scale-95 backdrop-blur-md ${isFirst ? 'bg-slate-100/50 border-slate-200 text-slate-300 opacity-50 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-700 hover:border-primary hover:text-primary hover:bg-slate-50'}`}><ArrowLeft size={16} strokeWidth={2.5} /></button>
-                                            <button onClick={(e) => { e.stopPropagation(); reorderGrid(card.id, 1); }} disabled={isLast} className={`pointer-events-auto w-8 h-8 flex items-center justify-center rounded-full shadow-lg border-2 transition-all active:scale-95 backdrop-blur-md ${isLast ? 'bg-slate-100/50 border-slate-200 text-slate-300 opacity-50 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-700 hover:border-primary hover:text-primary hover:bg-slate-50'}`}><ArrowRight size={16} strokeWidth={2.5} /></button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                        // Positioning wrapper. The card itself is a single <button> so it
+                        // is reachable by keyboard, screen reader and switch access; the
+                        // edit controls are siblings rather than nested buttons, which
+                        // would be invalid and would break that traversal.
+                        <div key={card.id} className="relative aspect-[4/5]">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    addToSentence(card);
+                                    if (isSearchActive) {
+                                        navigateToFolder(card.category);
+                                        setIsSearchActive(false);
+                                        setSearchQuery('');
+                                    }
+                                }}
+                                className={`
+                                    absolute inset-0 rounded-3xl cursor-pointer text-left
+                                    bg-white
+                                    flex flex-col items-center overflow-hidden
+                                    border-2 ${style.border}
+                                    shadow-[0_4px_0_0] ${style.shadow}
+                                    active:shadow-none active:translate-y-[4px] active:border-b-2
+                                    focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2
+                                    transition-all duration-100
+                                    group
+                                    ${isHidden ? 'opacity-50 grayscale' : ''}
+                                `}
+                            >
+                                {/* Image Container - Always White for clean photo display */}
+                                <div className="w-full flex-1 p-2 flex items-center justify-center bg-white relative min-h-0">
+                                    <img
+                                        src={card.imageUrl}
+                                        // Decorative: the label below is the button's
+                                        // accessible name, so alt text would duplicate it.
+                                        alt=""
+                                        className={`
+                                            w-full h-full pointer-events-none transition-transform duration-200 group-hover:scale-105
+                                            ${card.imageFit === 'contain' ? 'object-contain' : 'object-cover rounded-xl'}
+                                        `}
+                                        loading="lazy"
+                                    />
 
-                            {/* Text Band - Colored based on part of speech */}
-                            <div className={`w-full h-11 sm:h-12 flex items-center justify-center border-t-2 ${style.border} ${style.bg} px-1 shrink-0`}>
-                                <span className={`font-black text-center uppercase line-clamp-2 ${getLabelSize()} ${style.text}`}>
-                                    {displayLabel}
-                                </span>
-                            </div>
+                                    {isLink && <div className="absolute top-2 right-2 bg-purple-100 text-purple-600 p-1 rounded-full shadow-sm z-20"><ArrowUpRight size={16} strokeWidth={3} /></div>}
+                                </div>
+
+                                {/* Text Band - Colored based on part of speech */}
+                                <div className={`w-full h-11 sm:h-12 flex items-center justify-center border-t-2 ${style.border} ${style.bg} px-1 shrink-0`}>
+                                    <span className={`font-semibold text-center line-clamp-2 ${getLabelSize()} ${style.text}`}>
+                                        {displayLabel}
+                                    </span>
+                                </div>
+                            </button>
+
+                            {isEditMode && (
+                                <>
+                                    <button type="button" aria-label={t('modal.create.title_edit')} onClick={() => setEditOptionsItem({ item: card, type: 'card' })} className="absolute top-1 right-1 bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-sm z-30 border border-slate-200 hover:bg-slate-100 active:scale-95 transition-all"><Settings2 size={16} className="text-slate-700" /></button>
+                                    <div className="absolute bottom-[3.25rem] sm:bottom-[3.5rem] inset-x-2 flex justify-between z-30 pointer-events-none">
+                                        <button type="button" aria-label={t('move.title')} onClick={() => reorderGrid(card.id, -1)} disabled={isFirst} className={`pointer-events-auto w-8 h-8 flex items-center justify-center rounded-full shadow-lg border-2 transition-all active:scale-95 backdrop-blur-md ${isFirst ? 'bg-slate-100/50 border-slate-200 text-slate-300 opacity-50 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-700 hover:border-primary hover:text-primary hover:bg-slate-50'}`}><ArrowLeft size={16} strokeWidth={2.5} /></button>
+                                        <button type="button" aria-label={t('move.title')} onClick={() => reorderGrid(card.id, 1)} disabled={isLast} className={`pointer-events-auto w-8 h-8 flex items-center justify-center rounded-full shadow-lg border-2 transition-all active:scale-95 backdrop-blur-md ${isLast ? 'bg-slate-100/50 border-slate-200 text-slate-300 opacity-50 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-700 hover:border-primary hover:text-primary hover:bg-slate-50'}`}><ArrowRight size={16} strokeWidth={2.5} /></button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     );
                 }
@@ -276,7 +285,7 @@ export const BoardPage: React.FC = () => {
                     <FolderPlus size={48} />
                 </div>
                 <div className="text-center space-y-3 max-w-sm mx-auto">
-                    <p className="font-black text-2xl text-slate-700">{t('app.empty_folder')}</p>
+                    <p className="font-bold text-2xl text-slate-700">{t('app.empty_folder')}</p>
                     
                     {!isEditMode ? (
                         <div className="flex items-start gap-3 bg-blue-50 text-blue-900 px-5 py-4 rounded-2xl text-base font-bold text-left border border-blue-100 shadow-sm mx-auto max-w-xs">

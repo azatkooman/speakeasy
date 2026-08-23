@@ -35,7 +35,7 @@ const MainLayout: React.FC = () => {
   }
 
   return (
-    <div className="h-screen w-full bg-background pattern-grid flex flex-col overflow-hidden font-sans select-none">
+    <div className="h-screen w-full bg-background flex flex-col overflow-hidden font-sans select-none">
       <Header />
       <Routes>
         <Route path="/" element={<BoardPage />} />

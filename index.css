@@ -32,10 +32,9 @@ body {
   scrollbar-width: none;
 }
 
-.pattern-grid {
-  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-  background-size: 20px 20px;
-}
+/* The dotted ground was removed: background texture competes with the symbols
+   for attention, and for users with sensory sensitivities that raises the cost
+   of scanning the grid. The board is now a plain, low-contrast surface. */
 
 /* Many users of this app are motion-sensitive. tailwindcss-animate has no
    built-in reduced-motion handling, so opt the whole app out explicitly. */
