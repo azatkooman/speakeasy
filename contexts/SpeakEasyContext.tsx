@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
-import { AACItem, Category, Board, ChildProfile, AppSettings, ColorTheme } from '../types.ts';
+import { AACItem, Category, Board, ChildProfile, AppSettings, ColorTheme, GridSize } from '../types.ts';
 import { TranslationKey, getTranslation } from '../services/translations.ts';
 import { 
   getAllItems, getAllCategories, getAllBoards, getAllProfiles,
@@ -8,7 +8,7 @@ import {
   deleteItem, deleteCategory, deleteBoard, deleteProfile,
   saveItemsBatch, saveCategoriesBatch, saveBoardsBatch,
   initializeBoards, createNewBoard, ROOT_FOLDER,
-  DEFAULT_GRID_ROWS, DEFAULT_GRID_COLS
+  DEFAULT_GRID_ROWS, DEFAULT_GRID_COLS, GRID_PRESETS
 } from '../services/storage.ts';
 import { voiceService } from '../services/voice.ts';
 import { audioPlayer } from '../services/audioPlayer.ts';
@@ -56,6 +56,7 @@ interface SpeakEasyContextType {
   removeProfile: (id: string) => Promise<void>;
   
   createBoard: (label: string) => Promise<void>;
+  setBoardGridSize: (size: GridSize) => Promise<void>;
   updateBoard: (b: Board) => Promise<void>;
   removeBoard: (id: string) => Promise<void>;
   
@@ -468,6 +469,22 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       await reloadCurrentData();
   };
 
+  /**
+   * Grid density is a property of the board, not the profile — different boards
+   * legitimately want different densities. The Settings control writes here and
+   * also remembers the choice on the profile, so the control shows the right
+   * selection when the parent comes back.
+   */
+  const setBoardGridSize = async (size: GridSize) => {
+      const preset = GRID_PRESETS[size];
+      const board = boards.find(b => b.id === currentBoardId);
+      if (board) {
+          await saveBoard({ ...board, gridRows: preset.rows, gridCols: preset.cols });
+          await reloadCurrentData();
+      }
+      await handleSetSettings({ ...settings, gridColumns: size });
+  };
+
   const removeBoard = async (id: string) => {
       await deleteBoard(id);
       await reloadCurrentData();
@@ -659,6 +676,13 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (settings.maxSentenceLength > 0 && sentence.length >= settings.maxSentenceLength) return;
       setSentence(prev => [...prev, item]);
       playItemSound(item);
+
+      // Optionally bounce back to the top of the board so the child always
+      // re-orients from the same place. Core items are already board-scoped, so
+      // choosing one should not navigate anywhere.
+      if (settings.returnHomeAfterSelect && !item.isCore && currentFolderId !== ROOT_FOLDER) {
+          setCurrentFolderId(ROOT_FOLDER);
+      }
   };
 
   const removeFromSentence = (idx: number) => {
@@ -718,7 +742,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setSettings: handleSetSettings, 
       setEditMode: setIsEditMode, setSearchQuery, setIsSearchActive,
       switchProfile, switchBoard, navigateToFolder, navigateBackFolder, navigateBackBoard,
-      createProfile, updateProfile, removeProfile, createBoard, updateBoard, removeBoard,
+      createProfile, updateProfile, removeProfile, createBoard, updateBoard, removeBoard, setBoardGridSize,
       saveCard, saveFolderObj, saveLinkBoard, deleteCard, deleteFolderObj, reorderGrid, moveItemToFolder,
       addToSentence, removeFromSentence, removeLastFromSentence, clearSentence, playSentence, setSentenceFromHistory
   };

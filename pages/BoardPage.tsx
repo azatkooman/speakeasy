@@ -42,7 +42,7 @@ export const BoardPage: React.FC = () => {
      
      saveCard, saveFolderObj, saveLinkBoard, deleteCard, deleteFolderObj, 
      moveItemToFolder, setSentenceFromHistory, switchProfile, createProfile, updateProfile, removeProfile,
-     switchBoard, createBoard, updateBoard, removeBoard,
+     switchBoard, createBoard, updateBoard, removeBoard, setBoardGridSize,
      profiles, currentProfileId, boards, currentBoardId,
      setSettings,
      setSearchQuery, setIsSearchActive, searchQuery
@@ -392,7 +392,7 @@ export const BoardPage: React.FC = () => {
       <CreateCardModal voiceRate={settings.voiceRate} voicePitch={settings.voicePitch} isOpen={isCreateModalOpen} onClose={() => { setIsCreateModalOpen(false); setEditingItem(null); }} onSave={(d) => saveCard(d, editingItem?.id)} editItem={editingItem} t={t} language={settings.language} currentFolderName={currentFolderId === ROOT_FOLDER ? t('app.home_folder') : categories.find(c => c.id === currentFolderId)?.label} />
       <FolderModal isOpen={isFolderModalOpen} onClose={() => { setIsFolderModalOpen(false); setEditingFolder(null); }} onSave={(l, c, i) => saveFolderObj(l, c, i, editingFolder)} editFolder={editingFolder} t={t} language={settings.language} />
       <LinkBoardModal isOpen={isLinkBoardModalOpen} onClose={() => setIsLinkBoardModalOpen(false)} onSave={saveLinkBoard} boards={boards} currentBoardId={currentBoardId} t={t} />
-      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} settings={settings} onUpdateSettings={setSettings} t={t} />
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} settings={settings} onUpdateSettings={setSettings} onUpdateGridSize={setBoardGridSize} currentBoardLabel={boards.find(b => b.id === currentBoardId)?.label} t={t} />
       <BoardsModal isOpen={isBoardsModalOpen} onClose={() => setIsBoardsModalOpen(false)} boards={boards} currentBoardId={currentBoardId} onSwitchBoard={switchBoard} onCreateBoard={createBoard} onDeleteBoard={removeBoard} onUpdateBoard={updateBoard} t={t} />
       <ProfileSelectionModal 
         isOpen={isProfileModalOpen} 

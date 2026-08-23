@@ -125,9 +125,32 @@ const DEFAULT_CATEGORIES_TEMPLATE: Array<{
 export const IDX_PROFILE = 'by_profile';
 export const IDX_BOARD = 'by_board';
 
+/**
+ * Grid density presets. Rows x cols, landscape-oriented so a tablet held the
+ * usual way gets wider-than-tall grids. `large` means fewer, bigger cards.
+ */
+export const GRID_PRESETS = {
+  large:  { rows: 3, cols: 4 },   // 12 cells
+  medium: { rows: 4, cols: 6 },   // 24 cells
+  small:  { rows: 5, cols: 8 },   // 40 cells
+} as const;
+
 /** Default grid for boards created before gridRows/gridCols existed. */
-export const DEFAULT_GRID_ROWS = 4;
-export const DEFAULT_GRID_COLS = 6;
+export const DEFAULT_GRID_ROWS = GRID_PRESETS.medium.rows;
+export const DEFAULT_GRID_COLS = GRID_PRESETS.medium.cols;
+
+/** Closest preset for a board's actual dimensions, for showing the selection. */
+export const gridSizeForBoard = (rows?: number, cols?: number): 'small' | 'medium' | 'large' => {
+  const cells = (rows || DEFAULT_GRID_ROWS) * (cols || DEFAULT_GRID_COLS);
+  let best: 'small' | 'medium' | 'large' = 'medium';
+  let bestDelta = Infinity;
+  (Object.keys(GRID_PRESETS) as Array<keyof typeof GRID_PRESETS>).forEach(k => {
+    const p = GRID_PRESETS[k];
+    const delta = Math.abs(p.rows * p.cols - cells);
+    if (delta < bestDelta) { bestDelta = delta; best = k; }
+  });
+  return best;
+};
 
 /**
  * v6 -> v7. Converts the compacted `order` into an absolute `slot`, and gives

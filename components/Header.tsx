@@ -62,6 +62,8 @@ export const Header: React.FC = () => {
       }
       if (isEditMode) {
           setEditMode(false);
+          setIsSearchActive(false);
+          setSearchQuery('');
           ignoreNextClick.current = false;
           try {
              Haptics.impact({ style: ImpactStyle.Light });
@@ -109,7 +111,12 @@ export const Header: React.FC = () => {
                 </div>
                 
                 <div className="flex items-center gap-3 relative">
-                    <button onClick={() => setIsSearchActive(true)} className="p-2.5 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 active:bg-slate-300 transition-colors"><Search size={20} /></button>
+                    {/* Parent-only. In child mode, search replaces the board with a
+                        packed list of results, so every symbol a child has memorised
+                        appears somewhere else. */}
+                    {isEditMode && (
+                        <button aria-label={t('search.placeholder')} onClick={() => setIsSearchActive(true)} className="p-2.5 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 active:bg-slate-300 transition-colors"><Search size={20} /></button>
+                    )}
                     
                     {/* Lock Button */}
                     <div className="relative z-20">

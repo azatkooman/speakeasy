@@ -79,11 +79,32 @@ export interface SavedSentence {
 
 export type AppLanguage = 'en' | 'ru' | 'fr' | 'es';
 
+export type GridSize = 'small' | 'medium' | 'large';
+
+export type Shell = 'youngLearner' | 'neutral';
+
 export interface AppSettings {
   voicePitch: number;
   voiceRate: number;
-  gridColumns: 'small' | 'medium' | 'large';
+  /**
+   * Remembered grid-density preference. The authoritative dimensions live on
+   * the Board (gridRows/gridCols) — this is what the Settings control shows as
+   * selected, and changing it writes the mapped dimensions to the board.
+   */
+  gridColumns: GridSize;
   language: AppLanguage;
   maxSentenceLength: number; // 0 = unlimited, 1-5 = limit
   autoClearSentence: boolean;
+  /**
+   * Return to the home board after a fringe word is chosen, so the child
+   * always re-orients from the same place. Off by default: it is genuinely
+   * helpful for some children and disorienting for others.
+   */
+  returnHomeAfterSelect?: boolean;
+  /**
+   * Visual shell. AAC users keep a system for years — a child who starts at
+   * five is using it at fifteen — so the playful look is a choice, not a
+   * given. Same grid, same positions, same colours either way.
+   */
+  shell?: Shell;
 }

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Monitor, Volume2, Grid, Languages, Sparkles, AlertTriangle } from 'lucide-react';
+import { X, Monitor, Volume2, Grid, Languages, Sparkles, AlertTriangle, Home, Palette } from 'lucide-react';
 import { AppSettings } from '../types';
 import { voiceService } from '../services/voice';
 import { LANGUAGES, getLanguageOption } from '../utils/languages';
@@ -10,6 +10,9 @@ interface SettingsModalProps {
   onClose: () => void;
   settings: AppSettings;
   onUpdateSettings: (newSettings: AppSettings) => void;
+  /** Writes the mapped rows/cols to the current board — grid size is a board property. */
+  onUpdateGridSize: (size: 'small' | 'medium' | 'large') => void;
+  currentBoardLabel?: string;
   t: (key: any) => string;
 }
 
@@ -18,6 +21,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
   settings,
   onUpdateSettings,
+  onUpdateGridSize,
+  currentBoardLabel,
   t,
 }) => {
   const [testStatus, setTestStatus] = useState<'idle' | 'playing' | 'error'>('idle');
@@ -205,11 +210,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 <Grid size={20} className="text-indigo-600" />
                 <h3>{t('modal.settings.grid')}</h3>
             </div>
+            {/* Grid density lives on the board, so name the board it changes. */}
+            <p className="-mt-2 text-xs font-medium text-slate-400">
+                {t('modal.settings.grid_board')}{currentBoardLabel ? `: ${currentBoardLabel}` : ''}
+            </p>
             <div className="grid grid-cols-3 gap-3">
                 {(['large', 'medium', 'small'] as const).map((size) => (
                     <button
                         key={size}
-                        onClick={() => onUpdateSettings({...settings, gridColumns: size})}
+                        onClick={() => onUpdateGridSize(size)}
                         className={`
                             py-3 px-2 rounded-xl border-2 font-bold capitalize transition-all
                             ${settings.gridColumns === size 
@@ -221,6 +230,50 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     </button>
                 ))}
             </div>
+          </section>
+
+          {/* Return home after selection */}
+          <section className="space-y-4">
+             <div className="flex items-center space-x-2 text-slate-800 font-bold text-lg">
+                <Home size={20} className="text-indigo-600" />
+                <h3>{t('modal.settings.return_home')}</h3>
+             </div>
+             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between gap-4">
+                <p className="text-xs text-slate-400 font-medium flex-1">{t('modal.settings.return_home_desc')}</p>
+                <button
+                    role="switch"
+                    aria-checked={!!settings.returnHomeAfterSelect}
+                    aria-label={t('modal.settings.return_home')}
+                    onClick={() => onUpdateSettings({...settings, returnHomeAfterSelect: !settings.returnHomeAfterSelect})}
+                    className={`shrink-0 relative inline-flex h-9 w-16 items-center rounded-full transition-colors duration-200 border-2 border-transparent ${settings.returnHomeAfterSelect ? 'bg-indigo-600' : 'bg-slate-300'}`}
+                >
+                    <span className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow transition duration-200 ${settings.returnHomeAfterSelect ? 'translate-x-7' : 'translate-x-0'}`} />
+                </button>
+             </div>
+          </section>
+
+          {/* Visual shell */}
+          <section className="space-y-4">
+             <div className="flex items-center space-x-2 text-slate-800 font-bold text-lg">
+                <Palette size={20} className="text-indigo-600" />
+                <h3>{t('modal.settings.shell')}</h3>
+             </div>
+             <div className="grid grid-cols-2 gap-3">
+                {([['youngLearner','modal.settings.shell_young'],['neutral','modal.settings.shell_neutral']] as const).map(([value, key]) => {
+                    const active = (settings.shell || 'youngLearner') === value;
+                    return (
+                        <button
+                            key={value}
+                            aria-pressed={active}
+                            onClick={() => onUpdateSettings({...settings, shell: value})}
+                            className={`py-3 px-2 rounded-xl border-2 font-bold transition-all ${active ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm' : 'border-slate-200 text-slate-400 hover:border-slate-300'}`}
+                        >
+                            {t(key)}
+                        </button>
+                    );
+                })}
+             </div>
+             <p className="text-xs text-slate-400 font-medium">{t('modal.settings.shell_desc')}</p>
           </section>
 
         </div>

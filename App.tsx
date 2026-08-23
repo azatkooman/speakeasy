@@ -8,7 +8,7 @@ import { audioPlayer } from './services/audioPlayer.ts';
 import { SplashScreen } from '@capacitor/splash-screen';
 
 const MainLayout: React.FC = () => {
-  const { isInitializing } = useSpeakEasy();
+  const { isInitializing, settings } = useSpeakEasy();
 
   // Hide Splash Screen when data is loaded
   useEffect(() => {
@@ -35,7 +35,8 @@ const MainLayout: React.FC = () => {
   }
 
   return (
-    <div className="h-screen w-full bg-background flex flex-col overflow-hidden font-sans select-none">
+    <div data-shell={settings.shell || 'youngLearner'}
+      className="h-screen w-full bg-background flex flex-col overflow-hidden font-sans select-none">
       <Header />
       <Routes>
         <Route path="/" element={<BoardPage />} />

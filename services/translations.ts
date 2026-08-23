@@ -26,6 +26,13 @@ export type TranslationKey =
   | 'strip.remove_item'
   | 'modal.create.core'
   | 'modal.create.core_desc'
+  | 'modal.settings.grid_board'
+  | 'modal.settings.return_home'
+  | 'modal.settings.return_home_desc'
+  | 'modal.settings.shell'
+  | 'modal.settings.shell_young'
+  | 'modal.settings.shell_neutral'
+  | 'modal.settings.shell_desc'
   | 'nav.categories'
   | 'nav.add_card'
   | 'nav.settings'
@@ -217,6 +224,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'strip.remove_item': 'Remove',
     'modal.create.core': 'Always on screen',
     'modal.create.core_desc': 'Stays visible in every folder',
+    'modal.settings.grid_board': 'Applies to this board',
+    'modal.settings.return_home': 'Return home after choosing',
+    'modal.settings.return_home_desc': 'Go back to the main board after a word is picked',
+    'modal.settings.shell': 'Appearance',
+    'modal.settings.shell_young': 'Young learner',
+    'modal.settings.shell_neutral': 'Neutral',
+    'modal.settings.shell_desc': 'Same board and colours, calmer styling for older users',
     'nav.categories': 'Categories',
     'nav.add_card': 'Add Card',
     'nav.settings': 'Settings',
@@ -416,6 +430,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'strip.remove_item': 'Убрать',
     'modal.create.core': 'Всегда на экране',
     'modal.create.core_desc': 'Видно в любой папке',
+    'modal.settings.grid_board': 'Применяется к этой доске',
+    'modal.settings.return_home': 'Возврат на главную после выбора',
+    'modal.settings.return_home_desc': 'Возвращаться на главную доску после выбора слова',
+    'modal.settings.shell': 'Оформление',
+    'modal.settings.shell_young': 'Для малышей',
+    'modal.settings.shell_neutral': 'Нейтральное',
+    'modal.settings.shell_desc': 'Та же доска и цвета, спокойнее вид для старших',
     'nav.categories': 'Категории',
     'nav.add_card': 'Добавить',
     'nav.settings': 'Настройки',
@@ -615,6 +636,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'strip.remove_item': 'Retirer',
     'modal.create.core': 'Toujours visible',
     'modal.create.core_desc': 'Reste affiché dans chaque dossier',
+    'modal.settings.grid_board': 'Concerne ce tableau',
+    'modal.settings.return_home': 'Retour à l\'accueil après le choix',
+    'modal.settings.return_home_desc': 'Revenir au tableau principal après le choix d\'un mot',
+    'modal.settings.shell': 'Apparence',
+    'modal.settings.shell_young': 'Jeune enfant',
+    'modal.settings.shell_neutral': 'Neutre',
+    'modal.settings.shell_desc': 'Même tableau et mêmes couleurs, style plus sobre',
     'nav.categories': 'Catégories',
     'nav.add_card': 'Ajouter une Carte',
     'nav.settings': 'Paramètres',
@@ -814,6 +842,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'strip.remove_item': 'Quitar',
     'modal.create.core': 'Siempre visible',
     'modal.create.core_desc': 'Se mantiene en todas las carpetas',
+    'modal.settings.grid_board': 'Se aplica a este tablero',
+    'modal.settings.return_home': 'Volver al inicio tras elegir',
+    'modal.settings.return_home_desc': 'Regresar al tablero principal después de elegir una palabra',
+    'modal.settings.shell': 'Aspecto',
+    'modal.settings.shell_young': 'Primeros años',
+    'modal.settings.shell_neutral': 'Neutro',
+    'modal.settings.shell_desc': 'Mismo tablero y colores, estilo más sobrio',
     'nav.categories': 'Categorías',
     'nav.add_card': 'Añadir',
     'nav.settings': 'Ajustes',
