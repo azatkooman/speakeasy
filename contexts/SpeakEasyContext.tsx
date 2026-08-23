@@ -70,6 +70,13 @@ interface SpeakEasyContextType {
   reorderGrid: (itemId: string, direction: -1 | 1) => Promise<void>;
   moveItemToFolder: (item: AACItem | Category, type: 'card' | 'folder', targetFolderId: string) => Promise<void>;
 
+  /**
+   * The single entry point a cell should call. Applies auditory preview if it
+   * is on, and otherwise commits straight away.
+   */
+  selectItem: (item: AACItem) => void;
+  /** Card currently armed by auditory preview, for a visual cue. */
+  previewItemId: string | null;
   addToSentence: (item: AACItem) => void;
   removeFromSentence: (index: number) => void;
   removeLastFromSentence: () => void;
@@ -117,6 +124,9 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const playbackSessionRef = useRef(0);
   
+  const [previewItemId, setPreviewItemId] = useState<string | null>(null);
+  const previewTimerRef = useRef<number | null>(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchActive, setIsSearchActive] = useState(false);
 
@@ -685,6 +695,31 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
   };
 
+  /**
+   * Auditory preview: the first activation speaks the word without committing
+   * it, a second activation on the same card adds it. A card stays armed for a
+   * few seconds so a slow user is not forced to rush the second press.
+   */
+  const selectItem = (item: AACItem) => {
+      if (isPlaying) return;
+      // Board links navigate; previewing one would be meaningless.
+      if (!settings.auditoryPreview || item.linkedBoardId) {
+          addToSentence(item);
+          return;
+      }
+      if (previewItemId === item.id) {
+          if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+          setPreviewItemId(null);
+          addToSentence(item);
+          return;
+      }
+      setPreviewItemId(item.id);
+      const txt = (item.textToSpeak || (item.labelKey ? t(item.labelKey as TranslationKey) : item.label) || '').trim();
+      if (txt) voiceService.speak({ text: txt, language: settings.language, rate: settings.voiceRate, pitch: settings.voicePitch }).catch(() => {});
+      if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
+      previewTimerRef.current = window.setTimeout(() => setPreviewItemId(null), 4000);
+  };
+
   const removeFromSentence = (idx: number) => {
       if (isPlaying) stopPlayback();
       setSentence(prev => prev.filter((_, i) => i !== idx));
@@ -744,7 +779,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       switchProfile, switchBoard, navigateToFolder, navigateBackFolder, navigateBackBoard,
       createProfile, updateProfile, removeProfile, createBoard, updateBoard, removeBoard, setBoardGridSize,
       saveCard, saveFolderObj, saveLinkBoard, deleteCard, deleteFolderObj, reorderGrid, moveItemToFolder,
-      addToSentence, removeFromSentence, removeLastFromSentence, clearSentence, playSentence, setSentenceFromHistory
+      selectItem, previewItemId, addToSentence, removeFromSentence, removeLastFromSentence, clearSentence, playSentence, setSentenceFromHistory
   };
 
   return <SpeakEasyContext.Provider value={value}>{children}</SpeakEasyContext.Provider>;

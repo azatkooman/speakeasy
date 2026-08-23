@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Monitor, Volume2, Grid, Languages, Sparkles, AlertTriangle, Home, Palette } from 'lucide-react';
+import { X, Monitor, Volume2, Grid, Languages, Sparkles, AlertTriangle, Home, Palette, Hand } from 'lucide-react';
 import { AppSettings } from '../types';
 import { voiceService } from '../services/voice';
 import { LANGUAGES, getLanguageOption } from '../utils/languages';
@@ -248,6 +248,61 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     className={`shrink-0 relative inline-flex h-9 w-16 items-center rounded-full transition-colors duration-200 border-2 border-transparent ${settings.returnHomeAfterSelect ? 'bg-indigo-600' : 'bg-slate-300'}`}
                 >
                     <span className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow transition duration-200 ${settings.returnHomeAfterSelect ? 'translate-x-7' : 'translate-x-0'}`} />
+                </button>
+             </div>
+          </section>
+
+          {/* Access methods */}
+          <section className="space-y-4">
+             <div className="flex items-center space-x-2 text-slate-800 font-bold text-lg">
+                <Hand size={20} className="text-indigo-600" />
+                <h3>{t('modal.settings.access')}</h3>
+             </div>
+             <div className="grid grid-cols-3 gap-2">
+                {([['release','modal.settings.select_release'],['press','modal.settings.select_press'],['dwell','modal.settings.select_dwell']] as const).map(([value, key]) => {
+                    const active = (settings.selectionMode || 'release') === value;
+                    return (
+                        <button
+                            key={value}
+                            aria-pressed={active}
+                            onClick={() => onUpdateSettings({...settings, selectionMode: value})}
+                            className={`py-2.5 px-1 rounded-xl border-2 text-xs sm:text-sm font-bold transition-all min-h-[44px] ${active ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm' : 'border-slate-200 text-slate-400 hover:border-slate-300'}`}
+                        >
+                            {t(key)}
+                        </button>
+                    );
+                })}
+             </div>
+             <p className="text-xs text-slate-400 font-medium leading-snug">{t('modal.settings.select_desc')}</p>
+
+             {(settings.selectionMode === 'dwell') && (
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <div className="flex justify-between mb-2">
+                        <label className="text-sm font-bold text-slate-500 uppercase">{t('modal.settings.dwell_time')}</label>
+                        <span className="text-sm font-bold text-slate-700">{((settings.dwellMs || 600) / 1000).toFixed(1)}s</span>
+                    </div>
+                    <input
+                        type="range" min="200" max="2000" step="100"
+                        value={settings.dwellMs || 600}
+                        onChange={(e) => onUpdateSettings({...settings, dwellMs: parseInt(e.target.value)})}
+                        className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                    />
+                </div>
+             )}
+
+             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between gap-4">
+                <div className="flex-1">
+                    <p className="font-bold text-slate-700 text-sm">{t('modal.settings.preview')}</p>
+                    <p className="text-xs text-slate-400 font-medium">{t('modal.settings.preview_desc')}</p>
+                </div>
+                <button
+                    role="switch"
+                    aria-checked={!!settings.auditoryPreview}
+                    aria-label={t('modal.settings.preview')}
+                    onClick={() => onUpdateSettings({...settings, auditoryPreview: !settings.auditoryPreview})}
+                    className={`shrink-0 relative inline-flex h-9 w-16 items-center rounded-full transition-colors duration-200 border-2 border-transparent ${settings.auditoryPreview ? 'bg-indigo-600' : 'bg-slate-300'}`}
+                >
+                    <span className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow transition duration-200 ${settings.auditoryPreview ? 'translate-x-7' : 'translate-x-0'}`} />
                 </button>
              </div>
           </section>

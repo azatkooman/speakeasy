@@ -33,6 +33,14 @@ export type TranslationKey =
   | 'modal.settings.shell_young'
   | 'modal.settings.shell_neutral'
   | 'modal.settings.shell_desc'
+  | 'modal.settings.access'
+  | 'modal.settings.select_release'
+  | 'modal.settings.select_press'
+  | 'modal.settings.select_dwell'
+  | 'modal.settings.select_desc'
+  | 'modal.settings.dwell_time'
+  | 'modal.settings.preview'
+  | 'modal.settings.preview_desc'
   | 'nav.categories'
   | 'nav.add_card'
   | 'nav.settings'
@@ -231,6 +239,14 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.shell_young': 'Young learner',
     'modal.settings.shell_neutral': 'Neutral',
     'modal.settings.shell_desc': 'Same board and colours, calmer styling for older users',
+    'modal.settings.access': 'How cards are chosen',
+    'modal.settings.select_release': 'On lift',
+    'modal.settings.select_press': 'On touch',
+    'modal.settings.select_dwell': 'Hold',
+    'modal.settings.select_desc': 'On lift lets a finger slide off to cancel. Hold ignores brief or accidental contact.',
+    'modal.settings.dwell_time': 'Hold time',
+    'modal.settings.preview': 'Hear before choosing',
+    'modal.settings.preview_desc': 'First tap says the word, second tap adds it to the sentence',
     'nav.categories': 'Categories',
     'nav.add_card': 'Add Card',
     'nav.settings': 'Settings',
@@ -437,6 +453,14 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.shell_young': 'Для малышей',
     'modal.settings.shell_neutral': 'Нейтральное',
     'modal.settings.shell_desc': 'Та же доска и цвета, спокойнее вид для старших',
+    'modal.settings.access': 'Как выбираются карточки',
+    'modal.settings.select_release': 'При отпускании',
+    'modal.settings.select_press': 'При касании',
+    'modal.settings.select_dwell': 'Удержание',
+    'modal.settings.select_desc': 'При отпускании можно сдвинуть палец и отменить. Удержание не реагирует на случайные касания.',
+    'modal.settings.dwell_time': 'Время удержания',
+    'modal.settings.preview': 'Сначала прослушать',
+    'modal.settings.preview_desc': 'Первое нажатие произносит слово, второе добавляет его в строку',
     'nav.categories': 'Категории',
     'nav.add_card': 'Добавить',
     'nav.settings': 'Настройки',
@@ -643,6 +667,14 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.shell_young': 'Jeune enfant',
     'modal.settings.shell_neutral': 'Neutre',
     'modal.settings.shell_desc': 'Même tableau et mêmes couleurs, style plus sobre',
+    'modal.settings.access': 'Choix des cartes',
+    'modal.settings.select_release': 'Au relâchement',
+    'modal.settings.select_press': 'Au contact',
+    'modal.settings.select_dwell': 'Maintien',
+    'modal.settings.select_desc': 'Au relâchement, glisser le doigt annule. Le maintien ignore les contacts brefs ou accidentels.',
+    'modal.settings.dwell_time': 'Durée du maintien',
+    'modal.settings.preview': 'Écouter avant de choisir',
+    'modal.settings.preview_desc': 'La première pression dit le mot, la seconde l\'ajoute à la phrase',
     'nav.categories': 'Catégories',
     'nav.add_card': 'Ajouter une Carte',
     'nav.settings': 'Paramètres',
@@ -849,6 +881,14 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.shell_young': 'Primeros años',
     'modal.settings.shell_neutral': 'Neutro',
     'modal.settings.shell_desc': 'Mismo tablero y colores, estilo más sobrio',
+    'modal.settings.access': 'Cómo se eligen las tarjetas',
+    'modal.settings.select_release': 'Al soltar',
+    'modal.settings.select_press': 'Al tocar',
+    'modal.settings.select_dwell': 'Mantener',
+    'modal.settings.select_desc': 'Al soltar, deslizar el dedo cancela. Mantener ignora los toques breves o accidentales.',
+    'modal.settings.dwell_time': 'Tiempo de mantener',
+    'modal.settings.preview': 'Escuchar antes de elegir',
+    'modal.settings.preview_desc': 'El primer toque dice la palabra, el segundo la añade a la frase',
     'nav.categories': 'Categorías',
     'nav.add_card': 'Añadir',
     'nav.settings': 'Ajustes',

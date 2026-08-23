@@ -107,4 +107,25 @@ export interface AppSettings {
    * given. Same grid, same positions, same colours either way.
    */
   shell?: Shell;
+
+  /**
+   * How a press turns into a selection.
+   * - 'release' (default): activates on lift, and only if the finger is still
+   *   on the cell, so sliding off cancels. This is native click behaviour.
+   * - 'press': activates the instant contact is made. Fastest, but a brushed
+   *   hand selects.
+   * - 'dwell': the cell must be held for dwellMs before it activates, which
+   *   filters out tremor and involuntary contact.
+   */
+  selectionMode?: SelectionMode;
+  /** Hold duration for selectionMode 'dwell'. */
+  dwellMs?: number;
+  /**
+   * Two-stage selection. The first activation speaks the word without adding
+   * it to the sentence; a second activation on the same cell commits it.
+   * Essential for auditory scanning and for users who cannot see the symbol.
+   */
+  auditoryPreview?: boolean;
 }
+
+export type SelectionMode = 'release' | 'press' | 'dwell';

@@ -39,7 +39,9 @@ body {
 /* Many users of this app are motion-sensitive. tailwindcss-animate has no
    built-in reduced-motion handling, so opt the whole app out explicitly. */
 @media (prefers-reduced-motion: reduce) {
-  *,
+  /* The dwell fill is exempt below: it is the feedback that tells a user their
+     hold is being counted, so clamping it would remove information. */
+  *:not([style*='dwellFill']),
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
@@ -72,3 +74,11 @@ body {
 }
 [data-shell='neutral'] .font-black { font-weight: 700; }
 [data-shell='neutral'] .font-extrabold { font-weight: 600; }
+
+/* Dwell progress fill. Held under prefers-reduced-motion deliberately: this is
+   not decoration, it is the feedback that tells a user their hold is being
+   counted, so suppressing it would remove information rather than motion. */
+@keyframes dwellFill {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}

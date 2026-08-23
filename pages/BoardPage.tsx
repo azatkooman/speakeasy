@@ -8,6 +8,8 @@ import { ROOT_FOLDER } from '../services/storage.ts';
 import { AACItem, Category } from '../types.ts';
 import { TranslationKey } from '../services/translations.ts';
 import { readHistory } from '../utils/history.ts';
+import { useSelectable, DEFAULT_DWELL_MS } from '../utils/useSelectable.ts';
+import GridCellButton from '../components/GridCellButton.tsx';
 import ConfirmationModal from '../components/ConfirmationModal.tsx';
 import CreateCardModal from '../components/CreateCardModal.tsx';
 import CreateSelectionModal from '../components/CreateSelectionModal.tsx';
@@ -36,7 +38,7 @@ const DEFAULT_CARD_STYLE = THEME_STYLES['slate'];
 
 export const BoardPage: React.FC = () => {
   const { 
-     gridItems, gridCells, grid, coreItems, sentence, categories, settings, isEditMode, currentFolderId, breadcrumbs, 
+     gridItems, gridCells, grid, coreItems, selectItem, previewItemId, sentence, categories, settings, isEditMode, currentFolderId, breadcrumbs, 
      addToSentence, removeFromSentence, removeLastFromSentence, clearSentence, playSentence,
      t, navigateToFolder, navigateBackFolder, reorderGrid, isSearchActive, library,
      
@@ -188,11 +190,13 @@ export const BoardPage: React.FC = () => {
               const style = getCardStyle(card);
               const label = card.labelKey ? t(card.labelKey as TranslationKey) : card.label;
               return (
-                <button
+                <GridCellButton
                   key={card.id}
-                  type="button"
-                  onClick={() => addToSentence(card)}
-                  className={`shrink-0 h-[4.25rem] sm:h-20 rounded-2xl bg-white border-2 ${style.border} shadow-[0_3px_0_0] ${style.shadow} active:shadow-none active:translate-y-[3px] flex flex-col overflow-hidden focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2 ${card.isVisible === false ? 'opacity-50 grayscale' : ''}`}
+                  onActivate={() => selectItem(card)}
+                  selectionMode={settings.selectionMode || 'release'}
+                  dwellMs={settings.dwellMs || DEFAULT_DWELL_MS}
+                  isPreviewArmed={previewItemId === card.id}
+                  className={`shrink-0 h-[4.25rem] sm:h-20 rounded-2xl bg-white border-2 ${style.border} shadow-[0_3px_0_0] ${style.shadow} flex flex-col overflow-hidden ${card.isVisible === false ? 'opacity-50 grayscale' : ''}`}
                 >
                   <span className="flex-1 min-h-0 w-full p-1 flex items-center justify-center bg-white">
                     <img src={card.imageUrl} alt="" loading="lazy" className={`w-full h-full ${card.imageFit === 'contain' ? 'object-contain' : 'object-cover rounded-lg'}`} />
@@ -200,7 +204,7 @@ export const BoardPage: React.FC = () => {
                   <span className={`shrink-0 w-full py-0.5 px-1 border-t-2 ${style.border} ${style.bg} ${style.text} text-[10px] sm:text-xs font-semibold text-center truncate`}>
                     {label}
                   </span>
-                </button>
+                </GridCellButton>
               );
           })}
         </nav>
@@ -269,24 +273,24 @@ export const BoardPage: React.FC = () => {
                         // edit controls are siblings rather than nested buttons, which
                         // would be invalid and would break that traversal.
                         <div key={card.id} className="relative aspect-[4/5]">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    addToSentence(card);
+                            <GridCellButton
+                                onActivate={() => {
+                                    selectItem(card);
                                     if (isSearchActive) {
                                         navigateToFolder(card.category);
                                         setIsSearchActive(false);
                                         setSearchQuery('');
                                     }
                                 }}
+                                selectionMode={settings.selectionMode || 'release'}
+                                dwellMs={settings.dwellMs || DEFAULT_DWELL_MS}
+                                isPreviewArmed={previewItemId === card.id}
                                 className={`
-                                    absolute inset-0 rounded-3xl cursor-pointer text-left
+                                    absolute inset-0 rounded-3xl
                                     bg-white
                                     flex flex-col items-center overflow-hidden
                                     border-2 ${style.border}
                                     shadow-[0_4px_0_0] ${style.shadow}
-                                    active:shadow-none active:translate-y-[4px] active:border-b-2
-                                    focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2
                                     transition-all duration-100
                                     group
                                     ${isHidden ? 'opacity-50 grayscale' : ''}
@@ -315,7 +319,7 @@ export const BoardPage: React.FC = () => {
                                         {displayLabel}
                                     </span>
                                 </div>
-                            </button>
+                            </GridCellButton>
 
                             {isEditMode && (
                                 <>
