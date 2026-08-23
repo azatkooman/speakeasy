@@ -23,6 +23,7 @@ export type TranslationKey =
   | 'strip.history'
   | 'strip.speak'
   | 'strip.backspace'
+  | 'strip.remove_item'
   | 'nav.categories'
   | 'nav.add_card'
   | 'nav.settings'
@@ -138,9 +139,6 @@ export type TranslationKey =
   | 'recorder.playing'
   | 'recorder.tap_play'
   | 'recorder.tap_red'
-  | 'gate.title'
-  | 'gate.desc'
-  | 'gate.unlock'
   | 'category.NOUN'
   | 'category.VERB'
   | 'category.ADJECTIVE'
@@ -214,6 +212,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'strip.history': 'Recent Sentences',
     'strip.speak': 'Speak',
     'strip.backspace': 'Backspace',
+    'strip.remove_item': 'Remove',
     'nav.categories': 'Categories',
     'nav.add_card': 'Add Card',
     'nav.settings': 'Settings',
@@ -338,9 +337,6 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'recorder.playing': 'Playing...',
     'recorder.tap_play': 'Tap play to test',
     'recorder.tap_red': 'Tap red button',
-    'gate.title': 'For Parents Only',
-    'gate.desc': 'Please solve this to unlock editing.',
-    'gate.unlock': 'Unlock',
     'category.NOUN': 'Things',
     'category.VERB': 'Actions',
     'category.ADJECTIVE': 'Desc.',
@@ -413,6 +409,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'strip.history': 'История',
     'strip.speak': 'Сказать',
     'strip.backspace': 'Удалить',
+    'strip.remove_item': 'Убрать',
     'nav.categories': 'Категории',
     'nav.add_card': 'Добавить',
     'nav.settings': 'Настройки',
@@ -537,9 +534,6 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'recorder.playing': 'Воспроизведение...',
     'recorder.tap_play': 'Нажмите Play',
     'recorder.tap_red': 'Нажмите красную кнопку',
-    'gate.title': 'Для родителей',
-    'gate.desc': 'Решите пример, чтобы разблокировать.',
-    'gate.unlock': 'Открыть',
     'category.NOUN': 'Вещи',
     'category.VERB': 'Действия',
     'category.ADJECTIVE': 'Признаки',
@@ -612,6 +606,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'strip.history': 'Phrases Récentes',
     'strip.speak': 'Parler',
     'strip.backspace': 'Effacer',
+    'strip.remove_item': 'Retirer',
     'nav.categories': 'Catégories',
     'nav.add_card': 'Ajouter une Carte',
     'nav.settings': 'Paramètres',
@@ -736,9 +731,6 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'recorder.playing': 'Lecture en cours...',
     'recorder.tap_play': 'Touchez lire pour tester',
     'recorder.tap_red': 'Touchez le bouton rouge',
-    'gate.title': 'Pour les Parents Uniquement',
-    'gate.desc': 'Veuillez résoudre ceci pour déverrouiller l\'édition.',
-    'gate.unlock': 'Déverrouiller',
     'category.NOUN': 'Choses',
     'category.VERB': 'Actions',
     'category.ADJECTIVE': 'Desc.',
@@ -811,6 +803,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'strip.history': 'Historial',
     'strip.speak': 'Hablar',
     'strip.backspace': 'Borrar',
+    'strip.remove_item': 'Quitar',
     'nav.categories': 'Categorías',
     'nav.add_card': 'Añadir',
     'nav.settings': 'Ajustes',
@@ -935,9 +928,6 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'recorder.playing': 'Sonando...',
     'recorder.tap_play': 'Escuchar para probar',
     'recorder.tap_red': 'Elige botón rojo',
-    'gate.title': 'Cosas de padres',
-    'gate.desc': 'Resuelve este ejemplo para editar.',
-    'gate.unlock': 'Confirmar',
     'category.NOUN': 'Cosas',
     'category.VERB': 'Acciones',
     'category.ADJECTIVE': 'Descrip.',

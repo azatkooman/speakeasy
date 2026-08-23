@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useSpeakEasy } from '../contexts/SpeakEasyContext.tsx';
-import { Home, ChevronRight, CornerUpLeft, Plus, FolderPlus, ArrowLeft, ArrowRight, Settings2, ArrowUpRight, User, Layers, Lock } from 'lucide-react';
+import { Home, ChevronRight, CornerUpLeft, Plus, FolderPlus, ArrowLeft, ArrowRight, Settings2, ArrowUpRight, User, Layers } from 'lucide-react';
 import SentenceStrip from '../components/SentenceStrip.tsx';
 import FolderCard from '../components/FolderCard.tsx';
 import { ROOT_FOLDER } from '../services/storage.ts';
@@ -287,11 +287,24 @@ export const BoardPage: React.FC = () => {
                 <div className="text-center space-y-3 max-w-sm mx-auto">
                     <p className="font-bold text-2xl text-slate-700">{t('app.empty_folder')}</p>
                     
+                    {/*
+                      A child who lands in an empty folder used to be shown
+                      "Switch to Parent Mode to add folders or cards" — an
+                      instruction they cannot act on, on a screen with no way
+                      out. Give them the way out instead. At the root there is
+                      nowhere to go back to, so the heading stands alone.
+                    */}
                     {!isEditMode ? (
-                        <div className="flex items-start gap-3 bg-blue-50 text-blue-900 px-5 py-4 rounded-2xl text-base font-bold text-left border border-blue-100 shadow-sm mx-auto max-w-xs">
-                            <div className="mt-0.5 bg-blue-100 p-1.5 rounded-lg"><Lock size={18} className="text-blue-600" /></div>
-                            <p className="leading-snug">{t('app.switch_parent')}</p>
-                        </div>
+                        currentFolderId !== ROOT_FOLDER && (
+                            <button
+                                type="button"
+                                onClick={() => navigateToFolder(ROOT_FOLDER)}
+                                className="mx-auto flex items-center gap-2 px-5 py-3 bg-white border-2 border-slate-200 rounded-2xl text-slate-700 font-semibold shadow-sm hover:border-primary hover:text-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2"
+                            >
+                                <Home size={20} />
+                                <span>{t('app.home_folder')}</span>
+                            </button>
+                        )
                     ) : (
                         <div className="text-slate-400 font-bold text-lg flex items-center justify-center gap-2 flex-wrap">
                             <span>{t('app.hint_tap')}</span>

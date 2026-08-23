@@ -155,7 +155,7 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
                         {/* Remove — always visible; `hover` never happens on touch. */}
                         <button
                             type="button"
-                            aria-label={`${t('strip.backspace')}: ${displayLabel}`}
+                            aria-label={`${t('strip.remove_item')}: ${displayLabel}`}
                             onClick={(e) => { e.stopPropagation(); onRemoveItem(idx); }}
                             className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-1 shadow-sm z-30 border-2 border-white active:scale-90 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-1"
                         >

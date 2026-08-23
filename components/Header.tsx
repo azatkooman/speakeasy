@@ -3,7 +3,6 @@ import React, { useRef, useState } from 'react';
 import { Search, X, ChevronLeft, Lock, Unlock, Hand } from 'lucide-react';
 import { useSpeakEasy } from '../contexts/SpeakEasyContext.tsx';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
-import ParentGateModal from './ParentGateModal.tsx';
 
 export const Header: React.FC = () => {
   const { 
@@ -15,7 +14,6 @@ export const Header: React.FC = () => {
   const unlockTimerRef = useRef<number | null>(null);
   const ignoreNextClick = useRef(false);
   const [isHoldingUnlock, setIsHoldingUnlock] = useState(false);
-  const [isGateOpen, setIsGateOpen] = useState(false);
   const [showOnboardingHint, setShowOnboardingHint] = useState(!localStorage.getItem('aac_onboarding_completed'));
 
   const triggerHaptic = async () => {
@@ -33,28 +31,20 @@ export const Header: React.FC = () => {
     
     setIsHoldingUnlock(true);
     unlockTimerRef.current = window.setTimeout(() => {
-      // The long press is only the intent filter — it stops a stray tap from
-      // opening edit mode. The gate is what actually keeps a child out, since
-      // behind it they can delete every card, board and profile.
-      setIsGateOpen(true);
+      setEditMode(true);
       setIsHoldingUnlock(false);
       ignoreNextClick.current = true;
       triggerHaptic();
+
+      if (showOnboardingHint) {
+          localStorage.setItem('aac_onboarding_completed', 'true');
+          setShowOnboardingHint(false);
+      }
 
       setTimeout(() => {
           if (ignoreNextClick.current) ignoreNextClick.current = false;
       }, 1000);
     }, 1500);
-  };
-
-  const handleGateSuccess = () => {
-      setEditMode(true);
-      // Only mark onboarding done once the parent has actually got in, so a
-      // failed attempt does not remove the hint that explains how.
-      if (showOnboardingHint) {
-          localStorage.setItem('aac_onboarding_completed', 'true');
-          setShowOnboardingHint(false);
-      }
   };
 
   const cancelUnlock = () => {
@@ -165,13 +155,6 @@ export const Header: React.FC = () => {
                 </div>
             </>
         )}
-
-        <ParentGateModal
-          isOpen={isGateOpen}
-          onClose={() => setIsGateOpen(false)}
-          onSuccess={handleGateSuccess}
-          t={t}
-        />
       </div>
   );
 };
