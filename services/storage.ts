@@ -3,6 +3,7 @@ import { Capacitor } from '@capacitor/core';
 import { AACItem, Category, Board, ChildProfile, ColorTheme } from '../types';
 import { Filesystem as CapFilesystem, Directory as CapDirectory, Encoding as CapEncoding } from '@capacitor/filesystem';
 import { TranslationKey } from './translations';
+import { SEED_PICTOGRAMS, resolveSeedPictogram, isBundledAsset } from '../utils/seedPictograms';
 
 const DB_NAME = 'speakeasy_aac_db';
 const DB_VERSION = 5;
@@ -74,10 +75,18 @@ const deleteAssetFile = async (path: string | undefined) => {
     } catch (e) { /* Ignore */ }
 };
 
-const getDisplayUrl = (path: string | undefined): string | undefined => {
+const getDisplayUrl = (rawPath: string | undefined): string | undefined => {
+    // Existing installs have the old static.arasaac.org URLs for their default
+    // cards. Swap them for the bundled copies on read so those cards render
+    // offline too, without migrating the database.
+    const path = resolveSeedPictogram(rawPath);
     if (!path) return undefined;
     if (!isNative) return path;
     if (path.startsWith('data:') || path.startsWith('http') || !path.includes('/')) return path;
+    // Assets bundled with the web build are already served from the app origin.
+    // Running them through convertFileSrc() rewrites them to a filesystem URL
+    // that does not exist, which renders them as broken images.
+    if (isBundledAsset(path)) return path;
     if (Capacitor && Capacitor.convertFileSrc) return Capacitor.convertFileSrc(path);
     return path;
 };
@@ -254,15 +263,15 @@ export const initializeBoards = async (defaultName: string, profileId: string, t
     });
 
     const defaultCards: AACItem[] = [
-        createDefaultCard(crypto.randomUUID(), 'default.card.i_want', 'I want', 'https://static.arasaac.org/pictograms/5441/5441_500.png', ROOT_FOLDER, 'green', 0),
-        createDefaultCard(crypto.randomUUID(), 'default.card.yes', 'Yes', 'https://static.arasaac.org/pictograms/5584/5584_500.png', ROOT_FOLDER, 'green', 1),
-        createDefaultCard(crypto.randomUUID(), 'default.card.no', 'No', 'https://static.arasaac.org/pictograms/5526/5526_500.png', ROOT_FOLDER, 'red', 2),
-        createDefaultCard(crypto.randomUUID(), 'default.card.stop', 'Stop', 'https://static.arasaac.org/pictograms/7196/7196_500.png', ROOT_FOLDER, 'red', 3),
+        createDefaultCard(crypto.randomUUID(), 'default.card.i_want', 'I want', SEED_PICTOGRAMS.iWant, ROOT_FOLDER, 'green', 0),
+        createDefaultCard(crypto.randomUUID(), 'default.card.yes', 'Yes', SEED_PICTOGRAMS.yes, ROOT_FOLDER, 'green', 1),
+        createDefaultCard(crypto.randomUUID(), 'default.card.no', 'No', SEED_PICTOGRAMS.no, ROOT_FOLDER, 'red', 2),
+        createDefaultCard(crypto.randomUUID(), 'default.card.stop', 'Stop', SEED_PICTOGRAMS.stop, ROOT_FOLDER, 'red', 3),
     ];
 
     if (foodCategoryId) {
         defaultCards.push(
-            createDefaultCard(crypto.randomUUID(), 'default.card.apple', 'Apple', 'https://static.arasaac.org/pictograms/2462/2462_500.png', foodCategoryId, 'orange', 0)
+            createDefaultCard(crypto.randomUUID(), 'default.card.apple', 'Apple', SEED_PICTOGRAMS.apple, foodCategoryId, 'orange', 0)
         );
     }
 

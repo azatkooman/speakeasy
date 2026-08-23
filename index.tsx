@@ -2,6 +2,10 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
+// Tailwind, the self-hosted font and the app's base styles. Imported here so
+// Vite/PostCSS builds them into the bundle instead of the app fetching a
+// stylesheet from cdn.tailwindcss.com at runtime.
+import './index.css';
 
 const rootElement = document.getElementById('root');
 
@@ -11,11 +15,10 @@ if (!rootElement) {
 }
 
 try {
-  let root = (rootElement as any)._reactRootContainer;
-  if (!root) {
-    root = createRoot(rootElement);
-    (rootElement as any)._reactRootContainer = root;
-  }
+  // The guard that used to live here worked around index.tsx being executed
+  // twice, once by a @babel/standalone <script type="text/babel"> tag and once
+  // as a module. That tag is gone, so a single root is correct.
+  const root = createRoot(rootElement);
   root.render(
     <React.StrictMode>
       <App />

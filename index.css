@@ -1,0 +1,51 @@
+/* Self-hosted Nunito. Replaces the fonts.googleapis.com stylesheet — one
+   variable font file covers the 400/600/700/800/900 weights the app uses,
+   including `font-black`, which previously fell back to a synthesised bold
+   because the Google Fonts request only asked for 400..800. */
+@import '@fontsource-variable/nunito';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Everything below was previously an inline <style> block in index.html.
+   It lives here so PostCSS processes it and it ships in the bundle. */
+:root {
+  color-scheme: light;
+}
+
+body {
+  background-color: #f0f4f8;
+  color: #1e293b;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-touch-callout: none;
+  margin: 0;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.pattern-grid {
+  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Many users of this app are motion-sensitive. tailwindcss-animate has no
+   built-in reduced-motion handling, so opt the whole app out explicitly. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
