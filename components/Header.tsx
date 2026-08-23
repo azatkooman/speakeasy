@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import { Search, X, ChevronLeft, Lock, Unlock, Hand } from 'lucide-react';
 import { useSpeakEasy } from '../contexts/SpeakEasyContext.tsx';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import ParentGateModal from './ParentGateModal.tsx';
 
 export const Header: React.FC = () => {
   const { 
@@ -14,6 +15,7 @@ export const Header: React.FC = () => {
   const unlockTimerRef = useRef<number | null>(null);
   const ignoreNextClick = useRef(false);
   const [isHoldingUnlock, setIsHoldingUnlock] = useState(false);
+  const [isGateOpen, setIsGateOpen] = useState(false);
   const [showOnboardingHint, setShowOnboardingHint] = useState(!localStorage.getItem('aac_onboarding_completed'));
 
   const triggerHaptic = async () => {
@@ -31,20 +33,28 @@ export const Header: React.FC = () => {
     
     setIsHoldingUnlock(true);
     unlockTimerRef.current = window.setTimeout(() => {
-      setEditMode(true);
+      // The long press is only the intent filter — it stops a stray tap from
+      // opening edit mode. The gate is what actually keeps a child out, since
+      // behind it they can delete every card, board and profile.
+      setIsGateOpen(true);
       setIsHoldingUnlock(false);
       ignoreNextClick.current = true;
       triggerHaptic();
-      
+
+      setTimeout(() => {
+          if (ignoreNextClick.current) ignoreNextClick.current = false;
+      }, 1000);
+    }, 3000);
+  };
+
+  const handleGateSuccess = () => {
+      setEditMode(true);
+      // Only mark onboarding done once the parent has actually got in, so a
+      // failed attempt does not remove the hint that explains how.
       if (showOnboardingHint) {
           localStorage.setItem('aac_onboarding_completed', 'true');
           setShowOnboardingHint(false);
       }
-      
-      setTimeout(() => {
-          if (ignoreNextClick.current) ignoreNextClick.current = false;
-      }, 1000);
-    }, 2500);
   };
 
   const cancelUnlock = () => {
@@ -123,7 +133,7 @@ export const Header: React.FC = () => {
                             onClick={handleLockToggle}
                             className={`relative overflow-hidden p-1.5 pr-4 rounded-full flex items-center space-x-2 border-2 transition-all active:scale-95 ${isEditMode ? 'bg-red-50 text-red-600 border-red-200' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'} ${showOnboardingHint && !isEditMode ? 'ring-4 ring-blue-400/30' : ''}`}
                         >
-                            {!isEditMode && <div className={`absolute inset-0 bg-slate-200/80 transition-transform ease-linear origin-left ${isHoldingUnlock ? 'scale-x-100 duration-[2500ms]' : 'scale-x-0'}`} />}
+                            {!isEditMode && <div className={`absolute inset-0 bg-slate-200/80 transition-transform ease-linear origin-left ${isHoldingUnlock ? 'scale-x-100 duration-[3000ms]' : 'scale-x-0'}`} />}
                             <div className={`relative z-10 p-1.5 rounded-full ${isEditMode ? 'bg-red-100' : 'bg-slate-100'}`}>{isEditMode ? <Unlock size={16} /> : <Lock size={16} />}</div>
                             <div className="relative z-10 flex flex-col items-start"><span className="text-xs font-bold uppercase tracking-tight">{isHoldingUnlock ? t('mode.holding') : (isEditMode ? t('mode.parent') : t('mode.child'))}</span></div>
                         </button>
@@ -155,6 +165,13 @@ export const Header: React.FC = () => {
                 </div>
             </>
         )}
+
+        <ParentGateModal
+          isOpen={isGateOpen}
+          onClose={() => setIsGateOpen(false)}
+          onSuccess={handleGateSuccess}
+          t={t}
+        />
       </div>
   );
 };

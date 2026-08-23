@@ -11,6 +11,7 @@ import {
 } from '../services/storage.ts';
 import { voiceService } from '../services/voice.ts';
 import { audioPlayer } from '../services/audioPlayer.ts';
+import { pushHistory, clearHistory } from '../utils/history.ts';
 import { detectDeviceLanguage } from '../utils/languages.ts';
 
 interface SpeakEasyContextType {
@@ -378,6 +379,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const removeProfile = async (id: string) => {
       await deleteProfile(id);
+      clearHistory(id);
       const remaining = await getAllProfiles();
       setProfiles(remaining);
       if (remaining.length === 0) {
@@ -600,8 +602,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (valid.length === 0 || isPlaying) return;
       const session = ++playbackSessionRef.current;
       setIsPlaying(true);
-      const histIds = [valid.map(i => i.id), ...((JSON.parse(localStorage.getItem('aac_history_ids')||'[]') as string[][]))].slice(0, 15);
-      localStorage.setItem('aac_history_ids', JSON.stringify(histIds));
+      pushHistory(currentProfileId, valid.map(i => i.id));
       try {
           for (let i = 0; i < valid.length; i++) {
               if (playbackSessionRef.current !== session) break;

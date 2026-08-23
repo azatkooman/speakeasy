@@ -7,6 +7,7 @@ import FolderCard from '../components/FolderCard.tsx';
 import { ROOT_FOLDER } from '../services/storage.ts';
 import { AACItem, Category } from '../types.ts';
 import { TranslationKey } from '../services/translations.ts';
+import { readHistory } from '../utils/history.ts';
 import ConfirmationModal from '../components/ConfirmationModal.tsx';
 import CreateCardModal from '../components/CreateCardModal.tsx';
 import CreateSelectionModal from '../components/CreateSelectionModal.tsx';
@@ -310,9 +311,9 @@ export const BoardPage: React.FC = () => {
         </div>
       )}
 
-      <HistoryModal isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} historyIds={JSON.parse(localStorage.getItem('aac_history_ids') || '[]')} library={library} onSelectSentence={setSentenceFromHistory} t={t} />
+      <HistoryModal isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} historyIds={isHistoryOpen ? readHistory(currentProfileId) : []} library={library} onSelectSentence={setSentenceFromHistory} t={t} />
       <CreateSelectionModal isOpen={isCreateSelectionOpen} onClose={() => setIsCreateSelectionOpen(false)} onSelectCard={() => { setIsCreateSelectionOpen(false); setEditingItem(null); setIsCreateModalOpen(true); }} onSelectFolder={() => { setIsCreateSelectionOpen(false); setEditingFolder(null); setIsFolderModalOpen(true); }} onSelectLink={() => { setIsCreateSelectionOpen(false); setIsLinkBoardModalOpen(true); }} t={t} />
-      <CreateCardModal isOpen={isCreateModalOpen} onClose={() => { setIsCreateModalOpen(false); setEditingItem(null); }} onSave={(d) => saveCard(d, editingItem?.id)} editItem={editingItem} t={t} language={settings.language} currentFolderName={currentFolderId === ROOT_FOLDER ? t('app.home_folder') : categories.find(c => c.id === currentFolderId)?.label} />
+      <CreateCardModal voiceRate={settings.voiceRate} voicePitch={settings.voicePitch} isOpen={isCreateModalOpen} onClose={() => { setIsCreateModalOpen(false); setEditingItem(null); }} onSave={(d) => saveCard(d, editingItem?.id)} editItem={editingItem} t={t} language={settings.language} currentFolderName={currentFolderId === ROOT_FOLDER ? t('app.home_folder') : categories.find(c => c.id === currentFolderId)?.label} />
       <FolderModal isOpen={isFolderModalOpen} onClose={() => { setIsFolderModalOpen(false); setEditingFolder(null); }} onSave={(l, c, i) => saveFolderObj(l, c, i, editingFolder)} editFolder={editingFolder} t={t} language={settings.language} />
       <LinkBoardModal isOpen={isLinkBoardModalOpen} onClose={() => setIsLinkBoardModalOpen(false)} onSave={saveLinkBoard} boards={boards} currentBoardId={currentBoardId} t={t} />
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} settings={settings} onUpdateSettings={setSettings} t={t} />
@@ -331,7 +332,7 @@ export const BoardPage: React.FC = () => {
         language={settings.language} 
         onUpdateLanguage={(l) => setSettings({...settings, language: l})} 
       />
-      <EditOptionsModal isOpen={!!editOptionsItem} onClose={() => setEditOptionsItem(null)} item={editOptionsItem?.item || null} type={editOptionsItem?.type || 'card'} onEdit={() => { if(editOptionsItem?.type==='card') { setEditingItem(editOptionsItem.item as AACItem); setIsCreateModalOpen(true); } else { setEditingFolder(editOptionsItem?.item as Category); setIsFolderModalOpen(true); } }} onMove={() => setMoveModalItem(editOptionsItem)} onDelete={() => { if(editOptionsItem?.type==='card') setItemToDelete(editOptionsItem.item.id); else setFolderToDelete(editOptionsItem?.item.id); }} t={t} />
+      <EditOptionsModal isOpen={!!editOptionsItem} onClose={() => setEditOptionsItem(null)} item={editOptionsItem?.item || null} type={editOptionsItem?.type || 'card'} onEdit={() => { if(editOptionsItem?.type==='card') { setEditingItem(editOptionsItem.item as AACItem); setIsCreateModalOpen(true); } else { setEditingFolder(editOptionsItem?.item as Category); setIsFolderModalOpen(true); } }} onMove={() => setMoveModalItem(editOptionsItem)} onDelete={() => { if(editOptionsItem?.type==='card') setItemToDelete(editOptionsItem.item.id); else setFolderToDelete(editOptionsItem?.item.id ?? null); }} t={t} />
       <MoveItemModal isOpen={!!moveModalItem} onClose={() => setMoveModalItem(null)} itemToMove={moveModalItem} categories={categories.filter(c => c.boardId === currentBoardId)} onMove={(target) => { if(moveModalItem) moveItemToFolder(moveModalItem.item, moveModalItem.type, target); setMoveModalItem(null); }} t={t} />
       <ConfirmationModal isOpen={!!itemToDelete || !!folderToDelete} onClose={() => { setItemToDelete(null); setFolderToDelete(null); }} onConfirm={() => { if(itemToDelete) deleteCard(itemToDelete).then(() => setItemToDelete(null)); else if(folderToDelete) deleteFolderObj(folderToDelete).then(() => setFolderToDelete(null)); }} isFolder={!!folderToDelete} t={t} />
     </>

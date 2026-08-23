@@ -16,6 +16,8 @@ interface CreateCardModalProps {
   language: AppLanguage;
   currentFolderName?: string;
   defaultColorTheme?: ColorTheme;
+  voiceRate: number;
+  voicePitch: number;
 }
 
 type SoundMode = 'recording' | 'tts';
@@ -32,7 +34,7 @@ const THEMES: { theme: ColorTheme; bg: string; border: string; labelKey: Transla
   { theme: 'slate', bg: 'bg-slate-100', border: 'border-slate-400', labelKey: 'fitzgerald.misc', descKey: 'fitzgerald.misc_desc' },
 ];
 
-const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSave, editItem, t, language, currentFolderName, defaultColorTheme }) => {
+const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSave, editItem, t, language, currentFolderName, defaultColorTheme, voiceRate, voicePitch }) => {
   const [label, setLabel] = useState('');
   const [isLabelManuallyEdited, setIsLabelManuallyEdited] = useState(false);
   
@@ -315,15 +317,15 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
   const previewTTS = async () => {
       const text = textToSpeak || label;
       if (!text) return;
-      
-      const savedSettings = localStorage.getItem('aac_settings');
-      const s = savedSettings ? JSON.parse(savedSettings) : { voiceRate: 0.9, voicePitch: 1.0 };
-      
+
+      // This used to read the legacy global `aac_settings` localStorage key,
+      // which nothing has written since settings moved onto the profile — so
+      // the preview silently ignored the parent's configured rate and pitch.
       await voiceService.speak({
         text,
         language,
-        rate: s.voiceRate,
-        pitch: s.voicePitch
+        rate: voiceRate,
+        pitch: voicePitch
       });
   };
 

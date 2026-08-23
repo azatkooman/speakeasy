@@ -6,7 +6,7 @@ import { TranslationKey } from './translations';
 import { SEED_PICTOGRAMS, resolveSeedPictogram, isBundledAsset } from '../utils/seedPictograms';
 
 const DB_NAME = 'speakeasy_aac_db';
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 const STORE_ITEMS = 'aac_items';
 const STORE_CATEGORIES = 'aac_categories';
 const STORE_BOARDS = 'aac_boards';
@@ -122,20 +122,82 @@ const DEFAULT_CATEGORIES_TEMPLATE: Array<{
   { id: 'TIME', labelKey: 'folder.default.time', fallback: 'Time', colorTheme: 'teal', parentId: 'root', icon: 'time', order: 17 },
 ];
 
+export const IDX_PROFILE = 'by_profile';
+export const IDX_BOARD = 'by_board';
+
+/**
+ * Single cached connection. Every read and write used to call openDB(), which
+ * opened a fresh IDBDatabase and never closed it — and since reloadCurrentData()
+ * issues three reads after every mutation, editing one card opened four
+ * connections. They accumulated for the session and would block the next
+ * version upgrade.
+ */
+let dbPromise: Promise<IDBDatabase> | null = null;
+
 const openDB = (): Promise<IDBDatabase> => {
-  return new Promise((resolve, reject) => {
+  if (dbPromise) return dbPromise;
+
+  dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains(STORE_ITEMS)) db.createObjectStore(STORE_ITEMS, { keyPath: 'id' });
-      if (!db.objectStoreNames.contains(STORE_CATEGORIES)) db.createObjectStore(STORE_CATEGORIES, { keyPath: 'id' });
-      if (!db.objectStoreNames.contains(STORE_BOARDS)) db.createObjectStore(STORE_BOARDS, { keyPath: 'id' });
-      if (!db.objectStoreNames.contains(STORE_PROFILES)) db.createObjectStore(STORE_PROFILES, { keyPath: 'id' });
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      const tx = request.transaction;
+      if (!tx) return;
+
+      const ensureStore = (name: string) =>
+        db.objectStoreNames.contains(name)
+          ? tx.objectStore(name)
+          : db.createObjectStore(name, { keyPath: 'id' });
+
+      const ensureIndex = (store: IDBObjectStore, name: string, keyPath: string) => {
+        if (!store.indexNames.contains(name)) store.createIndex(name, keyPath);
+      };
+
+      // v6 adds the profileId / boardId indices. Reads previously did
+      // getAll() and filtered in JS, so opening one folder deserialised every
+      // card of every profile — including the inline base64 images on web.
+      const items = ensureStore(STORE_ITEMS);
+      ensureIndex(items, IDX_PROFILE, 'profileId');
+      ensureIndex(items, IDX_BOARD, 'boardId');
+
+      const categories = ensureStore(STORE_CATEGORIES);
+      ensureIndex(categories, IDX_PROFILE, 'profileId');
+      ensureIndex(categories, IDX_BOARD, 'boardId');
+
+      const boards = ensureStore(STORE_BOARDS);
+      ensureIndex(boards, IDX_PROFILE, 'profileId');
+
+      ensureStore(STORE_PROFILES);
     };
-    request.onsuccess = (event) => resolve((event.target as IDBOpenDBRequest).result);
-    request.onerror = (event) => reject((event.target as IDBOpenDBRequest).error);
+
+    request.onsuccess = () => {
+      const db = request.result;
+      // If another tab upgrades the schema, drop this connection so it does not
+      // block the upgrade, and let the next call reopen.
+      db.onversionchange = () => {
+        db.close();
+        dbPromise = null;
+      };
+      db.onclose = () => { dbPromise = null; };
+      resolve(db);
+    };
+
+    request.onerror = () => {
+      dbPromise = null;
+      reject(request.error);
+    };
+    request.onblocked = () => {
+      console.warn('IndexedDB upgrade blocked by another open connection');
+    };
   });
+
+  return dbPromise;
 };
+
+/** getAll() over an index when a filter is given, otherwise the whole store. */
+const getAllBy = <T>(store: IDBObjectStore, indexName: string, value?: string): IDBRequest<T[]> =>
+  value ? store.index(indexName).getAll(value) : store.getAll();
 
 // --- PROFILES ---
 
@@ -186,11 +248,8 @@ export const getAllBoards = async (profileId?: string): Promise<Board[]> => {
     const db = await openDB();
     return new Promise((resolve, reject) => {
         const t = db.transaction(STORE_BOARDS, 'readonly');
-        const r = t.objectStore(STORE_BOARDS).getAll();
-        r.onsuccess = () => {
-            const res = r.result as Board[];
-            resolve(profileId ? res.filter(b => b.profileId === profileId) : res);
-        };
+        const r = getAllBy<Board>(t.objectStore(STORE_BOARDS), IDX_PROFILE, profileId);
+        r.onsuccess = () => resolve(r.result);
         r.onerror = () => reject(r.error);
     });
 };
@@ -304,9 +363,19 @@ export const createNewBoard = async (label: string, profileId: string, t?: (key:
 };
 
 export const deleteBoard = async (boardId: string): Promise<void> => {
-    const allItems = await getAllItems(); 
+    const allItems = await getAllItems();
     const boardItems = allItems.filter(i => i.boardId === boardId);
     for (const item of boardItems) await deleteItem(item.id);
+
+    // Cards on *other* boards that jump to this one would otherwise keep
+    // pointing at a board that no longer exists. Tapping such a card left the
+    // child on an empty board with no breadcrumb and no way back. Clear the
+    // link rather than deleting the card, so the parent keeps the vocabulary
+    // and can re-point or remove it.
+    const danglingLinks = allItems.filter(i => i.boardId !== boardId && i.linkedBoardId === boardId);
+    if (danglingLinks.length > 0) {
+        await saveItemsBatch(danglingLinks.map(i => ({ ...i, linkedBoardId: undefined })));
+    }
 
     const allCats = await getAllCategories();
     const catsToDelete = allCats.filter(c => c.boardId === boardId);
@@ -351,7 +420,7 @@ export const saveItem = async (item: AACItem): Promise<void> => {
 };
 
 export const saveItemsBatch = async (items: AACItem[]): Promise<void> => {
-    const processed = [];
+    const processed: AACItem[] = [];
     for (const item of items) {
         let imageUrl = getStorageUrl(item.imageUrl) || item.imageUrl;
         let audioUrl = getStorageUrl(item.audioUrl);
@@ -374,10 +443,9 @@ export const getAllItems = async (profileId?: string): Promise<AACItem[]> => {
     const db = await openDB();
     return new Promise((resolve, reject) => {
         const t = db.transaction(STORE_ITEMS, 'readonly');
-        const r = t.objectStore(STORE_ITEMS).getAll();
+        const r = getAllBy<AACItem>(t.objectStore(STORE_ITEMS), IDX_PROFILE, profileId);
         r.onsuccess = () => {
-            let res = r.result as AACItem[];
-            if (profileId) res = res.filter(i => i.profileId === profileId);
+            const res = r.result;
             resolve(res.map(i => ({
                 ...i,
                 imageUrl: getDisplayUrl(i.imageUrl) || i.imageUrl,
@@ -437,7 +505,7 @@ export const saveCategory = async (category: Category): Promise<void> => {
 };
 
 export const saveCategoriesBatch = async (categories: Category[]): Promise<void> => {
-    const processed = [];
+    const processed: Category[] = [];
     for (const cat of categories) {
         let icon = getStorageUrl(cat.icon);
         icon = await saveAssetToFile(icon);
@@ -458,11 +526,9 @@ export const getAllCategories = async (profileId?: string): Promise<Category[]> 
     const db = await openDB();
     return new Promise((resolve, reject) => {
         const t = db.transaction(STORE_CATEGORIES, 'readonly');
-        const r = t.objectStore(STORE_CATEGORIES).getAll();
+        const r = getAllBy<Category>(t.objectStore(STORE_CATEGORIES), IDX_PROFILE, profileId);
         r.onsuccess = () => {
-            let res = r.result as Category[];
-            if (profileId) res = res.filter(c => c.profileId === profileId);
-            resolve(res.map(c => ({ ...c, icon: getDisplayUrl(c.icon) })));
+            resolve(r.result.map(c => ({ ...c, icon: getDisplayUrl(c.icon) })));
         };
         r.onerror = () => reject(r.error);
     });
