@@ -34,3 +34,15 @@ migrated_prompt_history/
 # OS
 .DS_Store
 **/.DS_Store
+
+# Native build output / IDE (Capacitor regenerates these)
+android/.idea/
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+android/local.properties
+android/.kotlin/
+ios/App/Pods/
+ios/App/App/public/
+ios/DerivedData/
