@@ -9,6 +9,7 @@ import { AACItem, Category } from '../types.ts';
 import { TranslationKey } from '../services/translations.ts';
 import { readHistory } from '../utils/history.ts';
 import { useSelectable, DEFAULT_DWELL_MS } from '../utils/useSelectable.ts';
+import { useScanner } from '../utils/useScanner.ts';
 import GridCellButton from '../components/GridCellButton.tsx';
 import ConfirmationModal from '../components/ConfirmationModal.tsx';
 import CreateCardModal from '../components/CreateCardModal.tsx';
@@ -94,6 +95,50 @@ export const BoardPage: React.FC = () => {
     }
     prevGridLength.current = gridItems.length;
   }, [gridItems.length]);
+
+  /**
+   * The scan sequence: core rail first, then the grid row-major. The rail is a
+   * single column, so each rail item is its own row for row-column scanning —
+   * which is right, because selecting a rail row should select that word rather
+   * than opening a second stage over one cell.
+   */
+  const scanSequence = React.useMemo(
+      () => [
+          ...coreItems.map(c => ({ kind: 'core' as const, item: c })),
+          ...gridCells.map(cell => ({ kind: 'grid' as const, item: cell })),
+      ],
+      [coreItems, gridCells]
+  );
+
+  const scanSettings = settings.scan || { mode: 'off' as const, rateMs: 1200, auto: true };
+
+  const isAnyModalOpen =
+      isHistoryOpen || isCreateSelectionOpen || isCreateModalOpen || isFolderModalOpen ||
+      isLinkBoardModalOpen || isSettingsOpen || isBoardsModalOpen || isProfileModalOpen ||
+      !!editOptionsItem || !!moveModalItem || !!itemToDelete || !!folderToDelete;
+
+  const scanner = useScanner({
+      settings: scanSettings,
+      count: scanSequence.length,
+      // Rail items occupy leading single-item rows; the grid keeps its own width.
+      cols: grid.cols,
+      // Scanning is a child-facing access method: it would fight the edit
+      // controls in parent mode, and while any dialog is open a switch press
+      // would otherwise select a cell on the board behind it.
+      enabled: !isEditMode && !isSearchActive && !isAnyModalOpen,
+      isEmpty: (i) => !scanSequence[i] || !scanSequence[i].item,
+      onSelect: (i) => {
+          const entry = scanSequence[i];
+          if (!entry || !entry.item) return;
+          if (entry.kind === 'core') { selectItem(entry.item); return; }
+          const cell = entry.item;
+          if (cell.type === 'folder') navigateToFolder(cell.id);
+          else selectItem(cell);
+      },
+  });
+
+  /** Index of a grid cell within the scan sequence. */
+  const scanIndexOfGridCell = (gridIdx: number) => coreItems.length + gridIdx;
 
   const getLabelSize = () => settings.gridColumns === 'small' ? 'text-xs sm:text-sm leading-tight' : 'text-sm sm:text-base leading-tight';
 
@@ -186,7 +231,7 @@ export const BoardPage: React.FC = () => {
           aria-label={t('modal.create.core')}
           className="shrink-0 w-[5.5rem] sm:w-28 bg-white/70 border-r border-slate-200 overflow-y-auto no-scrollbar p-2 flex flex-col gap-2"
         >
-          {coreItems.map(card => {
+          {coreItems.map((card, railIdx) => {
               const style = getCardStyle(card);
               const label = card.labelKey ? t(card.labelKey as TranslationKey) : card.label;
               return (
@@ -196,6 +241,7 @@ export const BoardPage: React.FC = () => {
                   selectionMode={settings.selectionMode || 'release'}
                   dwellMs={settings.dwellMs || DEFAULT_DWELL_MS}
                   isPreviewArmed={previewItemId === card.id}
+                  isScanFocused={scanner.focusedCell === railIdx}
                   className={`shrink-0 h-[4.25rem] sm:h-20 rounded-2xl bg-white border-2 ${style.border} shadow-[0_3px_0_0] ${style.shadow} flex flex-col overflow-hidden ${card.isVisible === false ? 'opacity-50 grayscale' : ''}`}
                 >
                   <span className="flex-1 min-h-0 w-full p-1 flex items-center justify-center bg-white">
@@ -228,12 +274,15 @@ export const BoardPage: React.FC = () => {
           style={{ gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))` }}
         >
             {gridCells.map((cell, index) => {
+                const seqIdx = scanIndexOfGridCell(index);
+                const inFocusedRow = scanner.focusedRow !== null
+                    && Math.floor(seqIdx / grid.cols) === scanner.focusedRow;
                 if (!cell) {
                     return (
                         <div
                             key={`empty-${index}`}
                             aria-hidden="true"
-                            className={`aspect-[4/5] rounded-3xl ${isEditMode ? 'border-2 border-dashed border-slate-300/70' : ''}`}
+                            className={`aspect-[4/5] rounded-3xl ${isEditMode ? 'border-2 border-dashed border-slate-300/70' : ''} ${inFocusedRow ? 'ring-4 ring-sky-500/60' : ''}`}
                         />
                     );
                 }
@@ -247,9 +296,10 @@ export const BoardPage: React.FC = () => {
                 if (item.type === 'folder') {
                     const folder = item as Category;
                     return (
-                        <div key={folder.id} className="relative">
+                        <div key={folder.id} className={`relative ${inFocusedRow ? 'ring-4 ring-sky-500/60 rounded-3xl' : ''}`}>
                             <FolderCard 
                                 folder={folder} 
+                                isScanFocused={scanner.focusedCell === scanIndexOfGridCell(index)}
                                 onClick={() => navigateToFolder(folder.id)} 
                                 onReorderLeft={(e) => { e.stopPropagation(); reorderGrid(folder.id, -1); }}
                                 onReorderRight={(e) => { e.stopPropagation(); reorderGrid(folder.id, 1); }}
@@ -272,7 +322,7 @@ export const BoardPage: React.FC = () => {
                         // is reachable by keyboard, screen reader and switch access; the
                         // edit controls are siblings rather than nested buttons, which
                         // would be invalid and would break that traversal.
-                        <div key={card.id} className="relative aspect-[4/5]">
+                        <div key={card.id} className={`relative aspect-[4/5] ${inFocusedRow ? 'ring-4 ring-sky-500/60 rounded-3xl' : ''}`}>
                             <GridCellButton
                                 onActivate={() => {
                                     selectItem(card);
@@ -285,6 +335,7 @@ export const BoardPage: React.FC = () => {
                                 selectionMode={settings.selectionMode || 'release'}
                                 dwellMs={settings.dwellMs || DEFAULT_DWELL_MS}
                                 isPreviewArmed={previewItemId === card.id}
+                                isScanFocused={scanner.focusedCell === scanIndexOfGridCell(index)}
                                 className={`
                                     absolute inset-0 rounded-3xl
                                     bg-white

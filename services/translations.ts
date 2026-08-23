@@ -41,6 +41,14 @@ export type TranslationKey =
   | 'modal.settings.dwell_time'
   | 'modal.settings.preview'
   | 'modal.settings.preview_desc'
+  | 'modal.settings.scan'
+  | 'modal.settings.scan_off'
+  | 'modal.settings.scan_linear'
+  | 'modal.settings.scan_rowcol'
+  | 'modal.settings.scan_desc'
+  | 'modal.settings.scan_rate'
+  | 'modal.settings.scan_auto'
+  | 'modal.settings.scan_auto_desc'
   | 'nav.categories'
   | 'nav.add_card'
   | 'nav.settings'
@@ -247,6 +255,14 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.dwell_time': 'Hold time',
     'modal.settings.preview': 'Hear before choosing',
     'modal.settings.preview_desc': 'First tap says the word, second tap adds it to the sentence',
+    'modal.settings.scan': 'Switch scanning',
+    'modal.settings.scan_off': 'Off',
+    'modal.settings.scan_linear': 'One by one',
+    'modal.settings.scan_rowcol': 'Rows first',
+    'modal.settings.scan_desc': 'A highlight moves across the board and a switch chooses. Space or Enter selects; arrow keys move when moving by switch.',
+    'modal.settings.scan_rate': 'Highlight speed',
+    'modal.settings.scan_auto': 'Move on its own',
+    'modal.settings.scan_auto_desc': 'Off means one switch moves the highlight and another selects',
     'nav.categories': 'Categories',
     'nav.add_card': 'Add Card',
     'nav.settings': 'Settings',
@@ -461,6 +477,14 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.dwell_time': 'Время удержания',
     'modal.settings.preview': 'Сначала прослушать',
     'modal.settings.preview_desc': 'Первое нажатие произносит слово, второе добавляет его в строку',
+    'modal.settings.scan': 'Сканирование переключателем',
+    'modal.settings.scan_off': 'Выкл.',
+    'modal.settings.scan_linear': 'По одной',
+    'modal.settings.scan_rowcol': 'Сначала строки',
+    'modal.settings.scan_desc': 'Подсветка движется по доске, а переключатель выбирает. Пробел или Ввод — выбор; стрелки — переход.',
+    'modal.settings.scan_rate': 'Скорость подсветки',
+    'modal.settings.scan_auto': 'Двигается сама',
+    'modal.settings.scan_auto_desc': 'Если выкл., один переключатель двигает подсветку, другой выбирает',
     'nav.categories': 'Категории',
     'nav.add_card': 'Добавить',
     'nav.settings': 'Настройки',
@@ -675,6 +699,14 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.dwell_time': 'Durée du maintien',
     'modal.settings.preview': 'Écouter avant de choisir',
     'modal.settings.preview_desc': 'La première pression dit le mot, la seconde l\'ajoute à la phrase',
+    'modal.settings.scan': 'Balayage par contacteur',
+    'modal.settings.scan_off': 'Désactivé',
+    'modal.settings.scan_linear': 'Une par une',
+    'modal.settings.scan_rowcol': 'Lignes d\'abord',
+    'modal.settings.scan_desc': 'Une surbrillance parcourt le tableau et le contacteur choisit. Espace ou Entrée sélectionne ; les flèches déplacent.',
+    'modal.settings.scan_rate': 'Vitesse de la surbrillance',
+    'modal.settings.scan_auto': 'Avance tout seul',
+    'modal.settings.scan_auto_desc': 'Désactivé : un contacteur déplace, un autre sélectionne',
     'nav.categories': 'Catégories',
     'nav.add_card': 'Ajouter une Carte',
     'nav.settings': 'Paramètres',
@@ -889,6 +921,14 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.dwell_time': 'Tiempo de mantener',
     'modal.settings.preview': 'Escuchar antes de elegir',
     'modal.settings.preview_desc': 'El primer toque dice la palabra, el segundo la añade a la frase',
+    'modal.settings.scan': 'Barrido con pulsador',
+    'modal.settings.scan_off': 'Desactivado',
+    'modal.settings.scan_linear': 'Una a una',
+    'modal.settings.scan_rowcol': 'Filas primero',
+    'modal.settings.scan_desc': 'Un resaltado recorre el tablero y el pulsador elige. Espacio o Intro selecciona; las flechas mueven.',
+    'modal.settings.scan_rate': 'Velocidad del resaltado',
+    'modal.settings.scan_auto': 'Avanza solo',
+    'modal.settings.scan_auto_desc': 'Desactivado: un pulsador mueve y otro selecciona',
     'nav.categories': 'Categorías',
     'nav.add_card': 'Añadir',
     'nav.settings': 'Ajustes',

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { X, Monitor, Volume2, Grid, Languages, Sparkles, AlertTriangle, Home, Palette, Hand } from 'lucide-react';
+import { X, Monitor, Volume2, Grid, Languages, Sparkles, AlertTriangle, Home, Palette, Hand, ScanLine } from 'lucide-react';
 import { AppSettings } from '../types';
 import { voiceService } from '../services/voice';
 import { LANGUAGES, getLanguageOption } from '../utils/languages';
@@ -305,6 +305,65 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     <span className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow transition duration-200 ${settings.auditoryPreview ? 'translate-x-7' : 'translate-x-0'}`} />
                 </button>
              </div>
+          </section>
+
+          {/* Switch scanning */}
+          <section className="space-y-4">
+             <div className="flex items-center space-x-2 text-slate-800 font-bold text-lg">
+                <ScanLine size={20} className="text-indigo-600" />
+                <h3>{t('modal.settings.scan')}</h3>
+             </div>
+             <div className="grid grid-cols-3 gap-2">
+                {([['off','modal.settings.scan_off'],['linear','modal.settings.scan_linear'],['rowColumn','modal.settings.scan_rowcol']] as const).map(([value, key]) => {
+                    const active = (settings.scan?.mode || 'off') === value;
+                    return (
+                        <button
+                            key={value}
+                            aria-pressed={active}
+                            onClick={() => onUpdateSettings({...settings, scan: { mode: value, rateMs: settings.scan?.rateMs ?? 1200, auto: settings.scan?.auto ?? true }})}
+                            className={`py-2.5 px-1 rounded-xl border-2 text-xs sm:text-sm font-bold transition-all min-h-[44px] ${active ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm' : 'border-slate-200 text-slate-400 hover:border-slate-300'}`}
+                        >
+                            {t(key)}
+                        </button>
+                    );
+                })}
+             </div>
+             <p className="text-xs text-slate-400 font-medium leading-snug">{t('modal.settings.scan_desc')}</p>
+
+             {settings.scan && settings.scan.mode !== 'off' && (
+               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-5">
+                  <div className="flex items-center justify-between gap-4">
+                     <div className="flex-1">
+                        <p className="font-bold text-slate-700 text-sm">{t('modal.settings.scan_auto')}</p>
+                        <p className="text-xs text-slate-400 font-medium">{t('modal.settings.scan_auto_desc')}</p>
+                     </div>
+                     <button
+                        role="switch"
+                        aria-checked={!!settings.scan.auto}
+                        aria-label={t('modal.settings.scan_auto')}
+                        onClick={() => onUpdateSettings({...settings, scan: { ...settings.scan!, auto: !settings.scan!.auto }})}
+                        className={`shrink-0 relative inline-flex h-9 w-16 items-center rounded-full transition-colors duration-200 border-2 border-transparent ${settings.scan.auto ? 'bg-indigo-600' : 'bg-slate-300'}`}
+                     >
+                        <span className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow transition duration-200 ${settings.scan.auto ? 'translate-x-7' : 'translate-x-0'}`} />
+                     </button>
+                  </div>
+
+                  {settings.scan.auto && (
+                    <div>
+                       <div className="flex justify-between mb-2">
+                          <label className="text-sm font-bold text-slate-500 uppercase">{t('modal.settings.scan_rate')}</label>
+                          <span className="text-sm font-bold text-slate-700">{(settings.scan.rateMs / 1000).toFixed(1)}s</span>
+                       </div>
+                       <input
+                          type="range" min="400" max="4000" step="100"
+                          value={settings.scan.rateMs}
+                          onChange={(e) => onUpdateSettings({...settings, scan: { ...settings.scan!, rateMs: parseInt(e.target.value) }})}
+                          className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                       />
+                    </div>
+                  )}
+               </div>
+             )}
           </section>
 
           {/* Visual shell */}

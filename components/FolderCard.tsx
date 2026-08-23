@@ -15,6 +15,8 @@ interface FolderCardProps {
   canMoveRight: boolean;
   isEditMode: boolean;
   onEdit?: () => void;
+  /** Highlighted by the switch scanner. */
+  isScanFocused?: boolean;
 }
 
 const FOLDER_THEMES: Record<string, { bg: string; border: string; shadow: string; tabBorder: string }> = {
@@ -37,7 +39,8 @@ const FolderCard: React.FC<FolderCardProps> = ({
   canMoveLeft,
   canMoveRight,
   isEditMode,
-  onEdit
+  onEdit,
+  isScanFocused
 }) => {
   const { t } = useSpeakEasy();
   const [imageError, setImageError] = useState(false);
@@ -60,7 +63,7 @@ const FolderCard: React.FC<FolderCardProps> = ({
       <button
         type="button"
         onClick={onClick}
-        className="group absolute inset-0 flex flex-col pt-3 text-left rounded-3xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2"
+        className={`group absolute inset-0 flex flex-col pt-3 text-left rounded-3xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2 ${isScanFocused ? 'ring-4 ring-sky-500 ring-offset-2 z-30' : ''}`}
       >
         {/* Folder Tab Effect */}
         <div className={`

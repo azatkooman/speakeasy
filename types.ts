@@ -126,6 +126,27 @@ export interface AppSettings {
    * Essential for auditory scanning and for users who cannot see the symbol.
    */
   auditoryPreview?: boolean;
+  /**
+   * Switch scanning. A highlight walks the board and a switch selects what it
+   * lands on. External AAC switches present as HID keyboards, so the switch
+   * arrives as a keypress.
+   */
+  scan?: ScanSettings;
 }
 
 export type SelectionMode = 'release' | 'press' | 'dwell';
+
+export type ScanMode = 'off' | 'linear' | 'rowColumn';
+
+export interface ScanSettings {
+  mode: ScanMode;
+  /** Milliseconds each step is highlighted before advancing. */
+  rateMs: number;
+  /**
+   * Automatic scanning advances on a timer and the switch selects.
+   * Step scanning does not advance on its own: one switch moves, the other
+   * selects. Users who cannot time a press against a moving highlight need
+   * step mode.
+   */
+  auto: boolean;
+}
