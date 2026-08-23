@@ -7,7 +7,8 @@ import {
   saveItem, saveCategory, saveBoard, saveProfile,
   deleteItem, deleteCategory, deleteBoard, deleteProfile,
   saveItemsBatch, saveCategoriesBatch, saveBoardsBatch,
-  initializeBoards, createNewBoard, ROOT_FOLDER
+  initializeBoards, createNewBoard, ROOT_FOLDER,
+  DEFAULT_GRID_ROWS, DEFAULT_GRID_COLS
 } from '../services/storage.ts';
 import { voiceService } from '../services/voice.ts';
 import { audioPlayer } from '../services/audioPlayer.ts';
@@ -33,6 +34,9 @@ interface SpeakEasyContextType {
   boardHistory: string[];
 
   gridItems: any[];
+  gridCells: (any | null)[];
+  grid: { rows: number; cols: number };
+  coreItems: AACItem[];
   breadcrumbs: {id: string, label: string}[];
 
   t: (key: TranslationKey) => string;
@@ -251,35 +255,94 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return path;
   }, [currentFolderId, categories, currentBoardId, settings.language]);
 
-  const gridItems = useMemo(() => {
-      const sortFn = (a: any, b: any) => {
-        if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
-        if (a.order !== undefined) return -1;
-        if (b.order !== undefined) return 1;
-        return b.createdAt - a.createdAt;
-      };
+  const currentBoard = useMemo(
+      () => boards.find(b => b.id === currentBoardId),
+      [boards, currentBoardId]
+  );
 
-      const currentItems = library.filter(item => {
-          if (item.boardId !== currentBoardId) return false;
-          if (isSearchActive && searchQuery) {
-              const displayLabel = item.labelKey ? t(item.labelKey as TranslationKey) : item.label;
-              return displayLabel.toLowerCase().includes(searchQuery.toLowerCase()) && (isEditMode || item.isVisible !== false);
-          }
-          return item.category === currentFolderId && (isEditMode || item.isVisible !== false);
-      }).map(i => ({ ...i, type: 'card' }));
+  const grid = useMemo(
+      () => ({
+          rows: currentBoard?.gridRows || DEFAULT_GRID_ROWS,
+          cols: currentBoard?.gridCols || DEFAULT_GRID_COLS,
+      }),
+      [currentBoard]
+  );
 
-      const currentFolders = categories.filter(cat => {
-          if (cat.boardId !== currentBoardId) return false;
-          if (isSearchActive && searchQuery) {
-              const displayLabel = cat.labelKey ? t(cat.labelKey as TranslationKey) : cat.label;
-              return displayLabel.toLowerCase().includes(searchQuery.toLowerCase());
-          }
-          if (currentFolderId === ROOT_FOLDER) return !cat.parentId || cat.parentId === ROOT_FOLDER;
-          return cat.parentId === currentFolderId;
-      }).map(c => ({ ...c, type: 'folder' }));
+  /** Core items are board-scoped and stay on screen in every folder. */
+  const coreItems = useMemo(() => {
+      return library
+          .filter(i => i.boardId === currentBoardId && i.isCore && (isEditMode || i.isVisible !== false))
+          .sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0));
+  }, [library, currentBoardId, isEditMode]);
 
-      return [...currentFolders, ...currentItems].sort(sortFn);
-  }, [library, categories, currentBoardId, currentFolderId, isEditMode, isSearchActive, searchQuery]);
+  /**
+   * Fixed-length array of grid cells, one per slot. A cell is null when nothing
+   * occupies that slot — including when the occupant is hidden in child mode.
+   * That is the motor-planning guarantee: a hidden or deleted item leaves a gap
+   * rather than pulling everything after it forward.
+   *
+   * Search is the one case where absolute slots make no sense, so it returns a
+   * packed list instead and the renderer lays it out as a plain flow.
+   */
+  const gridCells = useMemo(() => {
+      const query = isSearchActive && searchQuery ? searchQuery.toLowerCase() : '';
+      const labelOf = (r: AACItem | Category) =>
+          (r.labelKey ? t(r.labelKey as TranslationKey) : r.label).toLowerCase();
+
+      if (query) {
+          const hits: any[] = [
+              ...library
+                  .filter(i => i.boardId === currentBoardId && !i.isCore
+                      && labelOf(i).includes(query)
+                      && (isEditMode || i.isVisible !== false))
+                  .map(i => ({ ...i, type: 'card' })),
+              ...categories
+                  .filter(c => c.boardId === currentBoardId && labelOf(c).includes(query))
+                  .map(c => ({ ...c, type: 'folder' })),
+          ];
+          return hits;
+      }
+
+      const occupants: any[] = [
+          ...library
+              .filter(i => i.boardId === currentBoardId
+                  && !i.isCore
+                  && i.category === currentFolderId
+                  && (isEditMode || i.isVisible !== false))
+              .map(i => ({ ...i, type: 'card' })),
+          ...categories
+              .filter(c => c.boardId === currentBoardId
+                  && (currentFolderId === ROOT_FOLDER
+                      ? (!c.parentId || c.parentId === ROOT_FOLDER)
+                      : c.parentId === currentFolderId))
+              .map(c => ({ ...c, type: 'folder' })),
+      ];
+
+      // Grow the grid if a board somehow holds more occupants than its declared
+      // size, so nothing becomes unreachable.
+      const declared = grid.rows * grid.cols;
+      const maxSlot = occupants.reduce((m, o) => Math.max(m, o.slot ?? 0), -1);
+      const size = Math.max(declared, maxSlot + 1);
+
+      const cells: (any | null)[] = new Array(size).fill(null);
+      const overflow: any[] = [];
+      occupants.forEach(o => {
+          const s = o.slot;
+          if (typeof s === 'number' && s >= 0 && s < size && cells[s] === null) cells[s] = o;
+          else overflow.push(o);
+      });
+      // Anything without a usable slot (or colliding) takes the next free cell.
+      overflow.forEach(o => {
+          const free = cells.indexOf(null);
+          if (free !== -1) cells[free] = o;
+          else cells.push(o);
+      });
+
+      return cells;
+  }, [library, categories, currentBoardId, currentFolderId, isEditMode, isSearchActive, searchQuery, grid, settings.language]);
+
+  /** Occupied cells only — for callers that need the items rather than the layout. */
+  const gridItems = useMemo(() => gridCells.filter(Boolean), [gridCells]);
 
   // Wrapper to update settings both in state and in the active profile
   const handleSetSettings = async (newSettings: AppSettings) => {
@@ -414,11 +477,15 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
   };
 
-  const getMaxOrder = () => gridItems.reduce((max, i) => Math.max(max, i.order || 0), -1);
+  /** First empty cell in the current folder, or the end of the grid. */
+  const nextFreeSlot = () => {
+      const free = gridCells.indexOf(null);
+      return free !== -1 ? free : gridCells.length;
+  };
 
   const saveCard = async (data: any, existingId?: string) => {
       if (!currentBoardId || !currentProfileId) return;
-      const maxOrder = getMaxOrder();
+      const slot = nextFreeSlot();
       if (existingId) {
           const old = library.find(i => i.id === existingId);
           if (old) {
@@ -434,7 +501,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               boardId: currentBoardId,
               category: currentFolderId,
               createdAt: Date.now(),
-              order: maxOrder + 1
+              slot
           });
       }
       await reloadCurrentData();
@@ -442,7 +509,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const saveFolderObj = async (label: string, color: ColorTheme, icon: string, existing?: Category | null) => {
       if (!currentBoardId || !currentProfileId) return;
-      const maxOrder = getMaxOrder();
+      const slot = nextFreeSlot();
       if (existing) {
           await saveCategory({ ...existing, label, colorTheme: color, icon, labelKey: undefined });
       } else {
@@ -454,7 +521,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               colorTheme: color,
               parentId: currentFolderId,
               icon,
-              order: maxOrder + 1
+              slot
           });
       }
       await reloadCurrentData();
@@ -462,7 +529,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const saveLinkBoard = async (label: string, linkedBoardId: string, imageUrl: string) => {
       if (!currentBoardId || !currentProfileId) return;
-      const maxOrder = getMaxOrder();
+      const slot = nextFreeSlot();
       await saveItem({
           id: crypto.randomUUID(),
           profileId: currentProfileId,
@@ -474,7 +541,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           createdAt: Date.now(),
           isVisible: true,
           colorTheme: 'purple',
-          order: maxOrder + 1
+          slot
       });
       await reloadCurrentData();
   };
@@ -496,8 +563,24 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const itemsRescue = library.filter(i => i.boardId === currentBoardId && idsToRemove.includes(i.category));
       
       if (itemsRescue.length > 0) {
-          let startOrder = 1000;
-          await saveItemsBatch(itemsRescue.map((i, idx) => ({ ...i, category: ROOT_FOLDER, order: startOrder + idx })));
+          // Rescued cards go to the first free cells at the root rather than a
+          // fixed high offset, so they land somewhere the child can see.
+          const taken = new Set(
+              library
+                  .filter(i => i.boardId === currentBoardId && i.category === ROOT_FOLDER && !i.isCore)
+                  .map(i => i.slot)
+                  .concat(categories
+                      .filter(c => c.boardId === currentBoardId && (!c.parentId || c.parentId === ROOT_FOLDER))
+                      .map(c => c.slot))
+                  .filter((s): s is number => typeof s === 'number')
+          );
+          let cursor = 0;
+          const rescued = itemsRescue.map(i => {
+              while (taken.has(cursor)) cursor++;
+              taken.add(cursor);
+              return { ...i, category: ROOT_FOLDER, slot: cursor };
+          });
+          await saveItemsBatch(rescued);
       }
 
       for (const catId of idsToRemove) await deleteCategory(catId);
@@ -505,47 +588,48 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (idsToRemove.includes(currentFolderId)) setCurrentFolderId(ROOT_FOLDER);
   };
 
+  /**
+   * Swaps an item with whatever occupies the neighbouring cell — including an
+   * empty one, so a parent can nudge a card into a gap. Only the two cells
+   * involved are written; the rest of the grid is untouched, which is the point
+   * of absolute slots. Previously every item in the folder was renumbered.
+   */
   const reorderGrid = async (itemId: string, direction: -1 | 1) => {
-      const list = [...gridItems];
-      const idx = list.findIndex(i => i.id === itemId);
-      if (idx === -1) return;
-      const targetIdx = idx + direction;
-      if (targetIdx < 0 || targetIdx >= list.length) return;
+      const from = gridCells.findIndex(c => c && c.id === itemId);
+      if (from === -1) return;
+      const to = from + direction;
+      if (to < 0 || to >= gridCells.length) return;
 
-      const itemA = list[idx];
-      const itemB = list[targetIdx];
-      list[idx] = itemB;
-      list[targetIdx] = itemA;
+      const moving = gridCells[from];
+      const displaced = gridCells[to];
 
-      const itemsUpd: AACItem[] = [];
-      const catsUpd: Category[] = [];
+      const write = async (rec: any, slot: number) => {
+          const { type, ...rest } = rec;
+          if (type === 'card') await saveItem({ ...rest, slot } as AACItem);
+          else await saveCategory({ ...rest, slot } as Category);
+      };
 
-      list.forEach((itm, i) => {
-          if (itm.order !== i) {
-              if (itm.type === 'card') {
-                 const {type, ...rest} = itm;
-                 itemsUpd.push({...rest, order: i} as unknown as AACItem);
-              } else {
-                 const {type, ...rest} = itm;
-                 catsUpd.push({...rest, order: i} as unknown as Category);
-              }
-          }
-      });
-      
-      if (itemsUpd.length) await saveItemsBatch(itemsUpd);
-      if (catsUpd.length) await saveCategoriesBatch(catsUpd);
+      await write(moving, to);
+      if (displaced) await write(displaced, from);
       await reloadCurrentData();
   };
 
   const moveItemToFolder = async (item: any, type: 'card'|'folder', targetId: string) => {
-     const itemsInTgt = library.filter(i => i.boardId === currentBoardId && i.category === targetId);
-     const catsInTgt = categories.filter(c => c.boardId === currentBoardId && (c.parentId || ROOT_FOLDER) === targetId);
-     const maxI = Math.max(...itemsInTgt.map(i => i.order||0), -1);
-     const maxC = Math.max(...catsInTgt.map(c => c.order||0), -1);
-     const nextOrder = Math.max(maxI, maxC) + 1;
+     // Land in the target folder's first free cell.
+     const taken = new Set(
+         library
+             .filter(i => i.boardId === currentBoardId && i.category === targetId && !i.isCore && i.id !== item.id)
+             .map(i => i.slot)
+             .concat(categories
+                 .filter(c => c.boardId === currentBoardId && (c.parentId || ROOT_FOLDER) === targetId && c.id !== item.id)
+                 .map(c => c.slot))
+             .filter((s): s is number => typeof s === 'number')
+     );
+     let slot = 0;
+     while (taken.has(slot)) slot++;
 
-     if (type === 'card') await saveItem({ ...item, category: targetId, order: nextOrder });
-     else await saveCategory({ ...item, parentId: targetId, order: nextOrder });
+     if (type === 'card') await saveItem({ ...item, category: targetId, slot });
+     else await saveCategory({ ...item, parentId: targetId, slot });
      await reloadCurrentData();
   };
 
@@ -630,7 +714,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const value = {
       profiles, currentProfileId, boards, currentBoardId, library, categories, sentence, settings, isEditMode,
       isInitializing, isPlaying, activeIndex, currentFolderId, searchQuery, isSearchActive, boardHistory,
-      gridItems, breadcrumbs, t, 
+      gridItems, gridCells, grid, coreItems, breadcrumbs, t, 
       setSettings: handleSetSettings, 
       setEditMode: setIsEditMode, setSearchQuery, setIsSearchActive,
       switchProfile, switchBoard, navigateToFolder, navigateBackFolder, navigateBackBoard,

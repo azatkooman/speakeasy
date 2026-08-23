@@ -15,6 +15,14 @@ export interface Board {
   profileId: string; // Associated Profile
   label: string;
   createdAt: number;
+  /**
+   * Fixed grid dimensions. NOT responsive: the column count used to come from
+   * Tailwind breakpoints, so every word changed position when the tablet was
+   * rotated or the window resized, destroying the motor memory a child builds
+   * up. Cells scale; the grid does not reflow.
+   */
+  gridRows: number;
+  gridCols: number;
 }
 
 export interface Category {
@@ -26,7 +34,14 @@ export interface Category {
   colorTheme: ColorTheme;
   parentId?: string; // If undefined or 'root', it's a top-level folder
   icon?: string; // Key from ICON_MAP
-  order?: number;
+  /**
+   * Absolute cell index within the parent folder's grid. Cards and folders
+   * share one slot space, so each occupies a specific cell and nothing ever
+   * reflows. Replaces `order`, which was compacted — hiding the third of
+   * twelve items shifted the other nine.
+   */
+  slot?: number;
+  order?: number; // legacy, read only by the v6 -> v7 migration
 }
 
 export interface AACItem {
@@ -44,7 +59,16 @@ export interface AACItem {
   isVisible?: boolean; // If false, hidden in Child Mode
   linkedBoardId?: string; // If present, clicking this item switches to this board
   createdAt: number;
-  order?: number;
+  /** Absolute cell index. See Category.slot. */
+  slot?: number;
+  order?: number; // legacy, read only by the v6 -> v7 migration
+  /**
+   * Pinned to the persistent core-word rail. Core items are board-scoped and
+   * ignore `category`, so they stay on screen in every folder. Around 80% of
+   * what anyone says is core vocabulary, and it used to disappear the moment a
+   * child opened a folder.
+   */
+  isCore?: boolean;
 }
 
 export interface SavedSentence {

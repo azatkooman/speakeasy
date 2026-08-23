@@ -6,7 +6,7 @@ import { TranslationKey } from './translations';
 import { SEED_PICTOGRAMS, resolveSeedPictogram, isBundledAsset } from '../utils/seedPictograms';
 
 const DB_NAME = 'speakeasy_aac_db';
-const DB_VERSION = 6;
+const DB_VERSION = 7;
 const STORE_ITEMS = 'aac_items';
 const STORE_CATEGORIES = 'aac_categories';
 const STORE_BOARDS = 'aac_boards';
@@ -110,20 +110,89 @@ const DEFAULT_CATEGORIES_TEMPLATE: Array<{
     colorTheme: string;
     parentId: string;
     icon: string;
-    order: number;
+    slot: number;
 }> = [
-  { id: 'PEOPLE', labelKey: 'folder.default.people', fallback: 'People', colorTheme: 'yellow', parentId: 'root', icon: 'people', order: 10 },
-  { id: 'VERB', labelKey: 'folder.default.actions', fallback: 'Actions', colorTheme: 'green', parentId: 'root', icon: 'actions', order: 11 },
-  { id: 'NOUN', labelKey: 'folder.default.things', fallback: 'Things', colorTheme: 'orange', parentId: 'root', icon: 'things', order: 12 },
-  { id: 'ADJECTIVE', labelKey: 'folder.default.desc', fallback: 'Desc.', colorTheme: 'blue', parentId: 'root', icon: 'desc', order: 13 },
-  { id: 'SOCIAL', labelKey: 'folder.default.social', fallback: 'Social', colorTheme: 'pink', parentId: 'root', icon: 'social', order: 14 },
-  { id: 'PLACES', labelKey: 'folder.default.places', fallback: 'Places', colorTheme: 'purple', parentId: 'root', icon: 'places', order: 15 },
-  { id: 'FOOD', labelKey: 'folder.default.food', fallback: 'Food', colorTheme: 'orange', parentId: 'root', icon: 'food', order: 16 }, 
-  { id: 'TIME', labelKey: 'folder.default.time', fallback: 'Time', colorTheme: 'teal', parentId: 'root', icon: 'time', order: 17 },
+  { id: 'PEOPLE', labelKey: 'folder.default.people', fallback: 'People', colorTheme: 'yellow', parentId: 'root', icon: 'people', slot: 4 },
+  { id: 'VERB', labelKey: 'folder.default.actions', fallback: 'Actions', colorTheme: 'green', parentId: 'root', icon: 'actions', slot: 5 },
+  { id: 'NOUN', labelKey: 'folder.default.things', fallback: 'Things', colorTheme: 'orange', parentId: 'root', icon: 'things', slot: 6 },
+  { id: 'ADJECTIVE', labelKey: 'folder.default.desc', fallback: 'Desc.', colorTheme: 'blue', parentId: 'root', icon: 'desc', slot: 7 },
+  { id: 'SOCIAL', labelKey: 'folder.default.social', fallback: 'Social', colorTheme: 'pink', parentId: 'root', icon: 'social', slot: 8 },
+  { id: 'PLACES', labelKey: 'folder.default.places', fallback: 'Places', colorTheme: 'purple', parentId: 'root', icon: 'places', slot: 9 },
+  { id: 'FOOD', labelKey: 'folder.default.food', fallback: 'Food', colorTheme: 'orange', parentId: 'root', icon: 'food', slot: 10 }, 
+  { id: 'TIME', labelKey: 'folder.default.time', fallback: 'Time', colorTheme: 'teal', parentId: 'root', icon: 'time', slot: 11 },
 ];
 
 export const IDX_PROFILE = 'by_profile';
 export const IDX_BOARD = 'by_board';
+
+/** Default grid for boards created before gridRows/gridCols existed. */
+export const DEFAULT_GRID_ROWS = 4;
+export const DEFAULT_GRID_COLS = 6;
+
+/**
+ * v6 -> v7. Converts the compacted `order` into an absolute `slot`, and gives
+ * every board explicit grid dimensions.
+ *
+ * Cards and folders that live in the same parent folder are collected into one
+ * list, sorted the way the old grid sorted them, and assigned slots 0..n. That
+ * reproduces the arrangement the parent already sees, so nothing appears to
+ * move on upgrade — the difference is that from now on those positions are
+ * absolute and hiding or deleting an item leaves a gap instead of shifting
+ * everything after it.
+ *
+ * Everything happens on the upgrade transaction, so a failure aborts the whole
+ * thing and the database stays on v6 rather than half-migrated.
+ */
+const migrateOrderToSlot = (tx: IDBTransaction) => {
+  const legacySort = (a: any, b: any) => {
+    if (a.order !== undefined && b.order !== undefined) return a.order - b.order;
+    if (a.order !== undefined) return -1;
+    if (b.order !== undefined) return 1;
+    return (b.createdAt || 0) - (a.createdAt || 0);
+  };
+
+  // Boards: explicit grid dimensions.
+  const boardStore = tx.objectStore(STORE_BOARDS);
+  boardStore.getAll().onsuccess = (e) => {
+    const boards = (e.target as IDBRequest<Board[]>).result || [];
+    boards.forEach(b => {
+      if (typeof b.gridRows !== 'number' || typeof b.gridCols !== 'number') {
+        boardStore.put({ ...b, gridRows: DEFAULT_GRID_ROWS, gridCols: DEFAULT_GRID_COLS });
+      }
+    });
+  };
+
+  // Items and folders share a slot space per (board, parent folder).
+  const itemStore = tx.objectStore(STORE_ITEMS);
+  const catStore = tx.objectStore(STORE_CATEGORIES);
+
+  itemStore.getAll().onsuccess = (ie) => {
+    const items = ((ie.target as IDBRequest<AACItem[]>).result || []);
+    catStore.getAll().onsuccess = (ce) => {
+      const cats = ((ce.target as IDBRequest<Category[]>).result || []);
+
+      // Group by board + containing folder. An item's container is `category`;
+      // a folder's is `parentId`.
+      const buckets = new Map<string, Array<{ rec: any; kind: 'item' | 'cat' }>>();
+      const push = (key: string, rec: any, kind: 'item' | 'cat') => {
+        if (!buckets.has(key)) buckets.set(key, []);
+        buckets.get(key)!.push({ rec, kind });
+      };
+
+      items.forEach(i => push(`${i.boardId}|${i.category || ROOT_FOLDER}`, i, 'item'));
+      cats.forEach(c => push(`${c.boardId}|${c.parentId || ROOT_FOLDER}`, c, 'cat'));
+
+      buckets.forEach(entries => {
+        entries.sort((a, b) => legacySort(a.rec, b.rec));
+        entries.forEach(({ rec, kind }, index) => {
+          if (rec.slot === index) return;
+          const next = { ...rec, slot: index };
+          (kind === 'item' ? itemStore : catStore).put(next);
+        });
+      });
+    };
+  };
+};
 
 /**
  * Single cached connection. Every read and write used to call openDB(), which
@@ -140,7 +209,7 @@ const openDB = (): Promise<IDBDatabase> => {
   dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-    request.onupgradeneeded = () => {
+    request.onupgradeneeded = (event) => {
       const db = request.result;
       const tx = request.transaction;
       if (!tx) return;
@@ -169,6 +238,15 @@ const openDB = (): Promise<IDBDatabase> => {
       ensureIndex(boards, IDX_PROFILE, 'profileId');
 
       ensureStore(STORE_PROFILES);
+
+      // --- v7: compacted `order` becomes absolute `slot` ---
+      // Runs inside the upgrade transaction, so either the whole migration
+      // lands or the version does not advance. Cards and folders in the same
+      // parent folder share one slot space, assigned by walking the old order,
+      // so existing boards keep the exact arrangement the parent built.
+      if (event.oldVersion < 7) {
+        migrateOrderToSlot(tx);
+      }
     };
 
     request.onsuccess = () => {
@@ -283,7 +361,9 @@ export const initializeBoards = async (defaultName: string, profileId: string, t
         id: crypto.randomUUID(),
         profileId,
         label: defaultName,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        gridRows: DEFAULT_GRID_ROWS,
+        gridCols: DEFAULT_GRID_COLS
     };
     await saveBoard(defaultBoard);
 
@@ -306,7 +386,7 @@ export const initializeBoards = async (defaultName: string, profileId: string, t
     // Use saveCategoriesBatch to ensure files (if any) are handled, though default icons are simple strings
     await saveCategoriesBatch(catsToCreate);
 
-    const createDefaultCard = (id: string, labelKey: TranslationKey, fallback: string, iconUrl: string, catId: string, color: ColorTheme, order: number): AACItem => ({
+    const createDefaultCard = (id: string, labelKey: TranslationKey, fallback: string, iconUrl: string, catId: string, color: ColorTheme, slot: number): AACItem => ({
         id,
         profileId,
         boardId: defaultBoard.id,
@@ -317,7 +397,7 @@ export const initializeBoards = async (defaultName: string, profileId: string, t
         category: catId,
         colorTheme: color,
         createdAt: Date.now(),
-        order,
+        slot,
         isVisible: true
     });
 
@@ -344,7 +424,9 @@ export const createNewBoard = async (label: string, profileId: string, t?: (key:
         id: newId,
         profileId,
         label,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        gridRows: DEFAULT_GRID_ROWS,
+        gridCols: DEFAULT_GRID_COLS
     };
     await saveBoard(board);
 

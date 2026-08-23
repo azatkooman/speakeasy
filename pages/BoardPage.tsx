@@ -36,7 +36,7 @@ const DEFAULT_CARD_STYLE = THEME_STYLES['slate'];
 
 export const BoardPage: React.FC = () => {
   const { 
-     gridItems, sentence, categories, settings, isEditMode, currentFolderId, breadcrumbs, 
+     gridItems, gridCells, grid, coreItems, sentence, categories, settings, isEditMode, currentFolderId, breadcrumbs, 
      addToSentence, removeFromSentence, removeLastFromSentence, clearSentence, playSentence,
      t, navigateToFolder, navigateBackFolder, reorderGrid, isSearchActive, library,
      
@@ -93,14 +93,6 @@ export const BoardPage: React.FC = () => {
     prevGridLength.current = gridItems.length;
   }, [gridItems.length]);
 
-  const getGridClass = () => {
-    switch (settings.gridColumns) {
-      case 'small': return 'grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10';
-      case 'large': return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5';
-      case 'medium': default: return 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6';
-    }
-  };
-  
   const getLabelSize = () => settings.gridColumns === 'small' ? 'text-xs sm:text-sm leading-tight' : 'text-sm sm:text-base leading-tight';
 
   const getCardStyle = (item: AACItem) => {
@@ -182,10 +174,34 @@ export const BoardPage: React.FC = () => {
         className="flex-1 overflow-y-auto p-4"
         style={{ paddingBottom: isEditMode ? 'calc(10rem + env(safe-area-inset-bottom))' : 'calc(8rem + env(safe-area-inset-bottom))' }}
       >
-        <div className={`grid gap-4 max-w-7xl mx-auto ${getGridClass()}`}>
-            {gridItems.map((item, index) => {
-                const isFirst = index === 0;
-                const isLast = index === gridItems.length - 1;
+        {/*
+          Fixed grid. The column count comes from the board, not from Tailwind
+          breakpoints, so rotating the tablet scales the cells instead of
+          reflowing them and moving every word. `null` cells are real, preserved
+          gaps: a hidden or deleted item leaves its slot empty rather than
+          pulling everything after it forward. Search is the exception — absolute
+          slots are meaningless there, so it lays out as a plain flow.
+        */}
+        <div
+          className="grid gap-3 sm:gap-4 max-w-7xl mx-auto"
+          style={{ gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))` }}
+        >
+            {gridCells.map((cell, index) => {
+                if (!cell) {
+                    return (
+                        <div
+                            key={`empty-${index}`}
+                            aria-hidden="true"
+                            className={`aspect-[4/5] rounded-3xl ${isEditMode ? 'border-2 border-dashed border-slate-300/70' : ''}`}
+                        />
+                    );
+                }
+
+                const item = cell;
+                const prevFilled = gridCells.slice(0, index).some(Boolean);
+                const nextFilled = gridCells.slice(index + 1).some(Boolean);
+                const isFirst = !prevFilled;
+                const isLast = !nextFilled;
 
                 if (item.type === 'folder') {
                     const folder = item as Category;

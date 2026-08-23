@@ -48,7 +48,7 @@ const MoveItemModal: React.FC<MoveItemModalProps> = ({ isOpen, onClose, itemToMo
     const addChildren = (parentId: string, depth: number) => {
         const children = categories
             .filter(c => (c.parentId || ROOT_FOLDER) === parentId)
-            .sort((a, b) => (a.order || 0) - (b.order || 0));
+            .sort((a, b) => (a.slot ?? 0) - (b.slot ?? 0));
 
         children.forEach(child => {
             // If we are moving a folder, we cannot move it into itself or its children
