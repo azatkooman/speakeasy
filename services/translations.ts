@@ -388,7 +388,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'default.card.no': 'No',
     'default.card.stop': 'Stop',
     'default.card.apple': 'Apple',
-    'onboarding.unlock_hint': 'Press & hold (3s) to unlock Parent Mode.',
+    'onboarding.unlock_hint': 'Press & hold (1.5s) to unlock Parent Mode.',
     'onboarding.dismiss': 'Got it',
   },
   ru: {
@@ -587,8 +587,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'default.card.no': 'Нет',
     'default.card.stop': 'Стоп',
     'default.card.apple': 'Яблоко',
-    'onboarding.unlock_hint': 'Appuyez et maintenez (3s) pour déverrouiller le Mode Parent.',
-    'onboarding.dismiss': 'Compris',
+    'onboarding.unlock_hint': 'Нажмите и удерживайте (1,5 с), чтобы открыть режим родителя.',
+    'onboarding.dismiss': 'Понятно',
   },
   fr: {
     'app.title': 'SpeakEasy',
@@ -786,7 +786,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'default.card.no': 'Non',
     'default.card.stop': 'Arrêt',
     'default.card.apple': 'Pomme',
-    'onboarding.unlock_hint': 'Appuyez et maintenez (3s) pour déverrouiller le Mode Parent.',
+    'onboarding.unlock_hint': 'Appuyez et maintenez (1,5 s) pour déverrouiller le Mode Parent.',
     'onboarding.dismiss': 'Compris',
   },
   es: {
@@ -985,7 +985,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'default.card.no': 'No',
     'default.card.stop': 'Parar',
     'default.card.apple': 'Manzana',
-    'onboarding.unlock_hint': 'Presione (3s) para Modo Padre.',
+    'onboarding.unlock_hint': 'Mantenga pulsado (1,5 s) para el Modo Padres.',
     'onboarding.dismiss': 'Entendido',
   }
 };
