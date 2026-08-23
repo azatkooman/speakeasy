@@ -52,6 +52,11 @@ export type TranslationKey =
   | 'forms.title'
   | 'forms.edit_label'
   | 'forms.edit_hint'
+  | 'keyboard.title'
+  | 'keyboard.placeholder'
+  | 'keyboard.hint'
+  | 'keyboard.add'
+  | 'keyboard.open'
   | 'nav.categories'
   | 'nav.add_card'
   | 'nav.settings'
@@ -269,6 +274,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'forms.title': 'Word forms',
     'forms.edit_label': 'Other wordings',
     'forms.edit_hint': 'One per line, e.g. wants, wanted, wanting. The child picks from these on the card.',
+    'keyboard.title': 'Spell a word',
+    'keyboard.placeholder': 'Type here',
+    'keyboard.hint': 'Suggestions from your own cards appear here',
+    'keyboard.add': 'Add to sentence',
+    'keyboard.open': 'Spell a word',
     'nav.categories': 'Categories',
     'nav.add_card': 'Add Card',
     'nav.settings': 'Settings',
@@ -494,6 +504,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'forms.title': 'Формы слова',
     'forms.edit_label': 'Другие формы',
     'forms.edit_hint': 'По одной в строке, например: хочу, хотел, хочет. Ребёнок выбирает их на карточке.',
+    'keyboard.title': 'Написать слово',
+    'keyboard.placeholder': 'Введите текст',
+    'keyboard.hint': 'Здесь появятся подсказки из ваших карточек',
+    'keyboard.add': 'Добавить в строку',
+    'keyboard.open': 'Написать слово',
     'nav.categories': 'Категории',
     'nav.add_card': 'Добавить',
     'nav.settings': 'Настройки',
@@ -719,6 +734,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'forms.title': 'Formes du mot',
     'forms.edit_label': 'Autres formulations',
     'forms.edit_hint': 'Une par ligne, par exemple : veut, voulait, voulant. L\'enfant choisit parmi elles sur la carte.',
+    'keyboard.title': 'Écrire un mot',
+    'keyboard.placeholder': 'Tapez ici',
+    'keyboard.hint': 'Les suggestions viennent de vos propres cartes',
+    'keyboard.add': 'Ajouter à la phrase',
+    'keyboard.open': 'Écrire un mot',
     'nav.categories': 'Catégories',
     'nav.add_card': 'Ajouter une Carte',
     'nav.settings': 'Paramètres',
@@ -944,6 +964,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'forms.title': 'Formas de la palabra',
     'forms.edit_label': 'Otras formas',
     'forms.edit_hint': 'Una por línea, por ejemplo: quiere, quería, queriendo. El niño elige entre ellas en la tarjeta.',
+    'keyboard.title': 'Escribir una palabra',
+    'keyboard.placeholder': 'Escribe aquí',
+    'keyboard.hint': 'Las sugerencias vienen de tus propias tarjetas',
+    'keyboard.add': 'Añadir a la frase',
+    'keyboard.open': 'Escribir una palabra',
     'nav.categories': 'Categorías',
     'nav.add_card': 'Añadir',
     'nav.settings': 'Ajustes',

@@ -23,6 +23,7 @@ import ProfileSelectionModal from '../components/ProfileSelectionModal.tsx';
 import SettingsModal from '../components/SettingsModal.tsx';
 import BoardsModal from '../components/BoardsModal.tsx';
 import WordFormsModal from '../components/WordFormsModal.tsx';
+import KeyboardModal from '../components/KeyboardModal.tsx';
 
 // Updated Color definitions for the "Framed" style
 const THEME_STYLES: Record<string, { bg: string; border: string; shadow: string; text: string; ring: string }> = {
@@ -40,7 +41,7 @@ const DEFAULT_CARD_STYLE = THEME_STYLES['slate'];
 
 export const BoardPage: React.FC = () => {
   const { 
-     gridItems, gridCells, grid, coreItems, selectItem, previewItemId, sentence, categories, settings, isEditMode, currentFolderId, breadcrumbs, 
+     gridItems, gridCells, grid, coreItems, selectItem, addTypedWord, vocabulary, previewItemId, sentence, categories, settings, isEditMode, currentFolderId, breadcrumbs, 
      addToSentence, removeFromSentence, removeLastFromSentence, clearSentence, playSentence,
      t, navigateToFolder, navigateBackFolder, reorderGrid, isSearchActive, library,
      
@@ -68,6 +69,7 @@ export const BoardPage: React.FC = () => {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
   const [formsCard, setFormsCard] = useState<AACItem | null>(null);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
   const breadcrumbsScrollRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
@@ -117,7 +119,7 @@ export const BoardPage: React.FC = () => {
   const isAnyModalOpen =
       isHistoryOpen || isCreateSelectionOpen || isCreateModalOpen || isFolderModalOpen ||
       isLinkBoardModalOpen || isSettingsOpen || isBoardsModalOpen || isProfileModalOpen ||
-      !!editOptionsItem || !!moveModalItem || !!itemToDelete || !!folderToDelete || !!formsCard;
+      !!editOptionsItem || !!moveModalItem || !!itemToDelete || !!folderToDelete || !!formsCard || isKeyboardOpen;
 
   const scanner = useScanner({
       settings: scanSettings,
@@ -160,6 +162,7 @@ export const BoardPage: React.FC = () => {
           onClear={clearSentence}
           onPlay={playSentence}
           onShowHistory={() => setIsHistoryOpen(true)}
+          onOpenKeyboard={() => setIsKeyboardOpen(true)}
           isPlaying={useSpeakEasy().isPlaying}
           activeIndex={useSpeakEasy().activeIndex}
           t={t}
@@ -239,18 +242,6 @@ export const BoardPage: React.FC = () => {
               const hasForms = (card.forms?.length ?? 0) > 0;
               return (
                 <div key={card.id} className="relative shrink-0">
-                {/* Core vocabulary is where verbs live, so the rail needs the
-                    grammar badge as much as the grid does. */}
-                {!isEditMode && hasForms && (
-                  <button
-                    type="button"
-                    aria-label={`${t('forms.title')}: ${label}`}
-                    onClick={() => setFormsCard(card)}
-                    className="absolute -top-1 -right-1 z-30 bg-white/95 rounded-full w-6 h-6 flex items-center justify-center shadow-sm border-2 border-slate-200 text-slate-600 hover:border-primary hover:text-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary"
-                  >
-                    <Type size={12} strokeWidth={2.5} />
-                  </button>
-                )}
                 <GridCellButton
                   onActivate={() => selectItem(card)}
                   selectionMode={settings.selectionMode || 'release'}
@@ -266,6 +257,21 @@ export const BoardPage: React.FC = () => {
                     {label}
                   </span>
                 </GridCellButton>
+
+                {/* After the cell in DOM order on purpose: saying the word is the
+                    primary action and should come first for keyboard and switch
+                    users. Absolutely positioned, so visual placement is
+                    unaffected. */}
+                {!isEditMode && hasForms && (
+                  <button
+                    type="button"
+                    aria-label={`${t('forms.title')}: ${label}`}
+                    onClick={() => setFormsCard(card)}
+                    className="absolute -top-1 -right-1 z-30 bg-white/95 rounded-full w-6 h-6 flex items-center justify-center shadow-sm border-2 border-slate-200 text-slate-600 hover:border-primary hover:text-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary"
+                  >
+                    <Type size={12} strokeWidth={2.5} />
+                  </button>
+                )}
                 </div>
               );
           })}
@@ -494,6 +500,13 @@ export const BoardPage: React.FC = () => {
       />
       <EditOptionsModal isOpen={!!editOptionsItem} onClose={() => setEditOptionsItem(null)} item={editOptionsItem?.item || null} type={editOptionsItem?.type || 'card'} onEdit={() => { if(editOptionsItem?.type==='card') { setEditingItem(editOptionsItem.item as AACItem); setIsCreateModalOpen(true); } else { setEditingFolder(editOptionsItem?.item as Category); setIsFolderModalOpen(true); } }} onMove={() => setMoveModalItem(editOptionsItem)} onDelete={() => { if(editOptionsItem?.type==='card') setItemToDelete(editOptionsItem.item.id); else setFolderToDelete(editOptionsItem?.item.id ?? null); }} t={t} />
       <MoveItemModal isOpen={!!moveModalItem} onClose={() => setMoveModalItem(null)} itemToMove={moveModalItem} categories={categories.filter(c => c.boardId === currentBoardId)} onMove={(target) => { if(moveModalItem) moveItemToFolder(moveModalItem.item, moveModalItem.type, target); setMoveModalItem(null); }} t={t} />
+      <KeyboardModal
+        isOpen={isKeyboardOpen}
+        onClose={() => setIsKeyboardOpen(false)}
+        vocabulary={vocabulary}
+        onSubmit={addTypedWord}
+        t={t}
+      />
       <WordFormsModal
         card={formsCard}
         baseLabel={formsCard ? (formsCard.labelKey ? t(formsCard.labelKey as TranslationKey) : formsCard.label) : ''}

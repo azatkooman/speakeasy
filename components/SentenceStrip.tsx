@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect } from 'react';
-import { Play, RotateCcw, X, Volume2, Delete, Clock } from 'lucide-react';
+import { Play, RotateCcw, X, Volume2, Delete, Clock, Keyboard } from 'lucide-react';
 import { AACItem, Category } from '../types';
 
 interface SentenceStripProps {
@@ -11,6 +11,7 @@ interface SentenceStripProps {
   onClear: () => void;
   onPlay: () => void;
   onShowHistory: () => void;
+  onOpenKeyboard: () => void;
   isPlaying: boolean;
   activeIndex: number | null;
   t: (key: any) => string;
@@ -36,6 +37,7 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
   onClear, 
   onPlay,
   onShowHistory,
+  onOpenKeyboard,
   isPlaying,
   activeIndex,
   t
@@ -132,24 +134,34 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
                             h-[4.5rem] w-[4.5rem] sm:h-24 sm:w-24 rounded-2xl border-2 overflow-hidden shadow-sm bg-white flex flex-col items-center
                             ${style.border}
                         `}>
-                            {/* Image Area - White Background */}
-                            <div className="flex-1 w-full p-1 bg-white flex items-center justify-center overflow-hidden relative">
-                                <img
-                                    src={item.imageUrl}
-                                    alt=""
-                                    className={`w-full h-full pointer-events-none ${item.imageFit === 'contain' ? 'object-contain' : 'object-cover rounded-lg'}`}
-                                />
-                            </div>
-
-                            {/* Text Area - Colored Band */}
-                            <div className={`
-                                h-6 sm:h-7 w-full flex items-center justify-center px-1 overflow-hidden
-                                border-t-2 ${style.border} ${style.bg}
-                            `}>
-                                <span className={`text-[11px] sm:text-xs font-semibold text-center truncate leading-tight ${style.text}`}>
-                                    {displayLabel}
-                                </span>
-                            </div>
+                            {/* A spelled word has no image: show the word once,
+                                filling the tile, instead of a broken image plus a
+                                duplicate label underneath. */}
+                            {item.imageUrl ? (
+                                <>
+                                    <div className="flex-1 w-full p-1 bg-white flex items-center justify-center overflow-hidden relative">
+                                        <img
+                                            src={item.imageUrl}
+                                            alt=""
+                                            className={`w-full h-full pointer-events-none ${item.imageFit === 'contain' ? 'object-contain' : 'object-cover rounded-lg'}`}
+                                        />
+                                    </div>
+                                    <div className={`
+                                        h-6 sm:h-7 w-full flex items-center justify-center px-1 overflow-hidden
+                                        border-t-2 ${style.border} ${style.bg}
+                                    `}>
+                                        <span className={`text-[11px] sm:text-xs font-semibold text-center truncate leading-tight ${style.text}`}>
+                                            {displayLabel}
+                                        </span>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className={`flex-1 w-full flex items-center justify-center px-1.5 ${style.bg}`}>
+                                    <span className={`text-center text-xs sm:text-sm font-bold leading-tight line-clamp-3 ${style.text}`}>
+                                        {displayLabel}
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Remove — always visible; `hover` never happens on touch. */}
@@ -183,6 +195,15 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
                 <RotateCcw size={20} strokeWidth={2.5} />
             </button>
             
+            <button
+                onClick={onOpenKeyboard}
+                aria-label={t('keyboard.open')}
+                title={t('keyboard.open')}
+                className="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 hover:bg-primary/10 hover:text-primary flex items-center justify-center transition-all active:scale-95"
+            >
+                <Keyboard size={20} strokeWidth={2.5} />
+            </button>
+
             <button 
                 onClick={onShowHistory}
                 className="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 hover:bg-blue-50 hover:text-blue-500 flex items-center justify-center transition-all active:scale-95"

@@ -75,6 +75,10 @@ interface SpeakEasyContextType {
    * is on, and otherwise commits straight away.
    */
   selectItem: (item: AACItem) => void;
+  /** Adds a spelled word to the sentence as a text-only item. */
+  addTypedWord: (text: string) => void;
+  /** Every label and word form in this profile — the keyboard's prediction source. */
+  vocabulary: string[];
   /** Card currently armed by auditory preview, for a visual cue. */
   previewItemId: string | null;
   addToSentence: (item: AACItem) => void;
@@ -720,6 +724,39 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       previewTimerRef.current = window.setTimeout(() => setPreviewItemId(null), 4000);
   };
 
+  /**
+   * A spelled word joins the sentence as a text-only item. It carries no image
+   * and no board, so it is never written to the library — it exists only for
+   * the length of this sentence.
+   */
+  const addTypedWord = (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      if (settings.maxSentenceLength > 0 && sentence.length >= settings.maxSentenceLength) return;
+      const item: AACItem = {
+          id: `typed:${crypto.randomUUID()}`,
+          profileId: currentProfileId,
+          boardId: currentBoardId,
+          label: trimmed,
+          imageUrl: '',
+          textToSpeak: trimmed,
+          category: currentFolderId,
+          createdAt: Date.now(),
+      };
+      setSentence(prev => [...prev, item]);
+      playItemSound(item);
+  };
+
+  const vocabulary = useMemo(() => {
+      const words = new Set<string>();
+      library.forEach(i => {
+          const label = i.labelKey ? t(i.labelKey as TranslationKey) : i.label;
+          if (label) words.add(label);
+          (i.forms || []).forEach(f => { if (f) words.add(f); });
+      });
+      return [...words].sort((a, b) => a.localeCompare(b));
+  }, [library, settings.language]);
+
   const removeFromSentence = (idx: number) => {
       if (isPlaying) stopPlayback();
       setSentence(prev => prev.filter((_, i) => i !== idx));
@@ -779,7 +816,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       switchProfile, switchBoard, navigateToFolder, navigateBackFolder, navigateBackBoard,
       createProfile, updateProfile, removeProfile, createBoard, updateBoard, removeBoard, setBoardGridSize,
       saveCard, saveFolderObj, saveLinkBoard, deleteCard, deleteFolderObj, reorderGrid, moveItemToFolder,
-      selectItem, previewItemId, addToSentence, removeFromSentence, removeLastFromSentence, clearSentence, playSentence, setSentenceFromHistory
+      selectItem, addTypedWord, vocabulary, previewItemId, addToSentence, removeFromSentence, removeLastFromSentence, clearSentence, playSentence, setSentenceFromHistory
   };
 
   return <SpeakEasyContext.Provider value={value}>{children}</SpeakEasyContext.Provider>;
