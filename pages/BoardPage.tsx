@@ -311,7 +311,7 @@ export const BoardPage: React.FC = () => {
                   isPreviewArmed={previewItemId === card.id}
                   isScanFocused={scanner.focusedId === `core:${card.id}`}
                   dataPart="card-surface"
-                  className={`w-full h-[4.25rem] sm:h-20 rounded-2xl bg-white border-2 ${style.border} shadow-[0_3px_0_0] ${style.shadow} flex flex-col overflow-hidden ${card.isVisible === false ? 'opacity-50 grayscale' : ''}`}
+                  className={`relative w-full h-[4.25rem] sm:h-20 rounded-2xl bg-white border-2 ${style.border} shadow-[0_3px_0_0] ${style.shadow} flex flex-col overflow-hidden ${card.isVisible === false ? 'opacity-50 grayscale' : ''}`}
                 >
                   <span data-part="card-art" className="flex-1 min-h-0 w-full p-1 flex items-center justify-center bg-white">
                     <img src={card.imageUrl} alt="" loading="lazy" className={`w-full h-full ${card.imageFit === 'contain' ? 'object-contain' : 'object-cover rounded-lg'}`} />
@@ -380,7 +380,12 @@ export const BoardPage: React.FC = () => {
                 if (item.type === 'folder') {
                     const folder = item as Category;
                     return (
-                        <div key={folder.id} className={`relative ${inFocusedRow ? 'ring-4 ring-sky-500/60 rounded-3xl' : ''} ${foundItemId === folder.id ? 'ring-4 ring-amber-400 ring-offset-2 rounded-3xl z-20' : ''}`}>
+                        // aspect-[4/5] belongs here, on the grid item, exactly as it
+                        // does on the card branch below. It used to sit on
+                        // FolderCard's own root instead, one level down, so a folder
+                        // cell and a card cell were sized by two different rules and
+                        // came out 14px apart in the same row.
+                        <div key={folder.id} data-part="cell" data-theme-color={folder.colorTheme || 'slate'} className={`relative aspect-[4/5] ${inFocusedRow ? 'ring-4 ring-sky-500/60 rounded-3xl' : ''} ${foundItemId === folder.id ? 'ring-4 ring-amber-400 ring-offset-2 rounded-3xl z-20' : ''}`}>
                             <FolderCard 
                                 folder={folder} 
                                 isScanFocused={scanner.focusedId === `folder:${folder.id}`}

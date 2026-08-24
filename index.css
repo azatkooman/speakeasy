@@ -135,13 +135,18 @@ body {
 
 /* ---- Cards and folders ---- */
 
+[data-shell='neutral'] [data-part='card-surface'] { background-color: var(--n-surface) !important; }
 [data-shell='neutral'] [data-part='card-surface'],
 [data-shell='neutral'] [data-part='folder-surface'] [data-part='folder-body'] {
-  background-color: var(--n-surface) !important;
   border: 1px solid var(--n-hairline) !important;
   box-shadow: var(--n-lift) !important;
   overflow: hidden;
-  position: relative;
+  /* No `position` here. Both of these elements are already positioned by their
+     own classes — the card surface absolutely, the folder body relatively — so
+     the ::after accent bar anchors correctly either way. Forcing `relative`
+     pulled the absolutely-positioned card surface back into flow, where its
+     artwork stretched the cell past its 4/5 aspect ratio and made every card
+     taller than the folders beside it. */
 }
 
 /* The category edge. `currentColor` is not available here, so the accent comes
@@ -189,16 +194,6 @@ body {
   font-weight: 600;
 }
 
-/* The symbol sits on the surface itself: the inset white plate with its own
-   border and shadow was a second frame around an image that is already framed
-   by the card. */
-[data-shell='neutral'] [data-part='folder-art'] {
-  background: transparent !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-}
-[data-shell='neutral'] [data-part='folder-art'] svg { color: var(--cell-ink, #1e293b); }
-
 /*
   The literal folder tab is the most toy-like element on the board, but it was
   also doing real work: it is what tells a user at a glance that a cell opens
@@ -206,27 +201,31 @@ body {
   apart from their artwork, which is not a distinction to rely on — a card can
   hold a line-art symbol and a folder can hold a photo.
 
-  So the tab goes and a quieter container cue replaces it: one sheet peeking out
-  above the card's top edge. Same information, without the toy.
+  A first attempt at replacing it — a sheet peeking above the card's top edge —
+  needed 5px of top padding, which made every folder 5px shorter than the cards
+  beside it in the same row. Visible and wrong: a shell must not change cell
+  geometry.
+
+  So the distinction is carried by fill instead, which costs no height: a folder
+  is washed in its category tint throughout, a card keeps a white symbol area.
+  That is also the language the young-learner shell already uses — its folder
+  bodies are tinted and its cards are white — so the two shells stay
+  consistent about what a folder is.
 */
 [data-shell='neutral'] [data-part='folder-tab'] { display: none; }
-[data-shell='neutral'] [data-part='folder-surface'] { padding-top: 5px !important; }
+[data-shell='neutral'] [data-part='folder-surface'] { padding-top: 0 !important; }
 [data-shell='neutral'] [data-part='folder-surface'] [data-part='folder-body'] {
   border-radius: var(--n-radius) !important;
+  background-color: var(--cell-wash, rgba(100,116,139,.16)) !important;
 }
-[data-shell='neutral'] [data-part='folder-surface'] [data-part='folder-body']::before {
-  content: '';
-  position: absolute;
-  top: -5px;
-  left: 7px;
-  right: 7px;
-  height: 6px;
-  border-radius: 5px 5px 0 0;
-  background: var(--n-surface);
-  border: 1px solid var(--n-hairline);
-  border-bottom: none;
-  pointer-events: none;
+/* The symbol sits on the folder's own tint: the inset white plate with its own
+   border and shadow was a second frame around already-framed artwork. */
+[data-shell='neutral'] [data-part='folder-art'] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
+[data-shell='neutral'] [data-part='folder-art'] svg { color: var(--cell-ink, #1e293b); }
 
 /* ---- Chrome ---- */
 

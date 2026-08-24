@@ -94,10 +94,29 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
       */}
       <div className="h-24 sm:h-28 w-full bg-slate-50/50 relative flex items-center">
         {items.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center text-slate-400 pointer-events-none select-none">
-                <span className="text-base sm:text-lg font-semibold tracking-tight border-2 border-dashed border-slate-300/60 bg-slate-50/50 px-5 py-2.5 rounded-2xl">
-                    {t('strip.tap_instruction')}
-                </span>
+            /*
+              Mirrors the control bar's three-part structure exactly — same
+              padding, same gap, same 10rem left spacer (three 3rem buttons plus
+              two 0.5rem gaps) and 3rem right spacer — so this hint shares an
+              axis with the Speak button it refers to at every width.
+
+              Centring it on the full width instead, as it was, put it ~56px
+              left of the button: Speak is centred inside the flex-1 middle
+              section, and that section is not itself centred on the bar because
+              the group on its left is three buttons wide and the group on its
+              right is one. True geometric centring of Speak is not available —
+              on a 393px phone those three utility buttons alone take 43% of the
+              width — so the fix is to give both elements one shared axis rather
+              than two nearly-equal ones.
+            */
+            <div className="absolute inset-0 flex items-center gap-3 px-3 sm:px-4 text-slate-400 pointer-events-none select-none">
+                <div className="w-40 shrink-0" aria-hidden="true" />
+                <div className="flex-1 flex justify-center px-2 min-w-0">
+                    <span className="text-base sm:text-lg font-semibold tracking-tight border-2 border-dashed border-slate-300/60 bg-slate-50/50 px-5 py-2.5 rounded-2xl truncate">
+                        {t('strip.tap_instruction')}
+                    </span>
+                </div>
+                <div className="w-12 shrink-0" aria-hidden="true" />
             </div>
         )}
 

@@ -22,6 +22,14 @@ interface GridCellButtonProps {
  * three access methods, the auditory-preview cue and the scanner highlight
  * behave identically across the board — rather than each call site
  * re-implementing onClick and quietly diverging.
+ *
+ * The caller must supply a position class (`absolute inset-0` for a grid cell,
+ * `relative` for a rail button): the dwell fill is positioned against this
+ * element. This used to hardcode `relative` here, which silently beat the
+ * `absolute inset-0` that callers pass — Tailwind emits `relative` after
+ * `absolute`, so class order in the attribute does not decide it. The effect
+ * was that every grid card sat in flow and its artwork set the cell's height,
+ * making cards 14px taller than the folders beside them in the same row.
  */
 const GridCellButton: React.FC<GridCellButtonProps> = ({
   onActivate,
@@ -43,7 +51,7 @@ const GridCellButton: React.FC<GridCellButtonProps> = ({
       data-part={dataPart}
       {...handlers}
       className={`
-        relative cursor-pointer text-left
+        cursor-pointer text-left
         focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2
         ${selectionMode === 'dwell' ? '' : 'active:translate-y-[3px] active:shadow-none'}
         ${isPreviewArmed ? 'ring-4 ring-amber-400 ring-offset-2 z-20' : ''}

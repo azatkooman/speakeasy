@@ -56,7 +56,9 @@ const FolderCard: React.FC<FolderCardProps> = ({
     // The folder itself is one <button>, so keyboard, screen reader and switch
     // access can reach it. Edit controls sit outside it as siblings — nesting
     // them would be invalid HTML and would break that traversal.
-    <div data-part="cell" data-theme-color={folder.colorTheme || 'slate'} className="relative aspect-[4/5] select-none">
+    // Fills whatever cell it is given; the aspect ratio lives on the grid item
+    // in BoardPage, so folders and cards are sized by the same rule.
+    <div className="relative w-full h-full select-none">
       {/* `group` lives on the button, not the wrapper, so the press-down effect
           below responds to activating the control rather than to :active on a
           non-interactive div. */}
