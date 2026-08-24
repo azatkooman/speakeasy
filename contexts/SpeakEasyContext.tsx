@@ -70,6 +70,8 @@ interface SpeakEasyContextType {
   deleteFolderObj: (id: string) => Promise<void>;
   
   reorderGrid: (itemId: string, direction: -1 | 1) => Promise<void>;
+  /** Move a card up or down the core rail. */
+  reorderCore: (itemId: string, direction: -1 | 1) => Promise<void>;
   moveItemToFolder: (item: AACItem | Category, type: 'card' | 'folder', targetFolderId: string) => Promise<void>;
 
   /**
@@ -596,6 +598,20 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 updated.category = currentFolderId;
             }
 
+            /*
+             * Going the other way, a card joining the rail takes a slot after
+             * the last one already there. Without this it keeps its grid slot,
+             * which can equal a slot another core card already holds — and the
+             * rail is ordered by slot, so a tie leaves two cards in an
+             * arbitrary order that reordering cannot then separate. Landing at
+             * the bottom of the rail is also the predictable place for it.
+             */
+            if (!old.isCore && updated.isCore === true) {
+                updated.slot = coreItems.length
+                    ? Math.max(...coreItems.map(i => i.slot ?? 0)) + 1
+                    : 0;
+            }
+
             await saveItem(updated);
             setSentence(prev => prev.map(p => p.id === existingId ? updated : p));
           }
@@ -700,6 +716,31 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
    * involved are written; the rest of the grid is untouched, which is the point
    * of absolute slots. Previously every item in the folder was renumbered.
    */
+  /**
+   * Move a card up or down the core rail.
+   *
+   * Renumbers the whole rail from its resulting order rather than swapping the
+   * two slots involved. Core cards are rail-scoped, so nothing renumbers them
+   * when they are pinned, and two of them can legitimately hold the same slot
+   * value — a plain swap between equals is a no-op, which would read as the
+   * button being broken. Rewriting 0..n-1 also repairs any existing ties the
+   * first time a parent reorders.
+   *
+   * These numbers cannot collide with the grid: core cards are filtered out of
+   * gridCells, so the two live in separate spaces.
+   */
+  const reorderCore = async (itemId: string, direction: -1 | 1) => {
+      const from = coreItems.findIndex(i => i.id === itemId);
+      if (from === -1) return;
+      const to = from + direction;
+      if (to < 0 || to >= coreItems.length) return;
+
+      const order = [...coreItems];
+      [order[from], order[to]] = [order[to], order[from]];
+      await Promise.all(order.map((item, idx) => saveItem({ ...item, slot: idx })));
+      await reloadCurrentData();
+  };
+
   const reorderGrid = async (itemId: string, direction: -1 | 1) => {
       const from = gridCells.findIndex(c => c && c.id === itemId);
       if (from === -1) return;
@@ -890,7 +931,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setEditMode: setIsEditMode, setSearchQuery, setIsSearchActive,
       switchProfile, switchBoard, navigateToFolder, navigateBackFolder, navigateBackBoard,
       createProfile, updateProfile, removeProfile, createBoard, updateBoard, removeBoard, setBoardGridSize,
-      saveCard, saveFolderObj, saveLinkBoard, deleteCard, deleteFolderObj, reorderGrid, moveItemToFolder,
+      saveCard, saveFolderObj, saveLinkBoard, deleteCard, deleteFolderObj, reorderCore, reorderGrid, moveItemToFolder,
       selectItem, addTypedWord, vocabulary, previewItemId, addToSentence, removeFromSentence, removeLastFromSentence, clearSentence, playSentence, setSentenceFromHistory
   };
 

@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useSpeakEasy } from '../contexts/SpeakEasyContext.tsx';
-import { Home, ChevronRight, CornerUpLeft, Plus, FolderPlus, ArrowLeft, ArrowRight, Settings2, ArrowUpRight, User, Layers, Type } from 'lucide-react';
+import { Home, ChevronRight, CornerUpLeft, Plus, FolderPlus, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Settings2, ArrowUpRight, User, Layers, Type } from 'lucide-react';
 import SentenceStrip from '../components/SentenceStrip.tsx';
 import FolderCard from '../components/FolderCard.tsx';
 import { ROOT_FOLDER } from '../services/storage.ts';
@@ -45,7 +45,7 @@ export const BoardPage: React.FC = () => {
   const { 
      gridItems, gridCells, grid, coreItems, selectItem, addTypedWord, vocabulary, previewItemId, sentence, categories, settings, isEditMode, currentFolderId, breadcrumbs, 
      addToSentence, removeFromSentence, removeLastFromSentence, clearSentence, playSentence,
-     t, navigateToFolder, navigateBackFolder, reorderGrid, isSearchActive, library,
+     t, navigateToFolder, navigateBackFolder, reorderGrid, reorderCore, isSearchActive, library,
      
      saveCard, saveFolderObj, saveLinkBoard, deleteCard, deleteFolderObj, 
      moveItemToFolder, setSentenceFromHistory, switchProfile, createProfile, updateProfile, removeProfile,
@@ -362,14 +362,44 @@ export const BoardPage: React.FC = () => {
                   container too, so anything at a negative offset gets clipped.
                 */}
                 {isEditMode && (
-                  <button
-                    type="button"
-                    aria-label={t('modal.create.title_edit')}
-                    onClick={() => setEditOptionsItem({ item: card, type: 'card' })}
-                    className="absolute top-1 right-1 z-30 bg-white/95 backdrop-blur-sm rounded-full w-6 h-6 flex items-center justify-center shadow-sm border border-slate-200 text-slate-700 hover:border-primary hover:text-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary"
-                  >
-                    <Settings2 size={13} strokeWidth={2.5} />
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      aria-label={t('modal.create.title_edit')}
+                      onClick={() => setEditOptionsItem({ item: card, type: 'card' })}
+                      className="absolute top-1 right-1 z-30 bg-white/95 backdrop-blur-sm rounded-full w-6 h-6 flex items-center justify-center shadow-sm border border-slate-200 text-slate-700 hover:border-primary hover:text-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary"
+                    >
+                      <Settings2 size={13} strokeWidth={2.5} />
+                    </button>
+
+                    {/* Up and down, not left and right: the rail is a column, and
+                        arrows that disagree with the axis they move things along
+                        are a guess the parent has to make twice.
+
+                        Stacked on the left edge so they clear the gear, inside
+                        the cell because the rail clips anything that overhangs
+                        it, and the lower one raised above the label band — at
+                        bottom-1 it covered the word, so a parent could not read
+                        which card they were about to move. */}
+                    <button
+                      type="button"
+                      aria-label={t('move.up')}
+                      onClick={() => reorderCore(card.id, -1)}
+                      disabled={railIdx === 0}
+                      className={`absolute top-1 left-1 z-30 w-5 h-5 flex items-center justify-center rounded-full shadow-sm border transition-all active:scale-95 backdrop-blur-sm ${railIdx === 0 ? 'bg-slate-100/60 border-slate-200/60 text-slate-300 cursor-not-allowed' : 'bg-white/95 border-slate-200 text-slate-700 hover:border-primary hover:text-primary'}`}
+                    >
+                      <ArrowUp size={12} strokeWidth={2.5} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={t('move.down')}
+                      onClick={() => reorderCore(card.id, 1)}
+                      disabled={railIdx === coreItems.length - 1}
+                      className={`absolute bottom-6 left-1 z-30 w-5 h-5 flex items-center justify-center rounded-full shadow-sm border transition-all active:scale-95 backdrop-blur-sm ${railIdx === coreItems.length - 1 ? 'bg-slate-100/60 border-slate-200/60 text-slate-300 cursor-not-allowed' : 'bg-white/95 border-slate-200 text-slate-700 hover:border-primary hover:text-primary'}`}
+                    >
+                      <ArrowDown size={12} strokeWidth={2.5} />
+                    </button>
+                  </>
                 )}
 
                 {/* After the cell in DOM order on purpose: saying the word is the

@@ -162,6 +162,8 @@ export type TranslationKey =
   | 'fitzgerald.time' | 'fitzgerald.time_desc'
   | 'fitzgerald.misc' | 'fitzgerald.misc_desc'
   | 'move.title'
+  | 'move.up'
+  | 'move.down'
   | 'move.moving'
   | 'move.destination'
   | 'move.home'
@@ -393,6 +395,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'fitzgerald.misc': 'Misc / Grammar',
     'fitzgerald.misc_desc': 'Other',
     'move.title': 'Move Item',
+    'move.up': 'Move up',
+    'move.down': 'Move down',
     'move.moving': 'Moving:',
     'move.destination': 'Select Destination',
     'move.home': 'Home (Root)',
@@ -623,6 +627,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'fitzgerald.misc': 'Разное',
     'fitzgerald.misc_desc': 'Другое',
     'move.title': 'Переместить',
+    'move.up': 'Переместить вверх',
+    'move.down': 'Переместить вниз',
     'move.moving': 'Перемещение:',
     'move.destination': 'Выберите место',
     'move.home': 'Главная',
@@ -853,6 +859,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'fitzgerald.misc': 'Divers / Grammaire',
     'fitzgerald.misc_desc': 'Autre',
     'move.title': 'Déplacer l\'Élément',
+    'move.up': 'Déplacer vers le haut',
+    'move.down': 'Déplacer vers le bas',
     'move.moving': 'Déplacement :',
     'move.destination': 'Sélectionner la Destination',
     'move.home': 'Accueil (Racine)',
@@ -1083,6 +1091,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'fitzgerald.misc': 'Otros / Úti',
     'fitzgerald.misc_desc': 'Otros',
     'move.title': 'Mover',
+    'move.up': 'Mover arriba',
+    'move.down': 'Mover abajo',
     'move.moving': 'Moviendo:',
     'move.destination': 'Seleccionar Destino',
     'move.home': 'Inicio',
