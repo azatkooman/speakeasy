@@ -2,6 +2,7 @@
 import React from 'react';
 import { X, Image as ImageIcon, FolderPlus, Plus, Link } from 'lucide-react';
 import { TranslationKey } from '../services/translations.ts';
+import Dialog from './Dialog.tsx';
 
 interface CreateSelectionModalProps {
   isOpen: boolean;
@@ -20,17 +21,25 @@ const CreateSelectionModal: React.FC<CreateSelectionModalProps> = ({
   onSelectLink,
   t 
 }) => {
-  if (!isOpen) return null;
+
+  // Children of <Dialog> are evaluated before they are passed to it, so a
+
+  // closed dialog must not render at all — its body reads state that only
+
+  // exists while it is open.
+
+  if (!(isOpen)) return null;
+
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
-      {/* Click outside to close */}
-      <div className="absolute inset-0" onClick={onClose} />
-      
-      <div 
-        className="bg-white w-full max-w-sm sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-10 duration-200 relative z-10 border-t-4 sm:border-4 border-white"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
-      >
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      label={t('create.menu_title')}
+      scrimClassName="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200"
+      panelClassName="bg-white w-full max-w-sm sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-10 duration-200 border-t-4 sm:border-4 border-white"
+      panelStyle={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
+    >
         
         {/* Header */}
         <div className="p-5 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
@@ -86,8 +95,7 @@ const CreateSelectionModal: React.FC<CreateSelectionModalProps> = ({
                 </div>
             </button>
         </div>
-      </div>
-    </div>
+    </Dialog>
   );
 };
 

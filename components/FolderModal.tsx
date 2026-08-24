@@ -5,6 +5,7 @@ import { Category, ColorTheme, AppLanguage } from '../types.ts';
 import { getAvailableIcons, getIconComponent } from '../utils/icons.ts';
 import { searchArasaacSymbols, ArasaacSymbol } from '../services/arasaac.ts';
 import { TranslationKey } from '../services/translations.ts';
+import Dialog from './Dialog.tsx';
 
 interface FolderModalProps {
   isOpen: boolean;
@@ -84,8 +85,6 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSave, edit
     };
   }, [iconSearch, language]);
 
-  if (!isOpen) return null;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (label.trim()) {
@@ -134,9 +133,23 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSave, edit
   const SelectedIconComp = !isImageIcon ? getIconComponent(selectedIcon) : null;
   const selectedTheme = FITZGERALD_THEMES.find(t => t.theme === colorTheme) || FITZGERALD_THEMES[0];
 
+  // Children of <Dialog> are evaluated before they are passed to it, so a
+
+  // closed dialog must not render at all — its body reads state that only
+
+  // exists while it is open.
+
+  if (!(isOpen)) return null;
+
+
   return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border-4 border-white animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-200">
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      label={t('folder.edit')}
+      scrimClassName="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200"
+      panelClassName="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border-4 border-white animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-200"
+    >
         
         {/* Header */}
         <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50">
@@ -325,8 +338,7 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSave, edit
           </div>
 
         </form>
-      </div>
-    </div>
+    </Dialog>
   );
 };
 

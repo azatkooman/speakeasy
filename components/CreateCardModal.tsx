@@ -6,6 +6,7 @@ import { voiceService } from '../services/voice.ts';
 import { searchArasaacSymbols, ArasaacSymbol } from '../services/arasaac.ts';
 import AudioRecorder from './AudioRecorder.tsx';
 import { TranslationKey } from '../services/translations.ts';
+import Dialog from './Dialog.tsx';
 
 interface CreateCardModalProps {
   isOpen: boolean;
@@ -229,8 +230,6 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
       };
   }, []);
 
-  if (!isOpen) return null;
-
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -374,9 +373,23 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
 
   const activeTheme = THEMES.find(c => c.theme === colorTheme);
 
+  // Children of <Dialog> are evaluated before they are passed to it, so a
+
+  // closed dialog must not render at all — its body reads state that only
+
+  // exists while it is open.
+
+  if (!(isOpen)) return null;
+
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] h-full sm:h-auto transition-all relative">
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      label={editItem ? t('modal.create.title_edit') : t('modal.create.title_new')}
+      scrimClassName="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200"
+      panelClassName="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] h-full sm:h-auto transition-all relative"
+    >
         
         {/* === Full Screen Overlays (Camera/Search) === */}
         {isCameraActive && (
@@ -613,8 +626,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
         <div className="p-6 border-t border-slate-100 bg-white" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}>
           <button onClick={handleSave} disabled={!label || !imagePreview} className={`w-full py-4 rounded-2xl font-black text-xl flex items-center justify-center space-x-2 transition-all ${!label || !imagePreview ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-primary text-white shadow-btn active:shadow-btn-active active:translate-y-[4px] hover:brightness-110'}`}><span>{editItem ? t('modal.create.update') : t('modal.create.save')}</span><Check size={24} strokeWidth={3} /></button>
         </div>
-      </div>
-    </div>
+    </Dialog>
   );
 };
 

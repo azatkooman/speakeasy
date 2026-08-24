@@ -4,6 +4,7 @@ import { User, Plus, Check, X, Trash2, Baby, Loader2, Globe, Pencil } from 'luci
 import { ChildProfile, ColorTheme, AppLanguage } from '../types';
 import { TranslationKey } from '../services/translations';
 import { LANGUAGES } from '../utils/languages';
+import Dialog from './Dialog.tsx';
 
 interface ProfileSelectionModalProps {
   isOpen: boolean;
@@ -72,8 +73,6 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
     }
   }, [isOpen, forceCreate, profiles.length]);
 
-  if (!isOpen) return null;
-
   const handleStartEdit = (profile: ChildProfile, e: React.MouseEvent) => {
       e.stopPropagation();
       setEditingProfile(profile);
@@ -126,9 +125,23 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
       return t('profile.title');
   };
 
+  // Children of <Dialog> are evaluated before they are passed to it, so a
+
+  // closed dialog must not render at all — its body reads state that only
+
+  // exists while it is open.
+
+  if (!(isOpen)) return null;
+
+
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] border-4 border-white relative">
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      label={getTitle()}
+      scrimClassName="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in duration-300"
+      panelClassName="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] border-4 border-white relative"
+    >
         
         {/* Header */}
         <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50">
@@ -376,9 +389,7 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
                  </div>
             </form>
         )}
-
-      </div>
-    </div>
+    </Dialog>
   );
 };
 

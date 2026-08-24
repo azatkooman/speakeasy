@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Pencil, Trash2, Plus, AlertCircle, Check, Loader2 } from 'lucide-react';
 import { Category, ColorTheme } from '../types';
+import Dialog from './Dialog.tsx';
 
 interface CategoryManagerModalProps {
   isOpen: boolean;
@@ -47,8 +48,6 @@ const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
       setIsProcessing(false);
     }
   }, [isOpen]);
-
-  if (!isOpen) return null;
 
   const startAdd = () => {
     setEditingId(null);
@@ -120,9 +119,23 @@ const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
       setConfirmDeleteId(null);
   };
 
+  // Children of <Dialog> are evaluated before they are passed to it, so a
+
+  // closed dialog must not render at all — its body reads state that only
+
+  // exists while it is open.
+
+  if (!(isOpen)) return null;
+
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      label={t('modal.categories.title')}
+      scrimClassName="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      panelClassName="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+    >
         
         <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50/50">
           <h2 className="text-2xl font-black text-slate-900">{t('modal.categories.title')}</h2>
@@ -252,8 +265,7 @@ const CategoryManagerModal: React.FC<CategoryManagerModalProps> = ({
           )}
 
         </div>
-      </div>
-    </div>
+    </Dialog>
   );
 };
 

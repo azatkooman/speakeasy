@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { X, Layers, Plus, Trash2, Check, Layout, Loader2, Pencil } from 'lucide-react';
 import { Board } from '../types';
 import { TranslationKey } from '../services/translations';
+import Dialog from './Dialog.tsx';
 
 interface BoardsModalProps {
   isOpen: boolean;
@@ -35,8 +36,6 @@ const BoardsModal: React.FC<BoardsModalProps> = ({
   
   const [boardToDelete, setBoardToDelete] = useState<Board | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-
-  if (!isOpen) return null;
 
   const handleCreate = async () => {
     if (!newBoardName.trim()) return;
@@ -97,9 +96,23 @@ const BoardsModal: React.FC<BoardsModalProps> = ({
       setEditingBoardId(null);
   };
 
+  // Children of <Dialog> are evaluated before they are passed to it, so a
+
+  // closed dialog must not render at all — its body reads state that only
+
+  // exists while it is open.
+
+  if (!(isOpen)) return null;
+
+
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] border-4 border-white relative">
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      label={t('boards.title')}
+      scrimClassName="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      panelClassName="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] border-4 border-white relative"
+    >
         
         {/* Delete Confirmation Overlay */}
         {boardToDelete && (
@@ -262,8 +275,7 @@ const BoardsModal: React.FC<BoardsModalProps> = ({
                 </button>
             )}
         </div>
-      </div>
-    </div>
+    </Dialog>
   );
 };
 

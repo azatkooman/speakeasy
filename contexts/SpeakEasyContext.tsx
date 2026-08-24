@@ -12,7 +12,7 @@ import {
 } from '../services/storage.ts';
 import { voiceService } from '../services/voice.ts';
 import { audioPlayer } from '../services/audioPlayer.ts';
-import { pushHistory, clearHistory } from '../utils/history.ts';
+import { pushHistory, clearHistory, isLegacyWord, HistoryEntry } from '../utils/history.ts';
 import { detectDeviceLanguage } from '../utils/languages.ts';
 
 interface SpeakEasyContextType {
@@ -92,7 +92,7 @@ interface SpeakEasyContextType {
   removeLastFromSentence: () => void;
   clearSentence: () => void;
   playSentence: () => Promise<void>;
-  setSentenceFromHistory: (items: AACItem[]) => void;
+  setSentenceFromHistory: (entry: HistoryEntry) => void;
 }
 
 const SpeakEasyContext = createContext<SpeakEasyContextType | undefined>(undefined);
@@ -974,7 +974,23 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (valid.length === 0 || isPlaying) return;
       const session = ++playbackSessionRef.current;
       setIsPlaying(true);
-      pushHistory(currentProfileId, valid.map(i => i.id));
+      /*
+       * Record what is about to be said, as said. Not the card ids: those
+       * re-resolve later against a board that may have been renamed, deleted,
+       * or switched to another language, and typed words have no card at all.
+       */
+      pushHistory(currentProfileId, {
+          words: valid.map(i => ({
+              // Typed words carry a synthetic id that is not in the library;
+              // keeping it would only produce a lookup that always fails.
+              itemId: i.id.startsWith('typed:') ? undefined : i.id,
+              text: (i.textToSpeak || (i.labelKey ? t(i.labelKey as TranslationKey) : i.label) || '').trim(),
+              label: (i.labelKey ? t(i.labelKey as TranslationKey) : i.label) || '',
+              imageUrl: i.imageUrl || undefined,
+          })),
+          language: settings.language,
+          at: Date.now(),
+      });
       try {
           for (let i = 0; i < valid.length; i++) {
               if (playbackSessionRef.current !== session) break;
@@ -994,8 +1010,48 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
   };
 
-  const setSentenceFromHistory = (items: AACItem[]) => {
+  /**
+   * Rebuild a past utterance from its snapshot.
+   *
+   * The words come from the record, not from the board: restoring something a
+   * child said last week should say the same thing this week, even if a card
+   * has since been renamed or deleted. The live card is consulted only for
+   * artwork, and `labelKey` is dropped so the stored wording is not re-run
+   * through the current language.
+   *
+   * Legacy entries hold ids and nothing else, so those still resolve against
+   * the library — there is no wording recorded to prefer.
+   */
+  const setSentenceFromHistory = (entry: HistoryEntry) => {
       if (isPlaying) stopPlayback();
+      const at = entry.at ?? Date.now();
+      const items: AACItem[] = entry.words.map((w, idx) => {
+          const live = w.itemId ? library.find(i => i.id === w.itemId) : undefined;
+          if (isLegacyWord(w)) {
+              return live ?? {
+                  id: `history:${at}:${idx}`,
+                  profileId: currentProfileId,
+                  boardId: currentBoardId,
+                  label: '',
+                  imageUrl: '',
+                  category: currentFolderId,
+                  createdAt: at,
+              };
+          }
+          return {
+              id: live?.id ?? `history:${at}:${idx}`,
+              profileId: currentProfileId,
+              boardId: currentBoardId,
+              label: w.label,
+              labelKey: undefined,
+              imageUrl: w.imageUrl ?? live?.imageUrl ?? '',
+              imageFit: live?.imageFit,
+              textToSpeak: w.text,
+              colorTheme: live?.colorTheme,
+              category: live?.category ?? currentFolderId,
+              createdAt: live?.createdAt ?? at,
+          };
+      });
       setSentence(items);
   };
 

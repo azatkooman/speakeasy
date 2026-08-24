@@ -3,6 +3,7 @@ import { X, Delete, CornerDownLeft, Keyboard as KeyboardIcon } from 'lucide-reac
 import { TranslationKey } from '../services/translations';
 import { AppLanguage } from '../types';
 import { getKeyboardLayout } from '../utils/keyboardLayouts';
+import Dialog from './Dialog.tsx';
 
 interface KeyboardModalProps {
   isOpen: boolean;
@@ -54,8 +55,6 @@ const KeyboardModal: React.FC<KeyboardModalProps> = ({ isOpen, onClose, vocabula
     return out;
   }, [text, vocabulary]);
 
-  if (!isOpen) return null;
-
   const commit = (value: string) => {
     const v = value.trim();
     if (!v) return;
@@ -63,15 +62,24 @@ const KeyboardModal: React.FC<KeyboardModalProps> = ({ isOpen, onClose, vocabula
     setText('');
   };
 
+  // Children of <Dialog> are evaluated before they are passed to it, so a
+
+  // closed dialog must not render at all — its body reads state that only
+
+  // exists while it is open.
+
+  if (!(isOpen)) return null;
+
+
   return (
-    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-slate-900/50 backdrop-blur-sm">
-      <div className="absolute inset-0" onClick={onClose} />
-      <div
-        role="dialog"
-        aria-label={t('keyboard.title')}
-        className="relative z-10 bg-white w-full max-w-3xl rounded-t-3xl shadow-2xl overflow-hidden"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)' }}
-      >
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      label={t('keyboard.title')}
+      scrimClassName="fixed inset-0 z-[95] flex items-end justify-center bg-slate-900/50 backdrop-blur-sm"
+      panelClassName="bg-white w-full max-w-3xl rounded-t-3xl shadow-2xl overflow-hidden"
+      panelStyle={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)' }}
+    >
         <div className="flex items-center gap-3 p-4 border-b border-slate-100 bg-slate-50">
           <div className="p-2 bg-primary/10 text-primary rounded-xl"><KeyboardIcon size={20} /></div>
           <input
@@ -172,8 +180,7 @@ const KeyboardModal: React.FC<KeyboardModalProps> = ({ isOpen, onClose, vocabula
             </button>
           </div>
         </div>
-      </div>
-    </div>
+    </Dialog>
   );
 };
 

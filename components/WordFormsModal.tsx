@@ -3,6 +3,7 @@ import { X, Type } from 'lucide-react';
 import { AACItem, ScanSettings } from '../types';
 import { TranslationKey } from '../services/translations';
 import { useScanner, ScanStop } from '../utils/useScanner';
+import Dialog from './Dialog.tsx';
 
 interface WordFormsModalProps {
   card: AACItem | null;
@@ -45,17 +46,24 @@ const WordFormsModal: React.FC<WordFormsModalProps> = ({ card, baseLabel, onClos
 
   const scanner = useScanner({ settings: scanSettings, stops, enabled: !!card });
 
-  if (!card) return null;
+  // Children of <Dialog> are evaluated before they are passed to it, so a
+
+  // closed dialog must not render at all — its body reads state that only
+
+  // exists while it is open.
+
+  if (!(!!card)) return null;
+
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm p-0 sm:p-4">
-      <div className="absolute inset-0" onClick={onClose} />
-      <div
-        role="dialog"
-        aria-label={t('forms.title')}
-        className="relative z-10 bg-white w-full max-w-sm sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
-      >
+    <Dialog
+      isOpen={!!card}
+      onClose={onClose}
+      label={t('forms.title')}
+      scrimClassName="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm p-0 sm:p-4"
+      panelClassName="bg-white w-full max-w-sm sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden"
+      panelStyle={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
+    >
         <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary/10 text-primary rounded-xl"><Type size={22} /></div>
@@ -78,8 +86,7 @@ const WordFormsModal: React.FC<WordFormsModalProps> = ({ card, baseLabel, onClos
             </button>
           ))}
         </div>
-      </div>
-    </div>
+    </Dialog>
   );
 };
 

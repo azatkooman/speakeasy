@@ -677,7 +677,7 @@ export const BoardPage: React.FC = () => {
         </div>
       )}
 
-      <HistoryModal isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} historyIds={isHistoryOpen ? readHistory(currentProfileId) : []} library={library} onSelectSentence={setSentenceFromHistory} t={t} />
+      <HistoryModal isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} entries={isHistoryOpen ? readHistory(currentProfileId) : []} library={library} onSelectSentence={setSentenceFromHistory} t={t} />
       <CreateSelectionModal isOpen={isCreateSelectionOpen} onClose={() => setIsCreateSelectionOpen(false)} onSelectCard={() => { setIsCreateSelectionOpen(false); setEditingItem(null); setIsCreateModalOpen(true); }} onSelectFolder={() => { setIsCreateSelectionOpen(false); setEditingFolder(null); setIsFolderModalOpen(true); }} onSelectLink={() => { setIsCreateSelectionOpen(false); setIsLinkBoardModalOpen(true); }} t={t} />
       <CreateCardModal voiceRate={settings.voiceRate} voicePitch={settings.voicePitch} isOpen={isCreateModalOpen} onClose={() => { setIsCreateModalOpen(false); setEditingItem(null); }} onSave={(d) => saveCard(d, editingItem?.id)} editItem={editingItem} t={t} language={settings.language} currentFolderName={currentFolderId === ROOT_FOLDER ? t('app.home_folder') : categories.find(c => c.id === currentFolderId)?.label} />
       <FolderModal isOpen={isFolderModalOpen} onClose={() => { setIsFolderModalOpen(false); setEditingFolder(null); }} onSave={(l, c, i) => saveFolderObj(l, c, i, editingFolder)} editFolder={editingFolder} t={t} language={settings.language} />

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Trash2 } from 'lucide-react';
+import Dialog from './Dialog.tsx';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -11,11 +12,24 @@ interface ConfirmationModalProps {
 }
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, onConfirm, isFolder, t }) => {
-  if (!isOpen) return null;
+
+  // Children of <Dialog> are evaluated before they are passed to it, so a
+
+  // closed dialog must not render at all — its body reads state that only
+
+  // exists while it is open.
+
+  if (!(isOpen)) return null;
+
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border-4 border-white">
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      label={t('modal.confirm.delete_title')}
+      scrimClassName="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      panelClassName="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 border-4 border-white"
+    >
         <div className="p-6 flex flex-col items-center text-center space-y-4">
           <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-2 shadow-inner">
             <Trash2 size={36} strokeWidth={2.5} />
@@ -40,8 +54,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({ isOpen, onClose, 
             {t('modal.confirm.yes')}
           </button>
         </div>
-      </div>
-    </div>
+    </Dialog>
   );
 };
 

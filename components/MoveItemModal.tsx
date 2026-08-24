@@ -4,6 +4,7 @@ import { X, Folder, Home, ChevronRight, Check } from 'lucide-react';
 import { AACItem, Category } from '../types.ts';
 import { ROOT_FOLDER } from '../services/storage.ts';
 import { TranslationKey } from '../services/translations.ts';
+import Dialog from './Dialog.tsx';
 
 interface MoveItemModalProps {
   isOpen: boolean;
@@ -70,9 +71,23 @@ const MoveItemModal: React.FC<MoveItemModalProps> = ({ isOpen, onClose, itemToMo
 
   const movingItemLabel = (item as any).labelKey ? t((item as any).labelKey as TranslationKey) : item.label;
 
+  // Children of <Dialog> are evaluated before they are passed to it, so a
+
+  // closed dialog must not render at all — its body reads state that only
+
+  // exists while it is open.
+
+  if (!(isOpen)) return null;
+
+
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] border-4 border-white">
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
+      label={t('move.title')}
+      scrimClassName="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      panelClassName="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh] border-4 border-white"
+    >
         
         <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50">
           <div>
@@ -119,8 +134,7 @@ const MoveItemModal: React.FC<MoveItemModalProps> = ({ isOpen, onClose, itemToMo
                <div className="p-4 text-center text-slate-400 font-bold">{t('move.no_folders')}</div>
            )}
         </div>
-      </div>
-    </div>
+    </Dialog>
   );
 };
 

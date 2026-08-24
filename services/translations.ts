@@ -98,6 +98,7 @@ export type TranslationKey =
   | 'create.menu_folder_desc'
   | 'modal.history.title'
   | 'modal.history.empty'
+  | 'modal.history.unavailable'
   | 'modal.history.empty_desc'
   | 'modal.settings.title'
   | 'modal.settings.language'
@@ -322,6 +323,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'create.menu_folder_desc': 'Create a new category folder',
     'modal.history.title': 'Recent Sentences',
     'modal.history.empty': 'No history yet',
+    'modal.history.unavailable': 'Word no longer on the board',
     'modal.history.empty_desc': 'Sentences you speak will appear here.',
     'modal.settings.title': 'Settings',
     'modal.settings.language': 'Language',
@@ -554,6 +556,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'create.menu_folder_desc': 'Новая категория',
     'modal.history.title': 'Недавние фразы',
     'modal.history.empty': 'История пуста',
+    'modal.history.unavailable': 'Этой карточки больше нет',
     'modal.history.empty_desc': 'Здесь появятся сказанные фразы.',
     'modal.settings.title': 'Настройки',
     'modal.settings.language': 'Язык (Language)',
@@ -786,6 +789,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'create.menu_folder_desc': 'Créer un nouveau dossier de catégorie',
     'modal.history.title': 'Phrases Récentes',
     'modal.history.empty': 'Pas encore d\'historique',
+    'modal.history.unavailable': 'Carte supprimée du tableau',
     'modal.history.empty_desc': 'Les phrases que vous dites apparaîtront ici.',
     'modal.settings.title': 'Paramètres',
     'modal.settings.language': 'Langue',
@@ -1018,6 +1022,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'create.menu_folder_desc': 'Nueva carpeta de categoría',
     'modal.history.title': 'Historial Reciente',
     'modal.history.empty': 'No hay historial',
+    'modal.history.unavailable': 'Tarjeta que ya no existe',
     'modal.history.empty_desc': 'Las frases que digas aparecerán aquí.',
     'modal.settings.title': 'Ajustes',
     'modal.settings.language': 'Idioma (Language)',

@@ -2,6 +2,7 @@ import React from 'react';
 import { Search, X, ChevronRight, Home, Folder, Anchor } from 'lucide-react';
 import { SearchHit } from '../types';
 import { TranslationKey } from '../services/translations';
+import Dialog from './Dialog.tsx';
 
 interface SearchOverlayProps {
   isOpen: boolean;
@@ -32,12 +33,33 @@ interface SearchOverlayProps {
 const SearchOverlay: React.FC<SearchOverlayProps> = ({
   isOpen, query, onQueryChange, results, onJump, onClose, t,
 }) => {
-  if (!isOpen) return null;
 
   const trimmed = query.trim();
 
+  // Children of <Dialog> are evaluated before they are passed to it, so a
+
+  // closed dialog must not render at all — its body reads state that only
+
+  // exists while it is open.
+
+  if (!(isOpen)) return null;
+
+
   return (
-    <div className="fixed inset-0 z-[80] flex flex-col bg-white">
+
+    <Dialog
+
+      isOpen={isOpen}
+
+      onClose={onClose}
+
+      label={t('search.placeholder')}
+
+      scrimClassName="fixed inset-0 z-[80] flex"
+
+      panelClassName="bg-white w-full h-full flex flex-col"
+
+    >
       <div
         className="flex items-center gap-3 px-4 py-3 border-b border-slate-200 bg-slate-50 shrink-0"
         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
@@ -47,7 +69,6 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
             type="text"
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
             placeholder={t('search.placeholder')}
             aria-label={t('search.placeholder')}
             autoFocus
@@ -128,7 +149,8 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
           </ul>
         )}
       </div>
-    </div>
+
+    </Dialog>
   );
 };
 
