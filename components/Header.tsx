@@ -1,12 +1,12 @@
 
 import React, { useRef, useState } from 'react';
-import { Search, X, ChevronLeft, Lock, Unlock, Hand } from 'lucide-react';
+import { Search, ChevronLeft, Lock, Unlock, Hand } from 'lucide-react';
 import { useSpeakEasy } from '../contexts/SpeakEasyContext.tsx';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 
 export const Header: React.FC = () => {
   const { 
-    isSearchActive, searchQuery, setSearchQuery, setIsSearchActive, 
+    setSearchQuery, setIsSearchActive,
     boardHistory, navigateBackBoard, 
     isEditMode, setEditMode, t 
   } = useSpeakEasy();
@@ -76,23 +76,7 @@ export const Header: React.FC = () => {
         className="flex justify-between items-center px-4 py-3 bg-white/90 backdrop-blur-sm border-b border-slate-200 z-40 shrink-0 transition-all" 
         style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
       >
-        {isSearchActive ? (
-            <div className="flex-1 flex items-center gap-3">
-                <div className="relative flex-1">
-                    <input 
-                        type="text" 
-                        value={searchQuery} 
-                        onChange={(e) => setSearchQuery(e.target.value)} 
-                        placeholder={t('search.placeholder')} 
-                        autoFocus 
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-100 border-2 border-primary/20 rounded-xl outline-none font-bold text-slate-800 placeholder:text-slate-500 text-base" 
-                    />
-                    <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                </div>
-                <button onClick={() => { setIsSearchActive(false); setSearchQuery(''); }} className="p-2.5 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 active:bg-slate-300 transition-colors"><X size={20} /></button>
-            </div>
-        ) : (
-            <>
+        <>
                 <div className="flex items-center gap-3">
                     {boardHistory.length > 0 ? (
                         <button 
@@ -111,9 +95,9 @@ export const Header: React.FC = () => {
                 </div>
                 
                 <div className="flex items-center gap-3 relative">
-                    {/* Parent-only. In child mode, search replaces the board with a
-                        packed list of results, so every symbol a child has memorised
-                        appears somewhere else. */}
+                    {/* Parent-only. Search opens an overlay and never disturbs the
+                        board underneath, but it is still a parent's tool: it exists
+                        to answer "where did I put that card". */}
                     {isEditMode && (
                         <button aria-label={t('search.placeholder')} onClick={() => setIsSearchActive(true)} className="p-2.5 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 active:bg-slate-300 transition-colors"><Search size={20} /></button>
                     )}
@@ -160,8 +144,7 @@ export const Header: React.FC = () => {
                         )}
                     </div>
                 </div>
-            </>
-        )}
+        </>
       </div>
   );
 };

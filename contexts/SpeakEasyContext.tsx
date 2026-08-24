@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
-import { AACItem, Category, Board, ChildProfile, AppSettings, ColorTheme, GridSize } from '../types.ts';
+import { AACItem, Category, Board, ChildProfile, AppSettings, ColorTheme, GridSize, SearchHit } from '../types.ts';
 import { TranslationKey, getTranslation } from '../services/translations.ts';
 import { 
   getAllItems, getAllCategories, getAllBoards, getAllProfiles,
@@ -31,6 +31,8 @@ interface SpeakEasyContextType {
   currentFolderId: string;
   searchQuery: string;
   isSearchActive: boolean;
+  /** Matches for the current query, each with its location. Empty unless searching. */
+  searchResults: SearchHit[];
   boardHistory: string[];
 
   gridItems: any[];
@@ -296,28 +298,12 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
    * That is the motor-planning guarantee: a hidden or deleted item leaves a gap
    * rather than pulling everything after it forward.
    *
-   * Search is the one case where absolute slots make no sense, so it returns a
-   * packed list instead and the renderer lays it out as a plain flow.
+   * Search does not touch this. It used to replace the whole array with a
+   * packed list of matches, which meant the board a child had memorised was
+   * dismantled the moment a parent typed. Matches are now a separate selector
+   * (`searchResults`) shown in an overlay, and the grid underneath is untouched.
    */
   const gridCells = useMemo(() => {
-      const query = isSearchActive && searchQuery ? searchQuery.toLowerCase() : '';
-      const labelOf = (r: AACItem | Category) =>
-          (r.labelKey ? t(r.labelKey as TranslationKey) : r.label).toLowerCase();
-
-      if (query) {
-          const hits: any[] = [
-              ...library
-                  .filter(i => i.boardId === currentBoardId && !i.isCore
-                      && labelOf(i).includes(query)
-                      && (isEditMode || i.isVisible !== false))
-                  .map(i => ({ ...i, type: 'card' })),
-              ...categories
-                  .filter(c => c.boardId === currentBoardId && labelOf(c).includes(query))
-                  .map(c => ({ ...c, type: 'folder' })),
-          ];
-          return hits;
-      }
-
       const occupants: any[] = [
           ...library
               .filter(i => i.boardId === currentBoardId
@@ -354,10 +340,79 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       });
 
       return cells;
-  }, [library, categories, currentBoardId, currentFolderId, isEditMode, isSearchActive, searchQuery, grid, settings.language]);
+  }, [library, categories, currentBoardId, currentFolderId, isEditMode, grid, settings.language]);
 
   /** Occupied cells only — for callers that need the items rather than the layout. */
   const gridItems = useMemo(() => gridCells.filter(Boolean), [gridCells]);
+
+  /**
+   * Matches for the current search query, each carrying where it lives.
+   *
+   * Search in an AAC app is a parent's tool for answering "where did I put
+   * that card", so a bare list of hits is only half an answer — the location is
+   * the part they actually need. `path` is the folder chain from the root, and
+   * `openFolderId` is the folder to jump to: for a card that is its containing
+   * folder, for a folder the folder itself.
+   *
+   * Deliberately separate from `gridCells`. Search used to overwrite the grid,
+   * which dismantled the board layout a child had learned.
+   */
+  const searchResults = useMemo((): SearchHit[] => {
+      const query = isSearchActive ? searchQuery.trim().toLowerCase() : '';
+      if (!query) return [];
+
+      const labelOf = (r: AACItem | Category) =>
+          r.labelKey ? t(r.labelKey as TranslationKey) : r.label;
+
+      /** Folder labels from the root down to `folderId`, exclusive of root. */
+      const pathTo = (folderId?: string): string[] => {
+          const out: string[] = [];
+          let cur = folderId && folderId !== ROOT_FOLDER
+              ? categories.find(c => c.id === folderId && c.boardId === currentBoardId)
+              : undefined;
+          // Guard against a cycle in parentId rather than hanging the render.
+          const seen = new Set<string>();
+          while (cur && !seen.has(cur.id)) {
+              seen.add(cur.id);
+              out.unshift(labelOf(cur));
+              cur = cur.parentId && cur.parentId !== ROOT_FOLDER
+                  ? categories.find(c => c.id === cur!.parentId && c.boardId === currentBoardId)
+                  : undefined;
+          }
+          return out;
+      };
+
+      const cards: SearchHit[] = library
+          .filter(i => i.boardId === currentBoardId
+              && labelOf(i).toLowerCase().includes(query)
+              && (isEditMode || i.isVisible !== false))
+          .map(i => ({
+              id: i.id,
+              type: 'card' as const,
+              label: labelOf(i),
+              imageUrl: i.imageUrl,
+              // A core card sits on the rail in every folder, so it has no
+              // single home to jump to.
+              isCore: i.isCore === true,
+              path: i.isCore ? [] : pathTo(i.category),
+              openFolderId: i.isCore ? ROOT_FOLDER : (i.category || ROOT_FOLDER),
+          }));
+
+      const folders: SearchHit[] = categories
+          .filter(c => c.boardId === currentBoardId && labelOf(c).toLowerCase().includes(query))
+          .map(c => ({
+              id: c.id,
+              type: 'folder' as const,
+              label: labelOf(c),
+              isCore: false,
+              path: pathTo(c.parentId),
+              openFolderId: c.id,
+          }));
+
+      // Folders first: finding the container is usually what the parent wants,
+      // and it is the shorter list.
+      return [...folders, ...cards];
+  }, [isSearchActive, searchQuery, library, categories, currentBoardId, isEditMode, settings.language]);
 
   // Wrapper to update settings both in state and in the active profile
   const handleSetSettings = async (newSettings: AppSettings) => {
@@ -809,7 +864,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const value = {
       profiles, currentProfileId, boards, currentBoardId, library, categories, sentence, settings, isEditMode,
-      isInitializing, isPlaying, activeIndex, currentFolderId, searchQuery, isSearchActive, boardHistory,
+      isInitializing, isPlaying, activeIndex, currentFolderId, searchQuery, isSearchActive, searchResults, boardHistory,
       gridItems, gridCells, grid, coreItems, breadcrumbs, t, 
       setSettings: handleSetSettings, 
       setEditMode: setIsEditMode, setSearchQuery, setIsSearchActive,

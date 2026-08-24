@@ -25,6 +25,7 @@ import SettingsModal from '../components/SettingsModal.tsx';
 import BoardsModal from '../components/BoardsModal.tsx';
 import WordFormsModal from '../components/WordFormsModal.tsx';
 import KeyboardModal from '../components/KeyboardModal.tsx';
+import SearchOverlay from '../components/SearchOverlay.tsx';
 
 // Updated Color definitions for the "Framed" style
 const THEME_STYLES: Record<string, { bg: string; border: string; shadow: string; text: string; ring: string }> = {
@@ -51,7 +52,7 @@ export const BoardPage: React.FC = () => {
      switchBoard, createBoard, updateBoard, removeBoard, setBoardGridSize,
      profiles, currentProfileId, boards, currentBoardId,
      setSettings,
-     setSearchQuery, setIsSearchActive, searchQuery
+     setSearchQuery, setIsSearchActive, searchQuery, searchResults
   } = useSpeakEasy();
 
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -71,8 +72,21 @@ export const BoardPage: React.FC = () => {
   const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
   const [formsCard, setFormsCard] = useState<AACItem | null>(null);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  /**
+   * Briefly ringed after a search jump. Landing in the right folder still
+   * leaves a parent scanning two dozen cells for the one they searched for.
+   */
+  const [foundItemId, setFoundItemId] = useState<string | null>(null);
 
   const breadcrumbsScrollRef = useRef<HTMLDivElement>(null);
+
+  // Clear the post-search highlight on its own, so it draws the eye without
+  // becoming a permanent mark on the board.
+  useEffect(() => {
+      if (!foundItemId) return;
+      const timer = window.setTimeout(() => setFoundItemId(null), 2600);
+      return () => window.clearTimeout(timer);
+  }, [foundItemId]);
   const mainRef = useRef<HTMLElement>(null);
   const prevGridLength = useRef(0);
 
@@ -187,13 +201,9 @@ export const BoardPage: React.FC = () => {
               <div ref={breadcrumbsScrollRef} className="flex-1 flex items-center overflow-x-auto no-scrollbar px-4 py-3 gap-1">
                   <button 
                     onClick={() => {
-                        if (isSearchActive) {
-                            setIsSearchActive(false);
-                            setSearchQuery('');
-                        }
                         navigateToFolder(ROOT_FOLDER);
                     }} 
-                    className={`flex items-center justify-center p-2 rounded-xl transition-all active:scale-95 active:bg-slate-300 ${!isSearchActive && currentFolderId === ROOT_FOLDER ? 'text-slate-900 bg-slate-200' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'}`}
+                    className={`flex items-center justify-center p-2 rounded-xl transition-all active:scale-95 active:bg-slate-300 ${currentFolderId === ROOT_FOLDER ? 'text-slate-900 bg-slate-200' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'}`}
                     aria-label={t('app.home_folder')}
                   >
                       <Home size={22} />
@@ -204,10 +214,6 @@ export const BoardPage: React.FC = () => {
                           <ChevronRight size={18} className="text-slate-300 flex-shrink-0" />
                           <button 
                             onClick={() => {
-                                if (isSearchActive) {
-                                    setIsSearchActive(false);
-                                    setSearchQuery('');
-                                }
                                 navigateToFolder(crumb.id);
                             }} 
                             className={`whitespace-nowrap px-3 py-2 rounded-xl text-base font-bold transition-all active:scale-95 active:bg-slate-200 ${index === breadcrumbs.length - 1 ? 'text-primary-700 bg-primary/10' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'}`}
@@ -220,10 +226,6 @@ export const BoardPage: React.FC = () => {
               <div className="pl-2 border-l border-slate-200/50">
                   <button 
                     onClick={() => {
-                        if (isSearchActive) {
-                            setIsSearchActive(false);
-                            setSearchQuery('');
-                        }
                         navigateBackFolder();
                     }} 
                     className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50 hover:text-primary active:scale-95 transition-all text-sm shadow-sm whitespace-nowrap"
@@ -342,7 +344,7 @@ export const BoardPage: React.FC = () => {
                 if (item.type === 'folder') {
                     const folder = item as Category;
                     return (
-                        <div key={folder.id} className={`relative ${inFocusedRow ? 'ring-4 ring-sky-500/60 rounded-3xl' : ''}`}>
+                        <div key={folder.id} className={`relative ${inFocusedRow ? 'ring-4 ring-sky-500/60 rounded-3xl' : ''} ${foundItemId === folder.id ? 'ring-4 ring-amber-400 ring-offset-2 rounded-3xl z-20' : ''}`}>
                             <FolderCard 
                                 folder={folder} 
                                 isScanFocused={scanner.focusedCell === scanIndexOfGridCell(index)}
@@ -368,15 +370,10 @@ export const BoardPage: React.FC = () => {
                         // is reachable by keyboard, screen reader and switch access; the
                         // edit controls are siblings rather than nested buttons, which
                         // would be invalid and would break that traversal.
-                        <div key={card.id} className={`relative aspect-[4/5] ${inFocusedRow ? 'ring-4 ring-sky-500/60 rounded-3xl' : ''}`}>
+                        <div key={card.id} className={`relative aspect-[4/5] ${inFocusedRow ? 'ring-4 ring-sky-500/60 rounded-3xl' : ''} ${foundItemId === card.id ? 'ring-4 ring-amber-400 ring-offset-2 rounded-3xl z-20' : ''}`}>
                             <GridCellButton
                                 onActivate={() => {
                                     selectItem(card);
-                                    if (isSearchActive) {
-                                        navigateToFolder(card.category);
-                                        setIsSearchActive(false);
-                                        setSearchQuery('');
-                                    }
                                 }}
                                 selectionMode={settings.selectionMode || 'release'}
                                 dwellMs={settings.dwellMs || DEFAULT_DWELL_MS}
@@ -446,7 +443,7 @@ export const BoardPage: React.FC = () => {
             })}
         </div>
         
-        {!isSearchActive && gridItems.length === 0 && (
+        {gridItems.length === 0 && (
             <div className="flex flex-col items-center justify-center h-80 space-y-6 animate-in fade-in duration-500 px-4">
                 <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center text-slate-300">
                     <FolderPlus size={48} />
@@ -524,6 +521,22 @@ export const BoardPage: React.FC = () => {
       />
       <EditOptionsModal isOpen={!!editOptionsItem} onClose={() => setEditOptionsItem(null)} item={editOptionsItem?.item || null} type={editOptionsItem?.type || 'card'} onEdit={() => { if(editOptionsItem?.type==='card') { setEditingItem(editOptionsItem.item as AACItem); setIsCreateModalOpen(true); } else { setEditingFolder(editOptionsItem?.item as Category); setIsFolderModalOpen(true); } }} onMove={() => setMoveModalItem(editOptionsItem)} onDelete={() => { if(editOptionsItem?.type==='card') setItemToDelete(editOptionsItem.item.id); else setFolderToDelete(editOptionsItem?.item.id ?? null); }} t={t} />
       <MoveItemModal isOpen={!!moveModalItem} onClose={() => setMoveModalItem(null)} itemToMove={moveModalItem} categories={categories.filter(c => c.boardId === currentBoardId)} onMove={(target) => { if(moveModalItem) moveItemToFolder(moveModalItem.item, moveModalItem.type, target); setMoveModalItem(null); }} t={t} />
+      <SearchOverlay
+        isOpen={isSearchActive}
+        query={searchQuery}
+        onQueryChange={setSearchQuery}
+        results={searchResults}
+        onClose={() => { setIsSearchActive(false); setSearchQuery(''); }}
+        onJump={(hit) => {
+            navigateToFolder(hit.openFolderId);
+            // A folder hit opens the folder itself, so there is nothing inside
+            // it to point at; a card hit lands next to two dozen siblings.
+            setFoundItemId(hit.type === 'card' ? hit.id : null);
+            setIsSearchActive(false);
+            setSearchQuery('');
+        }}
+        t={t}
+      />
       <KeyboardModal
         isOpen={isKeyboardOpen}
         onClose={() => setIsKeyboardOpen(false)}

@@ -166,3 +166,19 @@ export interface ScanSettings {
    */
   auto: boolean;
 }
+
+/**
+ * One search match, with the location a parent needs in order to act on it.
+ * `path` is the folder chain from the root (empty means the root itself, or a
+ * core card, which lives on the rail in every folder and so has no one home).
+ * `openFolderId` is the folder to navigate to when the hit is chosen.
+ */
+export interface SearchHit {
+  id: string;
+  type: 'card' | 'folder';
+  label: string;
+  imageUrl?: string;
+  isCore: boolean;
+  path: string[];
+  openFolderId: string;
+}
