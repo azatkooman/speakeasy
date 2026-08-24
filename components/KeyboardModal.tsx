@@ -81,6 +81,23 @@ const KeyboardModal: React.FC<KeyboardModalProps> = ({ isOpen, onClose, vocabula
             placeholder={t('keyboard.placeholder')}
             aria-label={t('keyboard.title')}
             autoFocus
+            /*
+              Suppresses the device's own on-screen keyboard.
+
+              Focusing a text field in a WebView summons the Android IME, so
+              opening this dialog used to raise two keyboards at once: the
+              system one covered the keys below and halved the space the dialog
+              had to work in. This keyboard exists precisely so the system one
+              is not needed — its layout follows the interface language, its
+              targets are sized for the people using it, and its predictions
+              come from the child's own cards.
+
+              `inputMode="none"` rather than `readOnly`: the field stays a real
+              focusable input, so a Bluetooth keyboard or an HID switch still
+              types into it and screen readers still announce it. `readOnly`
+              would have silenced those along with the IME.
+            */
+            inputMode="none"
             className="flex-1 min-w-0 px-4 py-3 bg-white rounded-xl border-2 border-slate-200 focus:border-primary outline-none text-lg font-semibold text-slate-900"
           />
           <button onClick={onClose} aria-label={t('modal.categories.cancel')} className="p-2 rounded-full hover:bg-slate-200 text-slate-500">
