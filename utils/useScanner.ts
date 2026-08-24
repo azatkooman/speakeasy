@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ScanSettings } from '../types';
 
 /**
  * Switch scanning.
  *
- * A highlight walks the board and a switch selects whatever it lands on. This
+ * A highlight walks the screen and a switch selects whatever it lands on. This
  * is how users who cannot reliably touch a specific cell — or touch at all —
  * operate an AAC device. External AAC switches present themselves as HID
  * keyboards, so a switch press arrives as a keydown; that is why this listens
@@ -12,11 +12,12 @@ import { ScanSettings } from '../types';
  *
  * Two shapes, because they suit different users:
  *
- * - `linear` steps through every cell in turn. Simple to understand, but slow:
- *   reaching cell 30 of 40 means waiting through 29 others.
+ * - `linear` steps through every stop in turn. Simple to understand, but slow:
+ *   reaching stop 30 of 40 means waiting through 29 others.
  * - `rowColumn` highlights whole rows first; selecting a row then scans the
- *   cells inside it. Far fewer steps on a large grid, at the cost of a
- *   two-stage mental model.
+ *   stops inside it. Far fewer steps on a large grid, at the cost of a
+ *   two-stage mental model. A row holding a single stop selects that stop
+ *   directly rather than opening a second stage over one item.
  *
  * And two timings:
  *
@@ -24,122 +25,118 @@ import { ScanSettings } from '../types';
  *   user must press in time with a moving highlight.
  * - step mode does not advance by itself: one switch moves, the other selects.
  *   Users who cannot time a press against a moving target need this.
+ *
+ * Callers pass a flat list of stops, each declaring the row it belongs to and
+ * what selecting it does. That replaces an earlier design of "cells plus a
+ * column count", which computed rows as `floor(index / cols)`. Two things were
+ * wrong with it: the core-word rail is a single column but occupied several
+ * leading indices, so its items were silently grouped into rows with unrelated
+ * grid cells; and anything that was not itself a cell — the grammar badge on a
+ * card — could not be reached at all, because there was no index for it.
  */
+
+export interface ScanStop {
+  /** Stable identity, used to drive the highlight. */
+  id: string;
+  /** Visual row. Stops sharing a row are scanned together in rowColumn. */
+  row: number;
+  onSelect: () => void;
+}
 
 const SELECT_KEYS = [' ', 'Enter', 'Space'];
 const ADVANCE_KEYS = ['ArrowRight', 'ArrowDown', 'Tab', '1'];
 
 interface Options {
   settings: ScanSettings;
-  /** Total cells, laid out row-major. */
-  count: number;
-  cols: number;
+  stops: ScanStop[];
   enabled: boolean;
-  /** Cells that hold nothing — skipped, so the scan never dwells on a gap. */
-  isEmpty: (index: number) => boolean;
-  onSelect: (index: number) => void;
 }
 
-export const useScanner = ({ settings, count, cols, enabled, isEmpty, onSelect }: Options) => {
+export const useScanner = ({ settings, stops, enabled }: Options) => {
   // In rowColumn, `level` is which stage we are in.
   const [level, setLevel] = useState<'row' | 'cell'>('row');
   const [rowIndex, setRowIndex] = useState(0);
-  const [cellIndex, setCellIndex] = useState(0);
+  const [stopIndex, setStopIndex] = useState(0);
   const timerRef = useRef<number | null>(null);
 
-  const rows = Math.max(1, Math.ceil(count / cols));
-  const rowCount = rows;
+  /** Rows that actually hold something, in visual order. */
+  const rows = useMemo(() => {
+    const set = new Set(stops.map(s => s.row));
+    return [...set].sort((a, b) => a - b);
+  }, [stops]);
 
-  /** Row indices that contain at least one occupied cell. */
-  const usableRows = useCallback(() => {
-    const out: number[] = [];
-    for (let r = 0; r < rowCount; r++) {
-      let has = false;
-      for (let c = 0; c < cols; c++) {
-        const i = r * cols + c;
-        if (i < count && !isEmpty(i)) { has = true; break; }
-      }
-      if (has) out.push(r);
-    }
-    return out;
-  }, [rowCount, cols, count, isEmpty]);
-
-  /** Occupied cell indices, optionally restricted to one row. */
-  const usableCells = useCallback((row?: number) => {
-    const out: number[] = [];
-    const from = row === undefined ? 0 : row * cols;
-    const to = row === undefined ? count : Math.min(count, from + cols);
-    for (let i = from; i < to; i++) if (!isEmpty(i)) out.push(i);
-    return out;
-  }, [cols, count, isEmpty]);
+  const stopsInRow = useCallback(
+    (row: number) => stops.map((s, i) => ({ s, i })).filter(e => e.s.row === row).map(e => e.i),
+    [stops],
+  );
 
   const stop = useCallback(() => {
     if (timerRef.current !== null) { clearInterval(timerRef.current); timerRef.current = null; }
   }, []);
 
-  // Reset whenever the board underneath changes, so the highlight never points
-  // at a cell that no longer exists.
+  // Reset whenever the screen underneath changes, so the highlight never points
+  // at something that no longer exists. Keyed on the stop identities rather
+  // than the array, which is rebuilt on every render.
+  const signature = stops.map(s => s.id).join('|');
   useEffect(() => {
     setLevel('row');
-    setRowIndex(0);
-    setCellIndex(0);
-  }, [count, cols, settings.mode]);
+    setRowIndex(rows[0] ?? 0);
+    setStopIndex(0);
+  }, [signature, settings.mode]);
 
   const advance = useCallback(() => {
+    if (stops.length === 0) return;
     if (settings.mode === 'linear') {
-      const cells = usableCells();
-      if (cells.length === 0) return;
-      setCellIndex(prev => {
-        const at = cells.indexOf(prev);
-        return cells[(at + 1) % cells.length];
-      });
+      setStopIndex(prev => (prev + 1) % stops.length);
       return;
     }
     // rowColumn
     if (level === 'row') {
-      const rowsWithContent = usableRows();
-      if (rowsWithContent.length === 0) return;
+      if (rows.length === 0) return;
       setRowIndex(prev => {
-        const at = rowsWithContent.indexOf(prev);
-        return rowsWithContent[(at + 1) % rowsWithContent.length];
+        const at = rows.indexOf(prev);
+        return rows[(at + 1) % rows.length];
       });
     } else {
-      const cells = usableCells(rowIndex);
-      if (cells.length === 0) { setLevel('row'); return; }
-      setCellIndex(prev => {
-        const at = cells.indexOf(prev);
-        return cells[(at + 1) % cells.length];
+      const inRow = stopsInRow(rowIndex);
+      if (inRow.length === 0) { setLevel('row'); return; }
+      setStopIndex(prev => {
+        const at = inRow.indexOf(prev);
+        return inRow[(at + 1) % inRow.length];
       });
     }
-  }, [settings.mode, level, rowIndex, usableCells, usableRows]);
+  }, [settings.mode, level, rowIndex, rows, stops.length, stopsInRow]);
 
   const select = useCallback(() => {
+    if (stops.length === 0) return;
     if (settings.mode === 'linear') {
-      onSelect(cellIndex);
+      stops[stopIndex]?.onSelect();
       return;
     }
     if (level === 'row') {
-      const cells = usableCells(rowIndex);
-      if (cells.length === 0) return;
+      const inRow = stopsInRow(rowIndex);
+      if (inRow.length === 0) return;
+      // A row with one stop needs no second stage: selecting the row is
+      // unambiguous, and making the user press again to confirm a single
+      // option is a wasted press for someone who has very few.
+      if (inRow.length === 1) { stops[inRow[0]]?.onSelect(); return; }
       setLevel('cell');
-      setCellIndex(cells[0]);
+      setStopIndex(inRow[0]);
     } else {
-      onSelect(cellIndex);
+      stops[stopIndex]?.onSelect();
       setLevel('row');
     }
-  }, [settings.mode, level, cellIndex, rowIndex, usableCells, onSelect]);
+  }, [settings.mode, level, rowIndex, stopIndex, stops, stopsInRow]);
 
-  // Initialise the highlight onto something real.
+  // Keep the highlight on something real.
   useEffect(() => {
     if (!enabled) return;
     if (settings.mode === 'linear') {
-      const cells = usableCells();
-      if (cells.length && isEmpty(cellIndex)) setCellIndex(cells[0]);
+      if (stops.length && stopIndex >= stops.length) setStopIndex(0);
     } else if (level === 'row') {
-      const rws = usableRows();
-      if (rws.length && !rws.includes(rowIndex)) setRowIndex(rws[0]);
+      if (rows.length && !rows.includes(rowIndex)) setRowIndex(rows[0]);
     }
-  }, [enabled, settings.mode, level, rowIndex, cellIndex, usableCells, usableRows, isEmpty]);
+  }, [enabled, settings.mode, level, rowIndex, stopIndex, rows, stops.length]);
 
   // Auto-advance timer.
   useEffect(() => {
@@ -170,11 +167,12 @@ export const useScanner = ({ settings, count, cols, enabled, isEmpty, onSelect }
   }, [enabled, settings.mode, settings.auto, select, advance]);
 
   const active = enabled && settings.mode !== 'off';
+  const showingStop = active && (settings.mode === 'linear' || level === 'cell');
 
   return {
     active,
-    /** Cell currently highlighted, or null when a whole row is highlighted. */
-    focusedCell: active && (settings.mode === 'linear' || level === 'cell') ? cellIndex : null,
+    /** Stop currently highlighted, or null while a whole row is highlighted. */
+    focusedId: showingStop ? (stops[stopIndex]?.id ?? null) : null,
     /** Row currently highlighted in rowColumn's first stage. */
     focusedRow: active && settings.mode === 'rowColumn' && level === 'row' ? rowIndex : null,
   };

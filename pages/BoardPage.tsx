@@ -9,7 +9,7 @@ import { AACItem, Category } from '../types.ts';
 import { TranslationKey } from '../services/translations.ts';
 import { readHistory } from '../utils/history.ts';
 import { useSelectable, DEFAULT_DWELL_MS } from '../utils/useSelectable.ts';
-import { useScanner } from '../utils/useScanner.ts';
+import { useScanner, ScanStop } from '../utils/useScanner.ts';
 import { useRenderedCols } from '../utils/useRenderedCols.ts';
 import GridCellButton from '../components/GridCellButton.tsx';
 import ConfirmationModal from '../components/ConfirmationModal.tsx';
@@ -121,18 +121,63 @@ export const BoardPage: React.FC = () => {
    * which is right, because selecting a rail row should select that word rather
    * than opening a second stage over one cell.
    */
-  const scanSequence = React.useMemo(
-      () => [
-          ...coreItems.map(c => ({ kind: 'core' as const, item: c })),
-          ...gridCells.map(cell => ({ kind: 'grid' as const, item: cell })),
-      ],
-      [coreItems, gridCells]
-  );
-
   // The rail and the page padding are not available to the grid, so exclude
   // them before working out how many columns will fit.
   const railWidthPx = coreItems.length > 0 ? (window.innerWidth < 640 ? 64 : 112) : 0;
   const renderedCols = useRenderedCols(grid.cols, railWidthPx + 32);
+
+  /**
+   * Cells actually rendered. Trailing rows that are entirely empty are dropped
+   * in child mode: occupied cells keep their slots, so nothing a child has
+   * learned moves — this only stops a 24-slot board becoming eight mostly-blank
+   * rows when it wraps at three columns on a phone. Parent mode keeps them, so
+   * there is somewhere to place a new card.
+   *
+   * Hoisted out of the JSX because the scanner has to walk exactly what is on
+   * screen; computing it in two places is how a highlight ends up on a cell
+   * that is not there.
+   */
+  const visibleCells = React.useMemo(() => {
+      const lastFilled = gridCells.reduce((acc: number, c: any, i: number) => (c ? i : acc), -1);
+      const rowsNeeded = Math.max(1, Math.ceil((lastFilled + 1) / renderedCols));
+      return isEditMode ? gridCells : gridCells.slice(0, rowsNeeded * renderedCols);
+  }, [gridCells, renderedCols, isEditMode]);
+
+  /** Row a rendered grid cell belongs to, in scan-row terms. */
+  const gridRowOf = (index: number) => coreItems.length + Math.floor(index / renderedCols);
+
+  /**
+   * Everything a switch can land on, in traversal order.
+   *
+   * Each rail item is its own row: selecting a rail row should say that word,
+   * not open a second stage over a single cell. A card's grammar badge is a
+   * stop sharing its card's row, immediately after it — that is the only way a
+   * switch user can reach word forms at all, since the badge is a sibling
+   * button rather than a grid cell. Saying the word still comes first, so the
+   * common case costs no extra press.
+   */
+  const scanStops = React.useMemo((): ScanStop[] => {
+      const out: ScanStop[] = [];
+      coreItems.forEach((card, i) => {
+          out.push({ id: `core:${card.id}`, row: i, onSelect: () => selectItem(card) });
+          if ((card.forms?.length ?? 0) > 0) {
+              out.push({ id: `core-forms:${card.id}`, row: i, onSelect: () => setFormsCard(card) });
+          }
+      });
+      visibleCells.forEach((cell: any, index: number) => {
+          if (!cell) return;
+          const row = gridRowOf(index);
+          if (cell.type === 'folder') {
+              out.push({ id: `folder:${cell.id}`, row, onSelect: () => navigateToFolder(cell.id) });
+              return;
+          }
+          out.push({ id: `card:${cell.id}`, row, onSelect: () => selectItem(cell) });
+          if ((cell.forms?.length ?? 0) > 0) {
+              out.push({ id: `card-forms:${cell.id}`, row, onSelect: () => setFormsCard(cell) });
+          }
+      });
+      return out;
+  }, [coreItems, visibleCells, renderedCols, selectItem, navigateToFolder]);
 
   const scanSettings = settings.scan || { mode: 'off' as const, rateMs: 1200, auto: true };
 
@@ -143,27 +188,13 @@ export const BoardPage: React.FC = () => {
 
   const scanner = useScanner({
       settings: scanSettings,
-      count: scanSequence.length,
-      // Must match what is actually rendered, or row-column scanning would
-      // highlight rows that do not exist on screen.
-      cols: renderedCols,
+      stops: scanStops,
       // Scanning is a child-facing access method: it would fight the edit
       // controls in parent mode, and while any dialog is open a switch press
-      // would otherwise select a cell on the board behind it.
+      // would otherwise select a cell on the board behind it. The forms dialog
+      // runs its own scanner once it is open.
       enabled: !isEditMode && !isSearchActive && !isAnyModalOpen,
-      isEmpty: (i) => !scanSequence[i] || !scanSequence[i].item,
-      onSelect: (i) => {
-          const entry = scanSequence[i];
-          if (!entry || !entry.item) return;
-          if (entry.kind === 'core') { selectItem(entry.item); return; }
-          const cell = entry.item;
-          if (cell.type === 'folder') navigateToFolder(cell.id);
-          else selectItem(cell);
-      },
   });
-
-  /** Index of a grid cell within the scan sequence. */
-  const scanIndexOfGridCell = (gridIdx: number) => coreItems.length + gridIdx;
 
   /**
    * Label size follows how wide the cells actually ended up, not the stored
@@ -257,13 +288,17 @@ export const BoardPage: React.FC = () => {
               const label = card.labelKey ? t(card.labelKey as TranslationKey) : card.label;
               const hasForms = (card.forms?.length ?? 0) > 0;
               return (
-                <div key={card.id} className="relative shrink-0">
+                // Row highlight for rowColumn's first stage. Without it the
+                // rail is invisible while rows are being scanned: each rail
+                // item is its own row, so a switch user would be stepping
+                // through four rows with nothing on screen to show it.
+                <div key={card.id} className={`relative shrink-0 ${scanner.focusedRow === railIdx ? 'ring-4 ring-sky-500/60 rounded-2xl' : ''}`}>
                 <GridCellButton
                   onActivate={() => selectItem(card)}
                   selectionMode={settings.selectionMode || 'release'}
                   dwellMs={settings.dwellMs || DEFAULT_DWELL_MS}
                   isPreviewArmed={previewItemId === card.id}
-                  isScanFocused={scanner.focusedCell === railIdx}
+                  isScanFocused={scanner.focusedId === `core:${card.id}`}
                   className={`w-full h-[4.25rem] sm:h-20 rounded-2xl bg-white border-2 ${style.border} shadow-[0_3px_0_0] ${style.shadow} flex flex-col overflow-hidden ${card.isVisible === false ? 'opacity-50 grayscale' : ''}`}
                 >
                   <span className="flex-1 min-h-0 w-full p-1 flex items-center justify-center bg-white">
@@ -283,7 +318,7 @@ export const BoardPage: React.FC = () => {
                     type="button"
                     aria-label={`${t('forms.title')}: ${label}`}
                     onClick={() => setFormsCard(card)}
-                    className="absolute -top-1 -right-1 z-30 bg-white/95 rounded-full w-6 h-6 flex items-center justify-center shadow-sm border-2 border-slate-200 text-slate-600 hover:border-primary hover:text-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary"
+                    className={`absolute -top-1 -right-1 z-30 bg-white/95 rounded-full w-6 h-6 flex items-center justify-center shadow-sm border-2 border-slate-200 text-slate-600 hover:border-primary hover:text-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary ${scanner.focusedId === `core-forms:${card.id}` ? 'ring-4 ring-sky-500 ring-offset-2' : ''}`}
                   >
                     <Type size={12} strokeWidth={2.5} />
                   </button>
@@ -311,20 +346,9 @@ export const BoardPage: React.FC = () => {
           className="grid gap-3 sm:gap-4 max-w-7xl mx-auto"
           style={{ gridTemplateColumns: `repeat(${renderedCols}, minmax(0, 1fr))` }}
         >
-            {/* Trim trailing rows that are entirely empty. Occupied cells keep
-                their slots, so nothing a child has learned moves — this only
-                stops a 24-slot board becoming eight mostly-blank rows when it
-                wraps at three columns on a phone. Parent mode keeps them, so
-                there is somewhere to place a new card. */}
-            {(() => {
-                const lastFilled = gridCells.reduce((acc, c, i) => (c ? i : acc), -1);
-                const rowsNeeded = Math.max(1, Math.ceil((lastFilled + 1) / renderedCols));
-                const visible = isEditMode ? gridCells : gridCells.slice(0, rowsNeeded * renderedCols);
-                return visible;
-            })().map((cell, index) => {
-                const seqIdx = scanIndexOfGridCell(index);
+            {visibleCells.map((cell: any, index: number) => {
                 const inFocusedRow = scanner.focusedRow !== null
-                    && Math.floor(seqIdx / renderedCols) === scanner.focusedRow;
+                    && gridRowOf(index) === scanner.focusedRow;
                 if (!cell) {
                     return (
                         <div
@@ -347,7 +371,7 @@ export const BoardPage: React.FC = () => {
                         <div key={folder.id} className={`relative ${inFocusedRow ? 'ring-4 ring-sky-500/60 rounded-3xl' : ''} ${foundItemId === folder.id ? 'ring-4 ring-amber-400 ring-offset-2 rounded-3xl z-20' : ''}`}>
                             <FolderCard 
                                 folder={folder} 
-                                isScanFocused={scanner.focusedCell === scanIndexOfGridCell(index)}
+                                isScanFocused={scanner.focusedId === `folder:${folder.id}`}
                                 onClick={() => navigateToFolder(folder.id)} 
                                 onReorderLeft={(e) => { e.stopPropagation(); reorderGrid(folder.id, -1); }}
                                 onReorderRight={(e) => { e.stopPropagation(); reorderGrid(folder.id, 1); }}
@@ -378,7 +402,7 @@ export const BoardPage: React.FC = () => {
                                 selectionMode={settings.selectionMode || 'release'}
                                 dwellMs={settings.dwellMs || DEFAULT_DWELL_MS}
                                 isPreviewArmed={previewItemId === card.id}
-                                isScanFocused={scanner.focusedCell === scanIndexOfGridCell(index)}
+                                isScanFocused={scanner.focusedId === `card:${card.id}`}
                                 className={`
                                     absolute inset-0 rounded-3xl
                                     bg-white
@@ -422,7 +446,7 @@ export const BoardPage: React.FC = () => {
                                     type="button"
                                     aria-label={`${t('forms.title')}: ${displayLabel}`}
                                     onClick={() => setFormsCard(card)}
-                                    className="absolute top-1 right-1 z-30 bg-white/95 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center shadow-sm border-2 border-slate-200 text-slate-600 hover:border-primary hover:text-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary"
+                                    className={`absolute top-1 right-1 z-30 bg-white/95 backdrop-blur-sm rounded-full w-8 h-8 flex items-center justify-center shadow-sm border-2 border-slate-200 text-slate-600 hover:border-primary hover:text-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary ${scanner.focusedId === `card-forms:${card.id}` ? 'ring-4 ring-sky-500 ring-offset-2' : ''}`}
                                 >
                                     <Type size={15} strokeWidth={2.5} />
                                 </button>
@@ -547,6 +571,7 @@ export const BoardPage: React.FC = () => {
       />
       <WordFormsModal
         card={formsCard}
+        scanSettings={scanSettings}
         baseLabel={formsCard ? (formsCard.labelKey ? t(formsCard.labelKey as TranslationKey) : formsCard.label) : ''}
         onClose={() => setFormsCard(null)}
         onChoose={(text) => {
