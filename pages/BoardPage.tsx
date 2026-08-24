@@ -169,8 +169,18 @@ export const BoardPage: React.FC = () => {
       return isEditMode ? gridCells : gridCells.slice(0, rowsNeeded * renderedCols);
   }, [gridCells, renderedCols, isEditMode]);
 
+  /**
+   * How many scan rows sit above the rail: one for the sentence controls when
+   * there is a sentence to act on, one for navigation when there is somewhere
+   * to navigate. Shared by the stop list and by the row highlight below, since
+   * the two disagreeing is how a highlight ends up on a row that is not there.
+   */
+  const controlRowCount =
+      (sentence.length > 0 ? 1 : 0) + (currentFolderId !== ROOT_FOLDER ? 1 : 0);
+
   /** Row a rendered grid cell belongs to, in scan-row terms. */
-  const gridRowOf = (index: number) => coreItems.length + Math.floor(index / renderedCols);
+  const gridRowOf = (index: number) =>
+      controlRowCount + coreItems.length + Math.floor(index / renderedCols);
 
   /**
    * Everything a switch can land on, in traversal order.
@@ -184,10 +194,53 @@ export const BoardPage: React.FC = () => {
    */
   const scanStops = React.useMemo((): ScanStop[] => {
       const out: ScanStop[] = [];
+      let row = 0;
+
+      /*
+       * Sentence controls come first, as their own row.
+       *
+       * Without them the scanner covered vocabulary only, which meant a switch
+       * user could compose a sentence and then had no way to speak it, undo a
+       * wrong word, or start again. Scanning that reaches the words but not the
+       * Speak button is not an access method; it is a demonstration of one.
+       *
+       * First rather than last because in rowColumn this is one step from the
+       * start of a cycle, and speaking is the thing a user does at the end of
+       * every single utterance. It costs one extra row on the way to vocabulary
+       * and saves traversing the whole board on the way to the voice.
+       *
+       * Only offered when they would do something: a scan that dwells on a
+       * disabled Speak button spends the user's time on nothing. For someone
+       * driving this with one switch, that time is the cost of speaking.
+       */
+      if (sentence.length > 0) {
+          out.push({ id: 'ctl:speak', row, onSelect: () => playSentence() });
+          out.push({ id: 'ctl:backspace', row, onSelect: () => removeLastFromSentence() });
+          out.push({ id: 'ctl:clear', row, onSelect: () => clearSentence() });
+          row += 1;
+      }
+
+      /*
+       * Navigation, when there is anywhere to go. A switch user who opens a
+       * folder could not previously get back out of it without a carer.
+       *
+       * Deliberately not offering the keyboard or history buttons yet: both
+       * open dialogs that have no scanner of their own, so a switch user would
+       * reach a screen they could neither operate nor dismiss. That is worse
+       * than not reaching it — the same dead end the word-forms dialog had
+       * before it got its own scanner.
+       */
+      if (currentFolderId !== ROOT_FOLDER) {
+          out.push({ id: 'nav:back', row, onSelect: () => navigateBackFolder() });
+          out.push({ id: 'nav:home', row, onSelect: () => navigateToFolder(ROOT_FOLDER) });
+          row += 1;
+      }
+
+      const railRowBase = row;
       coreItems.forEach((card, i) => {
-          out.push({ id: `core:${card.id}`, row: i, onSelect: () => selectItem(card) });
+          out.push({ id: `core:${card.id}`, row: railRowBase + i, onSelect: () => selectItem(card) });
           if ((card.forms?.length ?? 0) > 0) {
-              out.push({ id: `core-forms:${card.id}`, row: i, onSelect: () => setFormsCard(card) });
+              out.push({ id: `core-forms:${card.id}`, row: railRowBase + i, onSelect: () => setFormsCard(card) });
           }
       });
       visibleCells.forEach((cell: any, index: number) => {
@@ -203,7 +256,9 @@ export const BoardPage: React.FC = () => {
           }
       });
       return out;
-  }, [coreItems, visibleCells, renderedCols, selectItem, navigateToFolder]);
+  }, [coreItems, visibleCells, renderedCols, selectItem, navigateToFolder,
+      sentence.length, currentFolderId, playSentence, removeLastFromSentence,
+      clearSentence, navigateBackFolder]);
 
   const scanSettings = settings.scan || { mode: 'off' as const, rateMs: 1200, auto: true };
 
@@ -257,6 +312,7 @@ export const BoardPage: React.FC = () => {
           onRemoveLastItem={removeLastFromSentence}
           onClear={clearSentence}
           onPlay={playSentence}
+          scanFocusedId={scanner.focusedId}
           onShowHistory={() => setIsHistoryOpen(true)}
           onOpenKeyboard={() => setIsKeyboardOpen(true)}
           isPlaying={useSpeakEasy().isPlaying}
@@ -271,7 +327,7 @@ export const BoardPage: React.FC = () => {
                     onClick={() => {
                         navigateToFolder(ROOT_FOLDER);
                     }} 
-                    className={`flex items-center justify-center p-2 rounded-xl transition-all active:scale-95 active:bg-slate-300 ${currentFolderId === ROOT_FOLDER ? 'text-slate-900 bg-slate-200' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'}`}
+                    className={`flex items-center justify-center p-2 rounded-xl transition-all active:scale-95 active:bg-slate-300 ${currentFolderId === ROOT_FOLDER ? 'text-slate-900 bg-slate-200' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'} ${scanner.focusedId === 'nav:home' ? 'ring-4 ring-sky-500 ring-offset-2 z-40' : ''}`}
                     aria-label={t('app.home_folder')}
                   >
                       <Home size={22} />
@@ -296,7 +352,7 @@ export const BoardPage: React.FC = () => {
                     onClick={() => {
                         navigateBackFolder();
                     }} 
-                    className="flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50 hover:text-primary active:scale-95 transition-all text-sm shadow-sm whitespace-nowrap"
+                    className={`flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-700 font-bold hover:bg-slate-50 hover:text-primary active:scale-95 transition-all text-sm shadow-sm whitespace-nowrap ${scanner.focusedId === 'nav:back' ? 'ring-4 ring-sky-500 ring-offset-2 z-40' : ''}`}
                   >
                       <CornerUpLeft size={20} strokeWidth={2.5} />
                       <span className="hidden sm:inline">{t('header.back')}</span>

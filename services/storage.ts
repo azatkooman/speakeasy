@@ -512,17 +512,32 @@ export const saveItem = async (item: AACItem): Promise<void> => {
     imageUrl = await saveAssetToFile(imageUrl) || imageUrl;
     audioUrl = await saveAssetToFile(audioUrl);
 
-    if (existing) {
-        if (existing.imageUrl && existing.imageUrl !== imageUrl) await deleteAssetFile(existing.imageUrl);
-        if (existing.audioUrl && existing.audioUrl !== audioUrl) await deleteAssetFile(existing.audioUrl);
-    }
-
     const finalItem = { ...item, imageUrl, audioUrl: audioUrl || undefined };
+
+    /*
+     * Write the new asset, commit the record, and only then delete the old
+     * asset. The previous order deleted first, so a failed or aborted
+     * IndexedDB write left the stored record pointing at a file that no longer
+     * existed — a card with a missing symbol, and no way back to it. Losing a
+     * superseded file to a failed cleanup is recoverable; losing the file the
+     * live record depends on is not.
+     */
+    const stale: (string | undefined)[] = existing
+        ? [
+            existing.imageUrl && existing.imageUrl !== imageUrl ? existing.imageUrl : undefined,
+            existing.audioUrl && existing.audioUrl !== audioUrl ? existing.audioUrl : undefined,
+          ]
+        : [];
 
     return new Promise((resolve, reject) => {
         const t = db.transaction(STORE_ITEMS, 'readwrite');
         t.objectStore(STORE_ITEMS).put(finalItem);
-        t.oncomplete = () => resolve();
+        t.oncomplete = () => {
+            // Best effort, and only after the record is safely committed.
+            Promise.all(stale.filter(Boolean).map(p => deleteAssetFile(p as string)))
+                .catch(e => console.error('Stale asset cleanup failed', e));
+            resolve();
+        };
         t.onerror = () => reject(t.error);
     });
 };
@@ -598,16 +613,19 @@ export const saveCategory = async (category: Category): Promise<void> => {
     let icon = getStorageUrl(category.icon);
     icon = await saveAssetToFile(icon);
 
-    if (existing && existing.icon && existing.icon !== icon) {
-        await deleteAssetFile(existing.icon);
-    }
-
     const finalCat = { ...category, icon: icon || category.icon };
+
+    // Same ordering as saveItem: commit the record first, clean up after. See
+    // the note there for why deleting first was the wrong way round.
+    const stale = existing && existing.icon && existing.icon !== icon ? existing.icon : undefined;
 
     return new Promise((resolve, reject) => {
         const t = db.transaction(STORE_CATEGORIES, 'readwrite');
         t.objectStore(STORE_CATEGORIES).put(finalCat);
-        t.oncomplete = () => resolve();
+        t.oncomplete = () => {
+            if (stale) deleteAssetFile(stale).catch(e => console.error('Stale icon cleanup failed', e));
+            resolve();
+        };
         t.onerror = () => reject(t.error);
     });
 };

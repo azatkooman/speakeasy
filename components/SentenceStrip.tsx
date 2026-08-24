@@ -14,6 +14,13 @@ interface SentenceStripProps {
   onOpenKeyboard: () => void;
   isPlaying: boolean;
   activeIndex: number | null;
+  /**
+   * Stop the switch scanner is currently on, when it is one of this strip's
+   * controls. The scan graph is assembled in BoardPage because it spans the
+   * strip, the navigation and the board; this prop is how the highlight gets
+   * back down here.
+   */
+  scanFocusedId?: string | null;
   t: (key: any) => string;
 }
 
@@ -40,6 +47,7 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
   onOpenKeyboard,
   isPlaying,
   activeIndex,
+  scanFocusedId,
   t
 }) => {
   const itemsRef = useRef<(HTMLDivElement | null)[]>([]);
@@ -186,6 +194,9 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
         </div>
       </div>
 
+      {/* The scanner highlight, matched by stop id. Same sky ring the board
+          cells use, so a switch user sees one consistent cue wherever the scan
+          happens to be. */}
       {/* 2. The Control Bar */}
       <div className="h-16 bg-white flex items-center gap-3 px-3 sm:px-4 py-2 relative z-40">
         
@@ -193,7 +204,8 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
             <button 
                 onClick={onClear}
                 disabled={items.length === 0}
-                className="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all disabled:opacity-50 disabled:hover:bg-slate-100 disabled:hover:text-slate-500 active:scale-95"
+                className={`w-12 h-12 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all disabled:opacity-50 disabled:hover:bg-slate-100 disabled:hover:text-slate-500 active:scale-95 ${scanFocusedId === 'ctl:clear' ? 'ring-4 ring-sky-500 ring-offset-2 z-40' : ''}`}
+                aria-label={t('strip.clear')}
                 title={t('strip.clear')}
             >
                 <RotateCcw size={20} strokeWidth={2.5} />
@@ -221,8 +233,9 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
             <button
                 onClick={onPlay}
                 disabled={isPlaying || items.length === 0}
+                aria-label={t('strip.speak')}
                 className={`
-                    w-full max-w-[220px] h-12 rounded-xl flex items-center justify-center gap-2 shadow-btn active:shadow-btn-active active:translate-y-[2px] transition-all
+                    w-full max-w-[220px] h-12 rounded-xl flex items-center justify-center gap-2 shadow-btn active:shadow-btn-active active:translate-y-[2px] transition-all ${scanFocusedId === 'ctl:speak' ? 'ring-4 ring-sky-500 ring-offset-2 z-40' : ''}
                     ${isPlaying 
                         ? 'bg-primary/10 text-primary border-2 border-primary/20' 
                         : items.length === 0
@@ -248,7 +261,8 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
              <button 
                 onClick={onRemoveLastItem}
                 disabled={items.length === 0}
-                className="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 flex items-center justify-center transition-all disabled:opacity-50 disabled:hover:bg-slate-100 disabled:hover:text-slate-500 active:scale-95"
+                className={`w-12 h-12 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 flex items-center justify-center transition-all disabled:opacity-50 disabled:hover:bg-slate-100 disabled:hover:text-slate-500 active:scale-95 ${scanFocusedId === 'ctl:backspace' ? 'ring-4 ring-sky-500 ring-offset-2 z-40' : ''}`}
+                aria-label={t('strip.backspace')}
                 title={t('strip.backspace')}
             >
                 <Delete size={20} strokeWidth={2.5} />

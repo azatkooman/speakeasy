@@ -26,6 +26,8 @@ interface SpeakEasyContextType {
   settings: AppSettings;
   isEditMode: boolean;
   isInitializing: boolean;
+  /** Non-null when start-up failed; the app shows a recoverable error instead of a spinner. */
+  initError: string | null;
   isPlaying: boolean;
   activeIndex: number | null;
   currentFolderId: string;
@@ -124,6 +126,8 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   
   const [isEditMode, setIsEditMode] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  /** Set when initialisation threw, so the UI can show a reason and a retry. */
+  const [initError, setInitError] = useState<string | null>(null);
   
   const [currentFolderId, setCurrentFolderId] = useState<string>(ROOT_FOLDER);
   const [boardHistory, setBoardHistory] = useState<string[]>([]);
@@ -143,6 +147,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => {
     const initData = async () => {
         setIsInitializing(true);
+        setInitError(null);
         
         // 1. Load Profiles
         let allProfiles = await getAllProfiles();
@@ -212,7 +217,18 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setIsInitializing(false);
     };
 
-    initData();
+    /*
+     * A throw anywhere in initData used to leave isInitializing true forever,
+     * and the app renders nothing but a spinner in that state. For a
+     * communication device that is the worst failure mode available: the child
+     * has no voice and the screen gives nobody a reason or a way out. Always
+     * clear the flag, and record the error so the UI can offer a retry.
+     */
+    initData().catch(err => {
+        console.error('Initialisation failed', err);
+        setInitError(err instanceof Error ? err.message : String(err));
+        setIsInitializing(false);
+    });
   }, []);
 
   useEffect(() => {
@@ -925,7 +941,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const value = {
       profiles, currentProfileId, boards, currentBoardId, library, categories, sentence, settings, isEditMode,
-      isInitializing, isPlaying, activeIndex, currentFolderId, searchQuery, isSearchActive, searchResults, boardHistory,
+      isInitializing, initError, isPlaying, activeIndex, currentFolderId, searchQuery, isSearchActive, searchResults, boardHistory,
       gridItems, gridCells, grid, coreItems, breadcrumbs, t, 
       setSettings: handleSetSettings, 
       setEditMode: setIsEditMode, setSearchQuery, setIsSearchActive,
