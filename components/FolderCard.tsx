@@ -105,8 +105,8 @@ const FolderCard: React.FC<FolderCardProps> = ({
                </div>
           </div>
 
-          <div className="w-full text-center py-2 px-1 relative min-h-[44px] sm:min-h-[48px] flex items-center justify-center bg-black/5 border-t border-black/5 shrink-0">
-            <span className="font-semibold text-sm sm:text-base tracking-wide line-clamp-2 leading-tight block px-1 text-slate-900">
+          <div className="w-full text-center py-1 sm:py-2 px-0.5 relative min-h-[26px] sm:min-h-[48px] flex items-center justify-center bg-black/5 border-t border-black/5 shrink-0">
+            <span className="font-semibold text-[11px] sm:text-base tracking-tight sm:tracking-wide line-clamp-2 leading-tight block px-0.5 break-words hyphens-auto text-slate-900">
               {displayLabel}
             </span>
           </div>

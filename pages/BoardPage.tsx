@@ -10,6 +10,7 @@ import { TranslationKey } from '../services/translations.ts';
 import { readHistory } from '../utils/history.ts';
 import { useSelectable, DEFAULT_DWELL_MS } from '../utils/useSelectable.ts';
 import { useScanner } from '../utils/useScanner.ts';
+import { useRenderedCols } from '../utils/useRenderedCols.ts';
 import GridCellButton from '../components/GridCellButton.tsx';
 import ConfirmationModal from '../components/ConfirmationModal.tsx';
 import CreateCardModal from '../components/CreateCardModal.tsx';
@@ -114,6 +115,11 @@ export const BoardPage: React.FC = () => {
       [coreItems, gridCells]
   );
 
+  // The rail and the page padding are not available to the grid, so exclude
+  // them before working out how many columns will fit.
+  const railWidthPx = coreItems.length > 0 ? (window.innerWidth < 640 ? 64 : 112) : 0;
+  const renderedCols = useRenderedCols(grid.cols, railWidthPx + 32);
+
   const scanSettings = settings.scan || { mode: 'off' as const, rateMs: 1200, auto: true };
 
   const isAnyModalOpen =
@@ -124,8 +130,9 @@ export const BoardPage: React.FC = () => {
   const scanner = useScanner({
       settings: scanSettings,
       count: scanSequence.length,
-      // Rail items occupy leading single-item rows; the grid keeps its own width.
-      cols: grid.cols,
+      // Must match what is actually rendered, or row-column scanning would
+      // highlight rows that do not exist on screen.
+      cols: renderedCols,
       // Scanning is a child-facing access method: it would fight the edit
       // controls in parent mode, and while any dialog is open a switch press
       // would otherwise select a cell on the board behind it.
@@ -144,7 +151,14 @@ export const BoardPage: React.FC = () => {
   /** Index of a grid cell within the scan sequence. */
   const scanIndexOfGridCell = (gridIdx: number) => coreItems.length + gridIdx;
 
-  const getLabelSize = () => settings.gridColumns === 'small' ? 'text-xs sm:text-sm leading-tight' : 'text-sm sm:text-base leading-tight';
+  /**
+   * Label size follows how wide the cells actually ended up, not the stored
+   * density preset — a 'medium' board on a phone has narrower cells than a
+   * 'small' board on a tablet.
+   */
+  const getLabelSize = () => renderedCols >= 6
+      ? 'text-[11px] sm:text-sm leading-tight'
+      : 'text-xs sm:text-base leading-tight';
 
   const getCardStyle = (item: AACItem) => {
     if (item.colorTheme && THEME_STYLES[item.colorTheme]) return THEME_STYLES[item.colorTheme];
@@ -234,7 +248,7 @@ export const BoardPage: React.FC = () => {
       {coreItems.length > 0 && (
         <nav
           aria-label={t('modal.create.core')}
-          className="shrink-0 w-[5.5rem] sm:w-28 bg-white/70 border-r border-slate-200 overflow-y-auto no-scrollbar p-2 flex flex-col gap-2"
+          className="shrink-0 w-16 sm:w-28 bg-white/70 border-r border-slate-200 overflow-y-auto no-scrollbar p-2 flex flex-col gap-2"
         >
           {coreItems.map((card, railIdx) => {
               const style = getCardStyle(card);
@@ -293,12 +307,22 @@ export const BoardPage: React.FC = () => {
         */}
         <div
           className="grid gap-3 sm:gap-4 max-w-7xl mx-auto"
-          style={{ gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))` }}
+          style={{ gridTemplateColumns: `repeat(${renderedCols}, minmax(0, 1fr))` }}
         >
-            {gridCells.map((cell, index) => {
+            {/* Trim trailing rows that are entirely empty. Occupied cells keep
+                their slots, so nothing a child has learned moves — this only
+                stops a 24-slot board becoming eight mostly-blank rows when it
+                wraps at three columns on a phone. Parent mode keeps them, so
+                there is somewhere to place a new card. */}
+            {(() => {
+                const lastFilled = gridCells.reduce((acc, c, i) => (c ? i : acc), -1);
+                const rowsNeeded = Math.max(1, Math.ceil((lastFilled + 1) / renderedCols));
+                const visible = isEditMode ? gridCells : gridCells.slice(0, rowsNeeded * renderedCols);
+                return visible;
+            })().map((cell, index) => {
                 const seqIdx = scanIndexOfGridCell(index);
                 const inFocusedRow = scanner.focusedRow !== null
-                    && Math.floor(seqIdx / grid.cols) === scanner.focusedRow;
+                    && Math.floor(seqIdx / renderedCols) === scanner.focusedRow;
                 if (!cell) {
                     return (
                         <div
@@ -387,8 +411,8 @@ export const BoardPage: React.FC = () => {
                                 </div>
 
                                 {/* Text Band - Colored based on part of speech */}
-                                <div className={`w-full h-11 sm:h-12 flex items-center justify-center border-t-2 ${style.border} ${style.bg} px-1 shrink-0`}>
-                                    <span className={`font-semibold text-center line-clamp-2 ${getLabelSize()} ${style.text}`}>
+                                <div className={`w-full h-7 sm:h-12 flex items-center justify-center border-t-2 ${style.border} ${style.bg} px-0.5 shrink-0`}>
+                                    <span className={`font-semibold text-center line-clamp-2 break-words ${getLabelSize()} ${style.text}`}>
                                         {displayLabel}
                                     </span>
                                 </div>

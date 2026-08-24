@@ -137,10 +137,10 @@ export const Header: React.FC = () => {
 
                         {/* Onboarding Tooltip */}
                         {showOnboardingHint && !isEditMode && (
-                            <div className="absolute top-full right-0 mt-4 w-72 bg-slate-900 text-white p-4 rounded-2xl shadow-2xl z-50 animate-in slide-in-from-top-2 duration-300 pointer-events-auto border border-slate-800">
+                            <div className="absolute top-full right-0 mt-2 sm:mt-4 w-[min(18rem,calc(100vw-2rem))] bg-slate-900 text-white p-3 sm:p-4 rounded-2xl shadow-2xl z-50 animate-in slide-in-from-top-2 duration-300 pointer-events-auto border border-slate-800">
                                 <div className="absolute -top-2 right-5 w-4 h-4 bg-slate-900 border-t border-l border-slate-800 rotate-45"></div>
-                                <div className="flex gap-4">
-                                    <div className="bg-indigo-500/20 p-3 rounded-full h-fit flex-shrink-0">
+                                <div className="flex gap-3 sm:gap-4">
+                                    <div className="bg-indigo-500/20 p-2 sm:p-3 rounded-full h-fit flex-shrink-0">
                                         <Hand size={24} className="text-indigo-400" />
                                     </div>
                                     <div className="flex-1">
