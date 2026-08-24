@@ -19,10 +19,15 @@ import { AppLanguage } from '../types';
  *
  * Each language gets the layout its own system keyboard uses — AZERTY for
  * French, ЙЦУКЕН for Russian — because that is the arrangement the child
- * already sees everywhere else on the device. Accented characters sit on their
- * own row rather than behind a long press: holding a key means "select" for
- * users on the dwell access method, and overloading it here would break input
- * for exactly the people who most depend on it.
+ * already sees everywhere else on the device.
+ *
+ * Accented characters sit on their own row rather than behind a long press:
+ * holding a key means "select" for users on the dwell access method, and
+ * overloading it here would break input for exactly the people who most depend
+ * on it. A language whose extra letters fit naturally among the others puts
+ * them there instead and leaves `accents` empty — Russian's ё beside е,
+ * Spanish's ñ on the home row. The separate row is for the ten French accents,
+ * which would not fit inline.
  *
  * Mirrors the shape of utils/languages.ts: adding a language is one edit here.
  */
@@ -40,10 +45,13 @@ const LAYOUTS: Record<AppLanguage, KeyboardLayout> = {
     rows: ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'],
     accents: [],
   },
-  // ЙЦУКЕН, the standard Russian layout. ё is a key of its own there too.
+  // ЙЦУКЕН. A physical Russian keyboard puts ё off on its own next to the
+  // number row, but here it sits directly after е, where someone looking for
+  // it will actually look — it is a variant of that letter, not a stray key.
+  // That makes the top row 13 keys wide; see the note on accents below.
   ru: {
-    rows: ['йцукенгшщзхъ', 'фывапролджэ', 'ячсмитьбю'],
-    accents: ['ё'],
+    rows: ['йцукеёнгшщзхъ', 'фывапролджэ', 'ячсмитьбю'],
+    accents: [],
   },
   // AZERTY, as on a French keyboard: m moves to the home row, w to the bottom.
   fr: {
