@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, useRef, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { AACItem, Category, Board, ChildProfile, AppSettings, ColorTheme, GridSize, SearchHit } from '../types.ts';
 import { TranslationKey, getTranslation } from '../services/translations.ts';
 import { 
@@ -44,7 +44,7 @@ interface SpeakEasyContextType {
   breadcrumbs: {id: string, label: string}[];
 
   t: (key: TranslationKey) => string;
-  setSettings: (s: AppSettings) => void;
+  setSettings: (next: AppSettings | ((prev: AppSettings) => AppSettings)) => void;
   setEditMode: (v: boolean) => void;
   setSearchQuery: (q: string) => void;
   setIsSearchActive: (v: boolean) => void;
@@ -195,6 +195,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
              if (currentProfile) {
                  // SETTINGS LOGIC
                  if (currentProfile.settings) {
+                     settingsRef.current = currentProfile.settings;
                      setSettings(currentProfile.settings);
                  } else {
                      // Migration: Profile exists but has no settings (legacy).
@@ -202,6 +203,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                      const savedInfo = localStorage.getItem('aac_settings');
                      const migrationSettings = savedInfo ? { ...DEFAULT_SETTINGS, ...JSON.parse(savedInfo) } : DEFAULT_SETTINGS;
                      
+                     settingsRef.current = migrationSettings;
                      setSettings(migrationSettings);
                      
                      // Save back to profile immediately to complete migration
@@ -433,22 +435,80 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [isSearchActive, searchQuery, library, categories, currentBoardId, isEditMode, settings.language]);
 
   // Wrapper to update settings both in state and in the active profile
-  const handleSetSettings = async (newSettings: AppSettings) => {
-      setSettings(newSettings);
-      
-      if (currentProfileId) {
-          const profile = profiles.find(p => p.id === currentProfileId);
-          if (profile) {
-              const updatedProfile = { ...profile, settings: newSettings };
-              try {
-                  await saveProfile(updatedProfile);
-                  setProfiles(prev => prev.map(p => p.id === currentProfileId ? updatedProfile : p));
-              } catch (e) {
-                  console.error("Failed to save settings to profile", e);
-              }
-          }
+  /*
+   * Settings updates, made safe against three separate races.
+   *
+   * 1. Stale snapshots. Callers used to pass a whole AppSettings built from the
+   *    `settings` they last rendered with. Two controls changed inside one
+   *    render cycle would each spread a copy of the same old object, and the
+   *    second silently discarded the first. Updates are now applied as
+   *    functions of the current state.
+   *
+   * 2. Out-of-order writes. Every change awaited its own saveProfile, and
+   *    IndexedDB gives no ordering guarantee across separate transactions — so
+   *    dragging a slider could finish with an earlier value on top. Writes are
+   *    now chained through one promise per provider, so they land in order.
+   *
+   * 3. Stale closures. The write read `profiles` and `currentProfileId` from
+   *    the closure it was created in. It now reads them from refs at flush
+   *    time.
+   *
+   * Range controls fire on every pixel of a drag, so persistence is debounced;
+   * the flush always writes whatever the latest state is rather than the value
+   * that scheduled it. React state is still updated synchronously, so the UI
+   * never lags the control.
+   */
+  const settingsRef = useRef(settings);
+  const profilesRef = useRef(profiles);
+  const currentProfileIdRef = useRef(currentProfileId);
+  const settingsWriteChain = useRef<Promise<void>>(Promise.resolve());
+  const settingsFlushTimer = useRef<number | null>(null);
+
+  useEffect(() => { profilesRef.current = profiles; }, [profiles]);
+  useEffect(() => { currentProfileIdRef.current = currentProfileId; }, [currentProfileId]);
+
+  const flushSettings = useCallback(() => {
+      if (settingsFlushTimer.current !== null) {
+          window.clearTimeout(settingsFlushTimer.current);
+          settingsFlushTimer.current = null;
       }
+      const pid = currentProfileIdRef.current;
+      if (!pid) return;
+      settingsWriteChain.current = settingsWriteChain.current
+          .then(async () => {
+              const latest = settingsRef.current;
+              const profile = profilesRef.current.find(p => p.id === pid);
+              if (!profile) return;
+              const updatedProfile = { ...profile, settings: latest };
+              await saveProfile(updatedProfile);
+              setProfiles(prev => prev.map(p => (p.id === pid ? updatedProfile : p)));
+          })
+          .catch(e => console.error('Failed to save settings to profile', e));
+  }, []);
+
+  const handleSetSettings = (
+      next: AppSettings | ((prev: AppSettings) => AppSettings),
+  ) => {
+      setSettings(prev => {
+          const value = typeof next === 'function' ? next(prev) : next;
+          settingsRef.current = value;
+          return value;
+      });
+      if (settingsFlushTimer.current !== null) window.clearTimeout(settingsFlushTimer.current);
+      settingsFlushTimer.current = window.setTimeout(flushSettings, 200);
   };
+
+  // A pending debounce must not be lost when the app is backgrounded — on
+  // Android the process can be killed while hidden, taking the last change
+  // with it.
+  useEffect(() => {
+      const onHide = () => { if (document.visibilityState === 'hidden') flushSettings(); };
+      document.addEventListener('visibilitychange', onHide);
+      return () => {
+          document.removeEventListener('visibilitychange', onHide);
+          flushSettings();
+      };
+  }, [flushSettings]);
 
   const switchProfile = async (id: string) => {
       if (id === currentProfileId) return;

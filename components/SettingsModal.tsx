@@ -9,7 +9,7 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   settings: AppSettings;
-  onUpdateSettings: (newSettings: AppSettings) => void;
+  onUpdateSettings: (next: AppSettings | ((prev: AppSettings) => AppSettings)) => void;
   /** Writes the mapped rows/cols to the current board — grid size is a board property. */
   onUpdateGridSize: (size: 'small' | 'medium' | 'large') => void;
   currentBoardLabel?: string;
@@ -76,7 +76,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                  {LANGUAGES.map(opt => (
                      <button
                         key={opt.code}
-                        onClick={() => onUpdateSettings({...settings, language: opt.code})}
+                        onClick={() => onUpdateSettings(prev => ({...prev, language: opt.code}))}
                         aria-pressed={settings.language === opt.code}
                         className={`py-3 rounded-xl border-2 font-bold transition-all ${settings.language === opt.code ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-500'}`}
                      >
@@ -107,7 +107,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                             max="1.5" 
                             step="0.1" 
                             value={settings.voiceRate}
-                            onChange={(e) => onUpdateSettings({...settings, voiceRate: parseFloat(e.target.value)})}
+                            onChange={(e) => onUpdateSettings(prev => ({...prev, voiceRate: parseFloat(e.target.value)}))}
                             className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
                         />
                     </div>
@@ -122,7 +122,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                             max="1.5" 
                             step="0.1" 
                             value={settings.voicePitch}
-                            onChange={(e) => onUpdateSettings({...settings, voicePitch: parseFloat(e.target.value)})}
+                            onChange={(e) => onUpdateSettings(prev => ({...prev, voicePitch: parseFloat(e.target.value)}))}
                             className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
                         />
                     </div>
@@ -182,7 +182,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                        max="5" 
                        step="1" 
                        value={settings.maxSentenceLength}
-                       onChange={(e) => onUpdateSettings({...settings, maxSentenceLength: parseInt(e.target.value)})}
+                       onChange={(e) => onUpdateSettings(prev => ({...prev, maxSentenceLength: parseInt(e.target.value)}))}
                        className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
                    />
                 </div>
@@ -194,7 +194,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         <p className="text-xs text-slate-400 font-medium">{t('modal.settings.auto_clear_desc')}</p>
                     </div>
                     <button 
-                        onClick={() => onUpdateSettings({...settings, autoClearSentence: !settings.autoClearSentence})}
+                        onClick={() => onUpdateSettings(prev => ({...prev, autoClearSentence: !prev.autoClearSentence}))}
                         className={`relative inline-flex h-9 w-16 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none border-2 border-transparent ${settings.autoClearSentence ? 'bg-indigo-600' : 'bg-slate-300'}`}
                     >
                         <span className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings.autoClearSentence ? 'translate-x-7' : 'translate-x-0'}`} />
@@ -244,7 +244,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     role="switch"
                     aria-checked={!!settings.returnHomeAfterSelect}
                     aria-label={t('modal.settings.return_home')}
-                    onClick={() => onUpdateSettings({...settings, returnHomeAfterSelect: !settings.returnHomeAfterSelect})}
+                    onClick={() => onUpdateSettings(prev => ({...prev, returnHomeAfterSelect: !prev.returnHomeAfterSelect}))}
                     className={`shrink-0 relative inline-flex h-9 w-16 items-center rounded-full transition-colors duration-200 border-2 border-transparent ${settings.returnHomeAfterSelect ? 'bg-indigo-600' : 'bg-slate-300'}`}
                 >
                     <span className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow transition duration-200 ${settings.returnHomeAfterSelect ? 'translate-x-7' : 'translate-x-0'}`} />
@@ -265,7 +265,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         <button
                             key={value}
                             aria-pressed={active}
-                            onClick={() => onUpdateSettings({...settings, selectionMode: value})}
+                            onClick={() => onUpdateSettings(prev => ({...prev, selectionMode: value}))}
                             className={`py-2.5 px-1 rounded-xl border-2 text-xs sm:text-sm font-bold transition-all min-h-[44px] ${active ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm' : 'border-slate-200 text-slate-400 hover:border-slate-300'}`}
                         >
                             {t(key)}
@@ -284,7 +284,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     <input
                         type="range" min="200" max="2000" step="100"
                         value={settings.dwellMs || 600}
-                        onChange={(e) => onUpdateSettings({...settings, dwellMs: parseInt(e.target.value)})}
+                        onChange={(e) => onUpdateSettings(prev => ({...prev, dwellMs: parseInt(e.target.value)}))}
                         className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
                     />
                 </div>
@@ -299,7 +299,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     role="switch"
                     aria-checked={!!settings.auditoryPreview}
                     aria-label={t('modal.settings.preview')}
-                    onClick={() => onUpdateSettings({...settings, auditoryPreview: !settings.auditoryPreview})}
+                    onClick={() => onUpdateSettings(prev => ({...prev, auditoryPreview: !prev.auditoryPreview}))}
                     className={`shrink-0 relative inline-flex h-9 w-16 items-center rounded-full transition-colors duration-200 border-2 border-transparent ${settings.auditoryPreview ? 'bg-indigo-600' : 'bg-slate-300'}`}
                 >
                     <span className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow transition duration-200 ${settings.auditoryPreview ? 'translate-x-7' : 'translate-x-0'}`} />
@@ -320,7 +320,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         <button
                             key={value}
                             aria-pressed={active}
-                            onClick={() => onUpdateSettings({...settings, scan: { mode: value, rateMs: settings.scan?.rateMs ?? 1200, auto: settings.scan?.auto ?? true }})}
+                            onClick={() => onUpdateSettings(prev => ({...prev, scan: { mode: value, rateMs: prev.scan?.rateMs ?? 1200, auto: prev.scan?.auto ?? true }}))}
                             className={`py-2.5 px-1 rounded-xl border-2 text-xs sm:text-sm font-bold transition-all min-h-[44px] ${active ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm' : 'border-slate-200 text-slate-400 hover:border-slate-300'}`}
                         >
                             {t(key)}
@@ -341,7 +341,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         role="switch"
                         aria-checked={!!settings.scan.auto}
                         aria-label={t('modal.settings.scan_auto')}
-                        onClick={() => onUpdateSettings({...settings, scan: { ...settings.scan!, auto: !settings.scan!.auto }})}
+                        onClick={() => onUpdateSettings(prev => ({...prev, scan: { ...prev.scan!, auto: !prev.scan!.auto }}))}
                         className={`shrink-0 relative inline-flex h-9 w-16 items-center rounded-full transition-colors duration-200 border-2 border-transparent ${settings.scan.auto ? 'bg-indigo-600' : 'bg-slate-300'}`}
                      >
                         <span className={`pointer-events-none inline-block h-7 w-7 transform rounded-full bg-white shadow transition duration-200 ${settings.scan.auto ? 'translate-x-7' : 'translate-x-0'}`} />
@@ -357,7 +357,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                        <input
                           type="range" min="400" max="4000" step="100"
                           value={settings.scan.rateMs}
-                          onChange={(e) => onUpdateSettings({...settings, scan: { ...settings.scan!, rateMs: parseInt(e.target.value) }})}
+                          onChange={(e) => onUpdateSettings(prev => ({...prev, scan: { ...prev.scan!, rateMs: parseInt(e.target.value) }}))}
                           className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
                        />
                     </div>
@@ -379,7 +379,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         <button
                             key={value}
                             aria-pressed={active}
-                            onClick={() => onUpdateSettings({...settings, shell: value})}
+                            onClick={() => onUpdateSettings(prev => ({...prev, shell: value}))}
                             className={`py-3 px-2 rounded-xl border-2 font-bold transition-all ${active ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm' : 'border-slate-200 text-slate-400 hover:border-slate-300'}`}
                         >
                             {t(key)}
