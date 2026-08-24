@@ -205,6 +205,17 @@ export const BoardPage: React.FC = () => {
       ? 'text-[11px] sm:text-sm leading-tight'
       : 'text-xs sm:text-base leading-tight';
 
+  /**
+   * The card's Fitzgerald colour as a key rather than a set of Tailwind
+   * classes. The shells need the identity so CSS can express it differently —
+   * see the [data-theme-color] custom properties in index.css.
+   */
+  const getCardThemeKey = (item: AACItem): string => {
+    if (item.colorTheme && THEME_STYLES[item.colorTheme]) return item.colorTheme;
+    const folder = categories.find(c => c.id === item.category);
+    return folder && THEME_STYLES[folder.colorTheme] ? folder.colorTheme : 'slate';
+  };
+
   const getCardStyle = (item: AACItem) => {
     if (item.colorTheme && THEME_STYLES[item.colorTheme]) return THEME_STYLES[item.colorTheme];
     const folder = categories.find(c => c.id === item.category);
@@ -292,19 +303,20 @@ export const BoardPage: React.FC = () => {
                 // rail is invisible while rows are being scanned: each rail
                 // item is its own row, so a switch user would be stepping
                 // through four rows with nothing on screen to show it.
-                <div key={card.id} className={`relative shrink-0 ${scanner.focusedRow === railIdx ? 'ring-4 ring-sky-500/60 rounded-2xl' : ''}`}>
+                <div key={card.id} data-part="cell" data-theme-color={getCardThemeKey(card)} className={`relative shrink-0 ${scanner.focusedRow === railIdx ? 'ring-4 ring-sky-500/60 rounded-2xl' : ''}`}>
                 <GridCellButton
                   onActivate={() => selectItem(card)}
                   selectionMode={settings.selectionMode || 'release'}
                   dwellMs={settings.dwellMs || DEFAULT_DWELL_MS}
                   isPreviewArmed={previewItemId === card.id}
                   isScanFocused={scanner.focusedId === `core:${card.id}`}
+                  dataPart="card-surface"
                   className={`w-full h-[4.25rem] sm:h-20 rounded-2xl bg-white border-2 ${style.border} shadow-[0_3px_0_0] ${style.shadow} flex flex-col overflow-hidden ${card.isVisible === false ? 'opacity-50 grayscale' : ''}`}
                 >
-                  <span className="flex-1 min-h-0 w-full p-1 flex items-center justify-center bg-white">
+                  <span data-part="card-art" className="flex-1 min-h-0 w-full p-1 flex items-center justify-center bg-white">
                     <img src={card.imageUrl} alt="" loading="lazy" className={`w-full h-full ${card.imageFit === 'contain' ? 'object-contain' : 'object-cover rounded-lg'}`} />
                   </span>
-                  <span className={`shrink-0 w-full py-0.5 px-1 border-t-2 ${style.border} ${style.bg} ${style.text} text-[10px] sm:text-xs font-semibold text-center truncate`}>
+                  <span data-part="card-label" className={`shrink-0 w-full py-0.5 px-1 border-t-2 ${style.border} ${style.bg} ${style.text} text-[10px] sm:text-xs font-semibold text-center truncate`}>
                     {label}
                   </span>
                 </GridCellButton>
@@ -394,7 +406,7 @@ export const BoardPage: React.FC = () => {
                         // is reachable by keyboard, screen reader and switch access; the
                         // edit controls are siblings rather than nested buttons, which
                         // would be invalid and would break that traversal.
-                        <div key={card.id} className={`relative aspect-[4/5] ${inFocusedRow ? 'ring-4 ring-sky-500/60 rounded-3xl' : ''} ${foundItemId === card.id ? 'ring-4 ring-amber-400 ring-offset-2 rounded-3xl z-20' : ''}`}>
+                        <div key={card.id} data-part="cell" data-theme-color={getCardThemeKey(card)} className={`relative aspect-[4/5] ${inFocusedRow ? 'ring-4 ring-sky-500/60 rounded-3xl' : ''} ${foundItemId === card.id ? 'ring-4 ring-amber-400 ring-offset-2 rounded-3xl z-20' : ''}`}>
                             <GridCellButton
                                 onActivate={() => {
                                     selectItem(card);
@@ -403,6 +415,7 @@ export const BoardPage: React.FC = () => {
                                 dwellMs={settings.dwellMs || DEFAULT_DWELL_MS}
                                 isPreviewArmed={previewItemId === card.id}
                                 isScanFocused={scanner.focusedId === `card:${card.id}`}
+                                dataPart="card-surface"
                                 className={`
                                     absolute inset-0 rounded-3xl
                                     bg-white
@@ -415,7 +428,7 @@ export const BoardPage: React.FC = () => {
                                 `}
                             >
                                 {/* Image Container - Always White for clean photo display */}
-                                <div className="w-full flex-1 p-2 flex items-center justify-center bg-white relative min-h-0">
+                                <div data-part="card-art" className="w-full flex-1 p-2 flex items-center justify-center bg-white relative min-h-0">
                                     <img
                                         src={card.imageUrl}
                                         // Decorative: the label below is the button's
@@ -432,7 +445,7 @@ export const BoardPage: React.FC = () => {
                                 </div>
 
                                 {/* Text Band - Colored based on part of speech */}
-                                <div className={`w-full h-7 sm:h-12 flex items-center justify-center border-t-2 ${style.border} ${style.bg} px-0.5 shrink-0`}>
+                                <div data-part="card-label" className={`w-full h-7 sm:h-12 flex items-center justify-center border-t-2 ${style.border} ${style.bg} px-0.5 shrink-0`}>
                                     <span className={`font-semibold text-center line-clamp-2 break-words ${getLabelSize()} ${style.text}`}>
                                         {displayLabel}
                                     </span>

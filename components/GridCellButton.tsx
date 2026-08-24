@@ -12,6 +12,8 @@ interface GridCellButtonProps {
   isScanFocused?: boolean;
   className?: string;
   ariaLabel?: string;
+  /** Styling hook for the visual shells — see the [data-part] rules in index.css. */
+  dataPart?: string;
   children: React.ReactNode;
 }
 
@@ -29,6 +31,7 @@ const GridCellButton: React.FC<GridCellButtonProps> = ({
   isScanFocused,
   className = '',
   ariaLabel,
+  dataPart,
   children,
 }) => {
   const { handlers, dwellProgress } = useSelectable({ mode: selectionMode, dwellMs, onActivate });
@@ -37,6 +40,7 @@ const GridCellButton: React.FC<GridCellButtonProps> = ({
     <button
       type="button"
       aria-label={ariaLabel}
+      data-part={dataPart}
       {...handlers}
       className={`
         relative cursor-pointer text-left

@@ -56,23 +56,24 @@ const FolderCard: React.FC<FolderCardProps> = ({
     // The folder itself is one <button>, so keyboard, screen reader and switch
     // access can reach it. Edit controls sit outside it as siblings — nesting
     // them would be invalid HTML and would break that traversal.
-    <div className="relative aspect-[4/5] select-none">
+    <div data-part="cell" data-theme-color={folder.colorTheme || 'slate'} className="relative aspect-[4/5] select-none">
       {/* `group` lives on the button, not the wrapper, so the press-down effect
           below responds to activating the control rather than to :active on a
           non-interactive div. */}
       <button
         type="button"
         onClick={onClick}
+        data-part="folder-surface"
         className={`group absolute inset-0 flex flex-col pt-3 text-left rounded-3xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2 ${isScanFocused ? 'ring-4 ring-sky-500 ring-offset-2 z-30' : ''}`}
       >
         {/* Folder Tab Effect */}
-        <div className={`
+        <div data-part="folder-tab" className={`
           absolute top-0 left-0 w-1/2 h-8 rounded-t-xl z-0 border-t-2 border-l-2 border-r-2
           ${theme.bg} ${theme.tabBorder}
         `} />
 
         {/* Main Folder Body */}
-        <div className={`
+        <div data-part="folder-body" className={`
             relative flex-1 w-full rounded-b-3xl rounded-tr-3xl flex flex-col
             border-2 border-t-2 shadow-[0_4px_0_0] group-active:shadow-none group-active:translate-y-[4px] group-active:border-b-2
             transition-all duration-100 z-10 cursor-pointer overflow-hidden
@@ -80,7 +81,7 @@ const FolderCard: React.FC<FolderCardProps> = ({
         `}>
           {/* Content Area - Reduced Padding for larger icon */}
           <div className="flex-1 w-full flex items-center justify-center p-2 relative min-h-0">
-               <div className="w-full h-full bg-white/40 rounded-xl flex items-center justify-center border border-black/5 p-1 shadow-sm relative overflow-hidden">
+               <div data-part="folder-art" className="w-full h-full bg-white/40 rounded-xl flex items-center justify-center border border-black/5 p-1 shadow-sm relative overflow-hidden">
                   {isImageIcon && !imageError ? (
                       <img
                         src={folder.icon}
@@ -105,7 +106,7 @@ const FolderCard: React.FC<FolderCardProps> = ({
                </div>
           </div>
 
-          <div className="w-full text-center py-1 sm:py-2 px-0.5 relative min-h-[26px] sm:min-h-[48px] flex items-center justify-center bg-black/5 border-t border-black/5 shrink-0">
+          <div data-part="folder-label" className="w-full text-center py-1 sm:py-2 px-0.5 relative min-h-[26px] sm:min-h-[48px] flex items-center justify-center bg-black/5 border-t border-black/5 shrink-0">
             <span className="font-semibold text-[11px] sm:text-base tracking-tight sm:tracking-wide line-clamp-2 leading-tight block px-0.5 break-words hyphens-auto text-slate-900">
               {displayLabel}
             </span>

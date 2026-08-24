@@ -52,28 +52,187 @@ body {
 }
 
 /*
-  Neutral shell. AAC users keep a system for years — a child who starts at five
-  is using it at fifteen — and a toddler interface in front of their peers is a
-  dignity problem, not a taste one. Same grid, same slots, same Fitzgerald
-  colours; only the styling calms down: tighter corners, flatter surfaces,
-  lighter weights, a less rounded face.
+  Fitzgerald category colour, as custom properties rather than as a fixed set of
+  Tailwind classes.
+
+  The colour carries grammatical category — it is clinical information, not
+  decoration — so every shell has to express it unmistakably. Holding it as
+  `accent / ink / wash` lets each shell choose *how*: the young-learner shell
+  keeps its pastel fill and thick coloured border, while the neutral shell puts
+  the same identity into a saturated edge and deep-tinted text. The category is
+  equally readable either way; only the register changes.
+
+  `wash` is the accent at 16% over white rather than color-mix(), which keeps
+  this working on older Android WebViews.
+*/
+[data-theme-color='yellow'] { --cell-accent: #eab308; --cell-ink: #854d0e; --cell-wash: rgba(234,179,8,.16); }
+[data-theme-color='green']  { --cell-accent: #22c55e; --cell-ink: #166534; --cell-wash: rgba(34,197,94,.16); }
+[data-theme-color='blue']   { --cell-accent: #3b82f6; --cell-ink: #1e40af; --cell-wash: rgba(59,130,246,.16); }
+[data-theme-color='pink']   { --cell-accent: #ec4899; --cell-ink: #9d174d; --cell-wash: rgba(236,72,153,.16); }
+[data-theme-color='orange'] { --cell-accent: #f97316; --cell-ink: #9a3412; --cell-wash: rgba(249,115,22,.16); }
+[data-theme-color='purple'] { --cell-accent: #a855f7; --cell-ink: #6b21a8; --cell-wash: rgba(168,85,247,.16); }
+[data-theme-color='teal']   { --cell-accent: #14b8a6; --cell-ink: #115e59; --cell-wash: rgba(20,184,166,.16); }
+[data-theme-color='red']    { --cell-accent: #ef4444; --cell-ink: #991b1b; --cell-wash: rgba(239,68,68,.16); }
+[data-theme-color='slate']  { --cell-accent: #64748b; --cell-ink: #1e293b; --cell-wash: rgba(100,116,139,.16); }
+
+/*
+  Neutral shell.
+
+  AAC users keep a system for years — a child who starts at five is using it at
+  fifteen — and a toddler interface in front of their peers is a dignity problem,
+  not a taste one. This shell exists for the older user.
+
+  Same grid, same slots, same Fitzgerald colours, same touch targets: nothing
+  that carries meaning or motor memory moves. What changes is the register.
+
+  The previous version of this shell only tightened corner radii, dropped the
+  offset shadow and lightened two font weights, which left the pastel fills,
+  the 2px candy borders and the literal folder tab in place — so it read as
+  the same interface with rounder corners filed off.
+
+  The design here is a different visual language:
+    - white cards on a cool near-white canvas, faintly violet to agree with the
+      app's primary rather than fighting it
+    - one hairline border, and real two-layer elevation instead of the toy
+      offset shadow
+    - category colour moved out of the border and the pastel fill into a
+      saturated 3px bottom edge plus deep-tinted label text: less coloured
+      area, but the part that is coloured is fully saturated, so the category
+      stays as quick to read
+    - the folder tab removed entirely; a folder is the same surface as a card,
+      distinguished by its icon
 */
 [data-shell='neutral'] {
   /* The platform sans, deliberately: it is already on the device, needs no
      download, and reads as neutral next to Nunito's rounded forms. Naming a
      webfont here would add a dependency the app does not bundle. */
   font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  letter-spacing: -0.006em;
+
+  --n-canvas: #f7f8fa;
+  --n-surface: #ffffff;
+  --n-hairline: rgba(16, 24, 40, 0.09);
+  --n-lift:
+    0 1px 2px rgba(16, 24, 40, 0.04),
+    0 2px 6px rgba(16, 24, 40, 0.06);
+  --n-lift-hover:
+    0 1px 2px rgba(16, 24, 40, 0.05),
+    0 6px 16px rgba(16, 24, 40, 0.09);
+  --n-radius: 0.625rem;
 }
-[data-shell='neutral'] .rounded-3xl { border-radius: 0.5rem; }
-[data-shell='neutral'] .rounded-2xl { border-radius: 0.375rem; }
-[data-shell='neutral'] .rounded-xl  { border-radius: 0.3125rem; }
-/* Drop the chunky offset shadow that gives the playful look its toy feel. */
-[data-shell='neutral'] [class*="shadow-[0_4px_0_0]"],
-[data-shell='neutral'] [class*="shadow-[0_3px_0_0]"] {
-  box-shadow: none !important;
-}
+
+[data-shell='neutral'].bg-background,
+[data-shell='neutral'] .bg-background { background-color: var(--n-canvas); }
+
+/* Corner radii: one consistent scale rather than three playful ones. */
+[data-shell='neutral'] .rounded-3xl { border-radius: var(--n-radius); }
+[data-shell='neutral'] .rounded-2xl { border-radius: 0.5rem; }
+[data-shell='neutral'] .rounded-xl  { border-radius: 0.375rem; }
+
+/* Lighter weights: font-black at 900 is part of the toy register. */
 [data-shell='neutral'] .font-black { font-weight: 700; }
 [data-shell='neutral'] .font-extrabold { font-weight: 600; }
+
+/* ---- Cards and folders ---- */
+
+[data-shell='neutral'] [data-part='card-surface'],
+[data-shell='neutral'] [data-part='folder-surface'] [data-part='folder-body'] {
+  background-color: var(--n-surface) !important;
+  border: 1px solid var(--n-hairline) !important;
+  box-shadow: var(--n-lift) !important;
+  overflow: hidden;
+  position: relative;
+}
+
+/* The category edge. `currentColor` is not available here, so the accent comes
+   from the custom property set on the cell wrapper. */
+[data-shell='neutral'] [data-part='card-surface']::after,
+[data-shell='neutral'] [data-part='folder-surface'] [data-part='folder-body']::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--cell-accent, #64748b);
+  pointer-events: none;
+  /* Overlays the label band's bottom edge rather than reserving space above it.
+     Reserving space made neutral cards 3px taller than young-learner ones, and
+     cell geometry is the one thing a shell must not change. */
+}
+
+@media (hover: hover) {
+  [data-shell='neutral'] [data-part='card-surface']:hover,
+  [data-shell='neutral'] [data-part='folder-surface']:hover [data-part='folder-body'] {
+    box-shadow: var(--n-lift-hover) !important;
+  }
+}
+
+/* Press: a small settle, not the 4px stomp the playful shell uses. */
+[data-shell='neutral'] [data-part='card-surface']:active,
+[data-shell='neutral'] [data-part='folder-surface']:active [data-part='folder-body'] {
+  transform: translateY(1px);
+  box-shadow: 0 1px 1px rgba(16, 24, 40, 0.05) !important;
+}
+[data-shell='neutral'] [data-part='card-surface']:active { transform: none; }
+
+/* Label band: a 10% wash and deep-tinted text, replacing the pastel fill and
+   the 2px coloured divider. */
+[data-shell='neutral'] [data-part='card-label'],
+[data-shell='neutral'] [data-part='folder-label'] {
+  background-color: var(--cell-wash, rgba(100,116,139,.16)) !important;
+  border-top: 1px solid var(--n-hairline) !important;
+}
+[data-shell='neutral'] [data-part='card-label'] > *,
+[data-shell='neutral'] [data-part='folder-label'] > * {
+  color: var(--cell-ink, #1e293b) !important;
+  font-weight: 600;
+}
+
+/* The symbol sits on the surface itself: the inset white plate with its own
+   border and shadow was a second frame around an image that is already framed
+   by the card. */
+[data-shell='neutral'] [data-part='folder-art'] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+[data-shell='neutral'] [data-part='folder-art'] svg { color: var(--cell-ink, #1e293b); }
+
+/*
+  The literal folder tab is the most toy-like element on the board, but it was
+  also doing real work: it is what tells a user at a glance that a cell opens
+  rather than speaks. Dropping it outright made folders and cards identical
+  apart from their artwork, which is not a distinction to rely on — a card can
+  hold a line-art symbol and a folder can hold a photo.
+
+  So the tab goes and a quieter container cue replaces it: one sheet peeking out
+  above the card's top edge. Same information, without the toy.
+*/
+[data-shell='neutral'] [data-part='folder-tab'] { display: none; }
+[data-shell='neutral'] [data-part='folder-surface'] { padding-top: 5px !important; }
+[data-shell='neutral'] [data-part='folder-surface'] [data-part='folder-body'] {
+  border-radius: var(--n-radius) !important;
+}
+[data-shell='neutral'] [data-part='folder-surface'] [data-part='folder-body']::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 7px;
+  right: 7px;
+  height: 6px;
+  border-radius: 5px 5px 0 0;
+  background: var(--n-surface);
+  border: 1px solid var(--n-hairline);
+  border-bottom: none;
+  pointer-events: none;
+}
+
+/* ---- Chrome ---- */
+
+/* Hairlines instead of 2px outlines on the surrounding controls. */
+[data-shell='neutral'] .border-2 { border-width: 1px; }
+[data-shell='neutral'] .border-4 { border-width: 2px; }
 
 /* Dwell progress fill. Held under prefers-reduced-motion deliberately: this is
    not decoration, it is the feedback that tells a user their hold is being
