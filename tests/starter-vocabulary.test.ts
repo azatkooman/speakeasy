@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { CORE_RAIL, FOLDER_VOCAB, ALL_VOCAB, vocabLabel } from '../utils/starterVocabulary';
 import { LANGUAGES } from '../utils/languages';
 
@@ -77,5 +77,19 @@ describe('identity and position are language-independent', () => {
   it('is substantially richer than the four cards it replaced', () => {
     expect(CORE_RAIL.length).toBeGreaterThanOrEqual(10);
     expect(ALL_VOCAB.length).toBeGreaterThanOrEqual(80);
+  });
+});
+
+describe('both ways of getting a board are seeded the same', () => {
+  it('is wired into a new board as well as a new profile', () => {
+    // A new profile used to get 90 words while a new board got none, so a
+    // parent adding a school board found it empty. Both call the same builder.
+    const src = readFileSync('services/storage.ts', 'utf8');
+    // Two call sites: initializeBoards and createNewBoard. The declaration is
+    // `buildStarterCards = (`, so it does not match this and is not counted.
+    const calls = [...src.matchAll(/buildStarterCards\(/g)].length;
+    expect(calls).toBe(2);
+    const newBoard = src.slice(src.indexOf('export const createNewBoard'));
+    expect(newBoard.slice(0, newBoard.indexOf('return newId'))).toContain('buildStarterCards');
   });
 });

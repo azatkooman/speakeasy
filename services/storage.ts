@@ -377,6 +377,59 @@ export const saveBoardsBatch = async (boards: Board[]): Promise<void> => {
     });
 };
 
+/**
+ * Builds the starter-vocabulary cards for a board.
+ *
+ * Shared by both entry points on purpose. A new profile used to get the whole
+ * vocabulary while a new *board* got the eight folders and no words at all —
+ * a parent adding a second board for school found it empty and had to build it
+ * by hand. Same seed, both paths.
+ *
+ * Order in utils/starterVocabulary.ts is the slot, so the same word lands in
+ * the same cell on every board, in every language.
+ */
+const buildStarterCards = (
+    boardId: string,
+    profileId: string,
+    folderIdByTemplate: Record<string, string>,
+    t?: (key: TranslationKey) => string,
+): AACItem[] => {
+    const card = (entry: VocabEntry, catId: string, slot: number, isCore: boolean): AACItem => {
+        const key = `vocab.${entry.id}`;
+        return {
+            id: crypto.randomUUID(),
+            profileId,
+            boardId,
+            label: t ? t(key as TranslationKey) : entry.labels.en,
+            labelKey: key,
+            imageUrl: `/pictograms/${entry.arasaac}.png`,
+            imageFit: 'contain',
+            category: catId,
+            colorTheme: entry.color as ColorTheme | undefined,
+            createdAt: Date.now(),
+            slot,
+            isCore,
+            isVisible: true,
+        };
+    };
+
+    return [
+        // The core rail: board-scoped, so these stay reachable inside every
+        // folder. `slot` here is the position in the rail, not in the grid.
+        ...CORE_RAIL.map((entry, i) => card(entry, ROOT_FOLDER, i, true)),
+        ...Object.entries(FOLDER_VOCAB).flatMap(([template, entries]) => {
+            const catId = folderIdByTemplate[template];
+            if (!catId) {
+                // A folder the template no longer defines would silently drop
+                // its words; better to notice than to ship a board missing one.
+                console.warn(`Starter vocabulary references unknown folder "${template}"`);
+                return [];
+            }
+            return entries.map((entry, i) => card(entry, catId, i, false));
+        }),
+    ];
+};
+
 export const initializeBoards = async (defaultName: string, profileId: string, t?: (key: TranslationKey) => string): Promise<string> => {
     const boards = await getAllBoards(profileId);
     if (boards.length > 0) return boards[0].id;
@@ -428,52 +481,7 @@ export const initializeBoards = async (defaultName: string, profileId: string, t
         isVisible: true
     });
 
-    /*
-     * Seed the starter vocabulary. Both the rail and each folder take their
-     * order straight from utils/starterVocabulary.ts, and the slot is the index
-     * in that array — so the same word lands in the same cell on every device,
-     * in every language, for every child. An SLP editing that file changes what
-     * a new board contains without touching anything here.
-     */
-    const createVocabCard = (
-        entry: VocabEntry,
-        catId: string,
-        slot: number,
-        isCore: boolean,
-    ): AACItem => {
-        const key = `vocab.${entry.id}`;
-        return {
-            id: crypto.randomUUID(),
-            profileId,
-            boardId: defaultBoard.id,
-            label: t ? t(key as TranslationKey) : entry.labels.en,
-            labelKey: key,
-            imageUrl: `/pictograms/${entry.arasaac}.png`,
-            imageFit: 'contain',
-            category: catId,
-            colorTheme: entry.color as ColorTheme | undefined,
-            createdAt: Date.now(),
-            slot,
-            isCore,
-            isVisible: true,
-        };
-    };
-
-    const defaultCards: AACItem[] = [
-        // The core rail: board-scoped, so these stay reachable inside every
-        // folder. `slot` here is the position in the rail, not in the grid.
-        ...CORE_RAIL.map((entry, i) => createVocabCard(entry, ROOT_FOLDER, i, true)),
-        ...Object.entries(FOLDER_VOCAB).flatMap(([template, entries]) => {
-            const catId = folderIdByTemplate[template];
-            // A folder the template no longer defines would silently drop its
-            // words; better to notice than to ship a board missing a category.
-            if (!catId) {
-                console.warn(`Starter vocabulary references unknown folder "${template}"`);
-                return [];
-            }
-            return entries.map((entry, i) => createVocabCard(entry, catId, i, false));
-        }),
-    ];
+    const defaultCards = buildStarterCards(defaultBoard.id, profileId, folderIdByTemplate, t);
 
     await saveItemsBatch(defaultCards);
     return defaultBoard.id;
@@ -491,16 +499,22 @@ export const createNewBoard = async (label: string, profileId: string, t?: (key:
     };
     await saveBoard(board);
 
-    const newCats: Category[] = DEFAULT_CATEGORIES_TEMPLATE.map(c => ({
-        ...c,
-        id: crypto.randomUUID(),
-        boardId: newId,
-        profileId,
-        label: t ? t(c.labelKey) : c.fallback,
-        labelKey: c.labelKey,
-        colorTheme: c.colorTheme as any
-    }));
+    const folderIdByTemplate: Record<string, string> = {};
+    const newCats: Category[] = DEFAULT_CATEGORIES_TEMPLATE.map(c => {
+        const id = crypto.randomUUID();
+        folderIdByTemplate[c.id] = id;
+        return {
+            ...c,
+            id,
+            boardId: newId,
+            profileId,
+            label: t ? t(c.labelKey) : c.fallback,
+            labelKey: c.labelKey,
+            colorTheme: c.colorTheme as any
+        };
+    });
     await saveCategoriesBatch(newCats);
+    await saveItemsBatch(buildStarterCards(newId, profileId, folderIdByTemplate, t));
 
     return newId;
 };
