@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { X, Delete, CornerDownLeft, Keyboard as KeyboardIcon } from 'lucide-react';
 import { TranslationKey } from '../services/translations';
 import { AppLanguage } from '../types';
-import { getKeyboardLayouts, SCRIPT_SWITCH_LABEL } from '../utils/keyboardLayouts';
+import { getKeyboardLayout } from '../utils/keyboardLayouts';
 
 interface KeyboardModalProps {
   isOpen: boolean;
@@ -29,16 +29,10 @@ interface KeyboardModalProps {
 
 const KeyboardModal: React.FC<KeyboardModalProps> = ({ isOpen, onClose, vocabulary, onSubmit, language, t }) => {
   const [text, setText] = useState('');
-  // Which of the two layouts is showing. Starts on the interface language's own.
-  const [useAlternate, setUseAlternate] = useState(false);
 
-  const { primary, alternate } = getKeyboardLayouts(language);
-  const layout = useAlternate ? alternate : primary;
-
-  // Changing the interface language returns the keyboard to that language's
-  // layout. Held otherwise, so typing several foreign words in a row does not
-  // mean re-pressing the script toggle for each one.
-  useEffect(() => { setUseAlternate(false); }, [language]);
+  // The layout is whatever Settings selected. Nothing in this modal can change
+  // it, so the keys never move under a child who has learned where they are.
+  const layout = getKeyboardLayout(language);
 
   // Closing discards a half-typed word rather than showing it again on reopen.
   useEffect(() => { if (!isOpen) setText(''); }, [isOpen]);
@@ -138,14 +132,6 @@ const KeyboardModal: React.FC<KeyboardModalProps> = ({ isOpen, onClose, vocabula
             </div>
           )}
           <div className="flex justify-center gap-1.5 pt-0.5">
-            <button
-              onClick={() => setUseAlternate(v => !v)}
-              aria-pressed={useAlternate}
-              aria-label={t('keyboard.script')}
-              className="px-3 min-h-[44px] rounded-lg bg-white border border-slate-200 font-bold text-slate-600 text-sm hover:border-primary active:scale-95"
-            >
-              {SCRIPT_SWITCH_LABEL[useAlternate ? primary.script : alternate.script]}
-            </button>
             <button
               onClick={() => setText(prev => prev + ' ')}
               className="flex-1 max-w-[16rem] min-h-[44px] rounded-lg bg-white border border-slate-200 font-semibold text-slate-600 hover:border-primary active:scale-95"

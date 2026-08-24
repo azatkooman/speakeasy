@@ -57,7 +57,6 @@ export type TranslationKey =
   | 'keyboard.hint'
   | 'keyboard.add'
   | 'keyboard.open'
-  | 'keyboard.script'
   | 'nav.categories'
   | 'nav.add_card'
   | 'nav.settings'
@@ -280,7 +279,6 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'keyboard.hint': 'Suggestions from your own cards appear here',
     'keyboard.add': 'Add to sentence',
     'keyboard.open': 'Spell a word',
-    'keyboard.script': 'Change keyboard',
     'nav.categories': 'Categories',
     'nav.add_card': 'Add Card',
     'nav.settings': 'Settings',
@@ -511,7 +509,6 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'keyboard.hint': 'Здесь появятся подсказки из ваших карточек',
     'keyboard.add': 'Добавить в строку',
     'keyboard.open': 'Написать слово',
-    'keyboard.script': 'Сменить раскладку',
     'nav.categories': 'Категории',
     'nav.add_card': 'Добавить',
     'nav.settings': 'Настройки',
@@ -742,7 +739,6 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'keyboard.hint': 'Les suggestions viennent de vos propres cartes',
     'keyboard.add': 'Ajouter à la phrase',
     'keyboard.open': 'Écrire un mot',
-    'keyboard.script': 'Changer de clavier',
     'nav.categories': 'Catégories',
     'nav.add_card': 'Ajouter une Carte',
     'nav.settings': 'Paramètres',
@@ -973,7 +969,6 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'keyboard.hint': 'Las sugerencias vienen de tus propias tarjetas',
     'keyboard.add': 'Añadir a la frase',
     'keyboard.open': 'Escribir una palabra',
-    'keyboard.script': 'Cambiar teclado',
     'nav.categories': 'Categorías',
     'nav.add_card': 'Añadir',
     'nav.settings': 'Ajustes',
