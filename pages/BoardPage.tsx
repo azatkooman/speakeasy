@@ -529,6 +529,7 @@ export const BoardPage: React.FC = () => {
         onClose={() => setIsKeyboardOpen(false)}
         vocabulary={vocabulary}
         onSubmit={addTypedWord}
+        language={settings.language}
         t={t}
       />
       <WordFormsModal

@@ -1,6 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { X, Delete, CornerDownLeft, Keyboard as KeyboardIcon } from 'lucide-react';
 import { TranslationKey } from '../services/translations';
+import { AppLanguage } from '../types';
+import { getKeyboardLayouts, SCRIPT_SWITCH_LABEL } from '../utils/keyboardLayouts';
 
 interface KeyboardModalProps {
   isOpen: boolean;
@@ -8,6 +10,8 @@ interface KeyboardModalProps {
   /** Every word the child's own vocabulary contains — the prediction source. */
   vocabulary: string[];
   onSubmit: (text: string) => void;
+  /** Interface language — decides which layout opens by default. */
+  language: AppLanguage;
   t: (key: TranslationKey) => string;
 }
 
@@ -23,13 +27,21 @@ interface KeyboardModalProps {
  * it works in every language without shipping anything.
  */
 
-// Latin, Cyrillic and the accented letters the four shipped languages need.
-const ROWS_LATIN = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
-const ROWS_CYRILLIC = ['йцукенгшщзхъ', 'фывапролджэ', 'ячсмитьбю'];
-
-const KeyboardModal: React.FC<KeyboardModalProps> = ({ isOpen, onClose, vocabulary, onSubmit, t }) => {
+const KeyboardModal: React.FC<KeyboardModalProps> = ({ isOpen, onClose, vocabulary, onSubmit, language, t }) => {
   const [text, setText] = useState('');
-  const [cyrillic, setCyrillic] = useState(false);
+  // Which of the two layouts is showing. Starts on the interface language's own.
+  const [useAlternate, setUseAlternate] = useState(false);
+
+  const { primary, alternate } = getKeyboardLayouts(language);
+  const layout = useAlternate ? alternate : primary;
+
+  // Changing the interface language returns the keyboard to that language's
+  // layout. Held otherwise, so typing several foreign words in a row does not
+  // mean re-pressing the script toggle for each one.
+  useEffect(() => { setUseAlternate(false); }, [language]);
+
+  // Closing discards a half-typed word rather than showing it again on reopen.
+  useEffect(() => { if (!isOpen) setText(''); }, [isOpen]);
 
   const suggestions = useMemo(() => {
     const frag = text.trim().toLowerCase();
@@ -50,7 +62,6 @@ const KeyboardModal: React.FC<KeyboardModalProps> = ({ isOpen, onClose, vocabula
 
   if (!isOpen) return null;
 
-  const rows = cyrillic ? ROWS_CYRILLIC : ROWS_LATIN;
   const commit = (value: string) => {
     const v = value.trim();
     if (!v) return;
@@ -100,7 +111,7 @@ const KeyboardModal: React.FC<KeyboardModalProps> = ({ isOpen, onClose, vocabula
         </div>
 
         <div className="p-2 sm:p-3 space-y-1.5 sm:space-y-2 bg-slate-50">
-          {rows.map((row, i) => (
+          {layout.rows.map((row, i) => (
             <div key={i} className="flex justify-center gap-1 sm:gap-1.5">
               {row.split('').map(ch => (
                 <button
@@ -113,13 +124,27 @@ const KeyboardModal: React.FC<KeyboardModalProps> = ({ isOpen, onClose, vocabula
               ))}
             </div>
           ))}
+          {layout.accents.length > 0 && (
+            <div className="flex justify-center gap-1 sm:gap-1.5">
+              {layout.accents.map(ch => (
+                <button
+                  key={ch}
+                  onClick={() => setText(prev => prev + ch)}
+                  className="flex-1 max-w-[3rem] min-h-[44px] rounded-lg bg-white border border-slate-200 font-semibold text-slate-800 text-base sm:text-lg hover:border-primary active:scale-95 transition-all"
+                >
+                  {ch}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="flex justify-center gap-1.5 pt-0.5">
             <button
-              onClick={() => setCyrillic(c => !c)}
-              aria-pressed={cyrillic}
+              onClick={() => setUseAlternate(v => !v)}
+              aria-pressed={useAlternate}
+              aria-label={t('keyboard.script')}
               className="px-3 min-h-[44px] rounded-lg bg-white border border-slate-200 font-bold text-slate-600 text-sm hover:border-primary active:scale-95"
             >
-              {cyrillic ? 'ABC' : 'АБВ'}
+              {SCRIPT_SWITCH_LABEL[useAlternate ? primary.script : alternate.script]}
             </button>
             <button
               onClick={() => setText(prev => prev + ' ')}
