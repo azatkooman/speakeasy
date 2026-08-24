@@ -111,8 +111,20 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
             */
             <div className="absolute inset-0 flex items-center gap-3 px-3 sm:px-4 text-slate-400 pointer-events-none select-none">
                 <div className="w-40 shrink-0" aria-hidden="true" />
-                <div className="flex-1 flex justify-center px-2 min-w-0">
-                    <span className="text-base sm:text-lg font-semibold tracking-tight border-2 border-dashed border-slate-300/60 bg-slate-50/50 px-5 py-2.5 rounded-2xl truncate">
+                {/*
+                  `min-w-0` is load-bearing: it keeps this column exactly as wide
+                  as the control bar's middle column, which is what puts its centre
+                  on the Speak button's axis. Without it the column grows to fit the
+                  text and the hint drifts right — 38px on a phone.
+
+                  The hint is then wider than the column and overflows it, which is
+                  fine and deliberate: the spacers either side are empty, and the
+                  sentence area behind is empty whenever this hint is showing, so
+                  there is nothing to collide with. `truncate` here instead of
+                  overflow clipped "Нажмите, чтобы сказать" down to "Нажмите, ...".
+                */}
+                <div className="flex-1 min-w-0 flex justify-center px-2">
+                    <span className="text-base sm:text-lg font-semibold tracking-tight border-2 border-dashed border-slate-300/60 bg-slate-50/50 px-5 py-2.5 rounded-2xl whitespace-nowrap">
                         {t('strip.tap_instruction')}
                     </span>
                 </div>

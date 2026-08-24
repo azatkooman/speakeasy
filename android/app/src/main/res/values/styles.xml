@@ -9,10 +9,25 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <!--
+      A Light parent, not DayNight, and force-dark explicitly off.
+
+      This app is light-only by design: index.css declares `color-scheme: light`
+      and paints its own palette. Under a DayNight theme on a device in night
+      mode, the WebView applies algorithmic darkening and inverts the whole
+      board — the Fitzgerald category colours that carry grammatical meaning
+      come out as dark washes, and the contrast ratios the palette was chosen
+      for no longer hold. Opting out keeps the app looking the same on every
+      device rather than letting the OS restyle a clinical colour system.
+
+      forceDarkAllowed covers API 29-32; the Light parent keeps isLightTheme
+      true, which is what API 33+ consults for algorithmic darkening.
+    -->
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <item name="android:forceDarkAllowed">false</item>
     </style>
 
 

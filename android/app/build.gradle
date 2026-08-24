@@ -21,6 +21,15 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+        debug {
+            // Debug builds install alongside the Play release rather than over
+            // it. A debug build is signed with the local debug key, so it can
+            // never replace a release-signed install anyway — and the only way
+            // to force it would be uninstalling, which would take a child's
+            // boards and profiles with it. Separate package, separate data.
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+        }
     }
 }
 

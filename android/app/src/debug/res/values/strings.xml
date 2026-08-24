@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+    <!-- Overrides the main source set so a test build is distinguishable from
+         the Play release on the launcher when both are installed. -->
+    <string name="app_name">SpeakEasy Test</string>
+    <string name="title_activity_main">SpeakEasy Test</string>
+</resources>
