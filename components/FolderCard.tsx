@@ -19,16 +19,16 @@ interface FolderCardProps {
   isScanFocused?: boolean;
 }
 
-const FOLDER_THEMES: Record<string, { bg: string; border: string; shadow: string; tabBorder: string }> = {
-    'yellow': { bg: 'bg-yellow-100', border: 'border-yellow-400', shadow: 'shadow-yellow-700', tabBorder: 'border-yellow-400' },
-    'green':  { bg: 'bg-green-100',  border: 'border-green-500',  shadow: 'shadow-green-700',  tabBorder: 'border-green-500' },
-    'blue':   { bg: 'bg-blue-100',   border: 'border-blue-400',   shadow: 'shadow-blue-700',   tabBorder: 'border-blue-400' },
-    'pink':   { bg: 'bg-pink-100',   border: 'border-pink-400',   shadow: 'shadow-pink-700',   tabBorder: 'border-pink-400' },
-    'orange': { bg: 'bg-orange-100', border: 'border-orange-500', shadow: 'shadow-orange-700', tabBorder: 'border-orange-500' },
-    'purple': { bg: 'bg-purple-100', border: 'border-purple-400', shadow: 'shadow-purple-700', tabBorder: 'border-purple-400' },
-    'teal':   { bg: 'bg-teal-100',   border: 'border-teal-500',   shadow: 'shadow-teal-700',   tabBorder: 'border-teal-500' },
-    'red':    { bg: 'bg-red-100',    border: 'border-red-500',    shadow: 'shadow-red-700',    tabBorder: 'border-red-500' },
-    'slate':  { bg: 'bg-slate-100',  border: 'border-slate-400',  shadow: 'shadow-slate-600',  tabBorder: 'border-slate-400' },
+const FOLDER_THEMES: Record<string, { bg: string; border: string; shadow: string }> = {
+    'yellow': { bg: 'bg-yellow-100', border: 'border-yellow-400', shadow: 'shadow-yellow-700' },
+    'green':  { bg: 'bg-green-100',  border: 'border-green-500',  shadow: 'shadow-green-700' },
+    'blue':   { bg: 'bg-blue-100',   border: 'border-blue-400',   shadow: 'shadow-blue-700' },
+    'pink':   { bg: 'bg-pink-100',   border: 'border-pink-400',   shadow: 'shadow-pink-700' },
+    'orange': { bg: 'bg-orange-100', border: 'border-orange-500', shadow: 'shadow-orange-700' },
+    'purple': { bg: 'bg-purple-100', border: 'border-purple-400', shadow: 'shadow-purple-700' },
+    'teal':   { bg: 'bg-teal-100',   border: 'border-teal-500',   shadow: 'shadow-teal-700' },
+    'red':    { bg: 'bg-red-100',    border: 'border-red-500',    shadow: 'shadow-red-700' },
+    'slate':  { bg: 'bg-slate-100',  border: 'border-slate-400',  shadow: 'shadow-slate-600' },
 };
 
 const FolderCard: React.FC<FolderCardProps> = ({ 
@@ -59,24 +59,24 @@ const FolderCard: React.FC<FolderCardProps> = ({
     // Fills whatever cell it is given; the aspect ratio lives on the grid item
     // in BoardPage, so folders and cards are sized by the same rule.
     <div className="relative w-full h-full select-none">
-      {/* `group` lives on the button, not the wrapper, so the press-down effect
-          below responds to activating the control rather than to :active on a
-          non-interactive div. */}
+      {/* `group` lives on the button, not the wrapper, so the press effect below
+          responds to activating the control rather than to :active on a
+          non-interactive div.
+
+          The folder tab that used to sit above this body is gone. It was a
+          filing-cabinet metaphor a five-year-old has no reference for, and both
+          shells had ended up hiding it — the young-learner one now marks a
+          folder by filling it with its category colour, and the neutral one does
+          the same more quietly. */}
       <button
         type="button"
         onClick={onClick}
         data-part="folder-surface"
-        className={`group absolute inset-0 flex flex-col pt-3 text-left rounded-3xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2 ${isScanFocused ? 'ring-4 ring-sky-500 ring-offset-2 z-30' : ''}`}
+        className={`group absolute inset-0 flex flex-col text-left rounded-3xl focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary focus-visible:ring-offset-2 ${isScanFocused ? 'ring-4 ring-sky-500 ring-offset-2 z-30' : ''}`}
       >
-        {/* Folder Tab Effect */}
-        <div data-part="folder-tab" className={`
-          absolute top-0 left-0 w-1/2 h-8 rounded-t-xl z-0 border-t-2 border-l-2 border-r-2
-          ${theme.bg} ${theme.tabBorder}
-        `} />
-
         {/* Main Folder Body */}
         <div data-part="folder-body" className={`
-            relative flex-1 w-full rounded-b-3xl rounded-tr-3xl flex flex-col
+            relative flex-1 w-full rounded-3xl flex flex-col
             border-2 border-t-2 shadow-[0_4px_0_0] group-active:shadow-none group-active:translate-y-[4px] group-active:border-b-2
             transition-all duration-100 z-10 cursor-pointer overflow-hidden
             ${theme.bg} ${theme.border} ${theme.shadow}

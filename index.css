@@ -62,18 +62,22 @@ body {
   the same identity into a saturated edge and deep-tinted text. The category is
   equally readable either way; only the register changes.
 
-  `wash` is the accent at 16% over white rather than color-mix(), which keeps
-  this working on older Android WebViews.
+  Two fill strengths, because the shells want the category at different volumes:
+  `wash` at 16% for the neutral shell, `fill` at 30% for the young-learner one,
+  which also uses it as a tinted drop shadow. Both are written out rather than
+  derived with color-mix() or rgba(var(--rgb), a) — the first is not on every
+  Android WebView this ships to, and the second resolves against the wrong
+  element when the alpha is applied in an ancestor rule.
 */
-[data-theme-color='yellow'] { --cell-accent: #eab308; --cell-ink: #854d0e; --cell-wash: rgba(234,179,8,.16); }
-[data-theme-color='green']  { --cell-accent: #22c55e; --cell-ink: #166534; --cell-wash: rgba(34,197,94,.16); }
-[data-theme-color='blue']   { --cell-accent: #3b82f6; --cell-ink: #1e40af; --cell-wash: rgba(59,130,246,.16); }
-[data-theme-color='pink']   { --cell-accent: #ec4899; --cell-ink: #9d174d; --cell-wash: rgba(236,72,153,.16); }
-[data-theme-color='orange'] { --cell-accent: #f97316; --cell-ink: #9a3412; --cell-wash: rgba(249,115,22,.16); }
-[data-theme-color='purple'] { --cell-accent: #a855f7; --cell-ink: #6b21a8; --cell-wash: rgba(168,85,247,.16); }
-[data-theme-color='teal']   { --cell-accent: #14b8a6; --cell-ink: #115e59; --cell-wash: rgba(20,184,166,.16); }
-[data-theme-color='red']    { --cell-accent: #ef4444; --cell-ink: #991b1b; --cell-wash: rgba(239,68,68,.16); }
-[data-theme-color='slate']  { --cell-accent: #64748b; --cell-ink: #1e293b; --cell-wash: rgba(100,116,139,.16); }
+[data-theme-color='yellow'] { --cell-accent: #eab308; --cell-ink: #854d0e; --cell-wash: rgba(234,179,8,.16); --cell-fill: rgba(234,179,8,.30); }
+[data-theme-color='green']  { --cell-accent: #22c55e; --cell-ink: #166534; --cell-wash: rgba(34,197,94,.16); --cell-fill: rgba(34,197,94,.30); }
+[data-theme-color='blue']   { --cell-accent: #3b82f6; --cell-ink: #1e40af; --cell-wash: rgba(59,130,246,.16); --cell-fill: rgba(59,130,246,.30); }
+[data-theme-color='pink']   { --cell-accent: #ec4899; --cell-ink: #9d174d; --cell-wash: rgba(236,72,153,.16); --cell-fill: rgba(236,72,153,.30); }
+[data-theme-color='orange'] { --cell-accent: #f97316; --cell-ink: #9a3412; --cell-wash: rgba(249,115,22,.16); --cell-fill: rgba(249,115,22,.30); }
+[data-theme-color='purple'] { --cell-accent: #a855f7; --cell-ink: #6b21a8; --cell-wash: rgba(168,85,247,.16); --cell-fill: rgba(168,85,247,.30); }
+[data-theme-color='teal']   { --cell-accent: #14b8a6; --cell-ink: #115e59; --cell-wash: rgba(20,184,166,.16); --cell-fill: rgba(20,184,166,.30); }
+[data-theme-color='red']    { --cell-accent: #ef4444; --cell-ink: #991b1b; --cell-wash: rgba(239,68,68,.16); --cell-fill: rgba(239,68,68,.30); }
+[data-theme-color='slate']  { --cell-accent: #64748b; --cell-ink: #1e293b; --cell-wash: rgba(100,116,139,.16); --cell-fill: rgba(100,116,139,.30); }
 
 /*
   Neutral shell.
@@ -195,25 +199,15 @@ body {
 }
 
 /*
-  The literal folder tab is the most toy-like element on the board, but it was
-  also doing real work: it is what tells a user at a glance that a cell opens
-  rather than speaks. Dropping it outright made folders and cards identical
-  apart from their artwork, which is not a distinction to rely on — a card can
-  hold a line-art symbol and a folder can hold a photo.
+  A folder is filled with its category colour; a card is white. That is the only
+  cue for "this opens" versus "this speaks", and it has to be reliable, because
+  artwork cannot carry it — a card can hold a line-art symbol and a folder can
+  hold a photo.
 
-  A first attempt at replacing it — a sheet peeking above the card's top edge —
-  needed 5px of top padding, which made every folder 5px shorter than the cards
-  beside it in the same row. Visible and wrong: a shell must not change cell
-  geometry.
-
-  So the distinction is carried by fill instead, which costs no height: a folder
-  is washed in its category tint throughout, a card keeps a white symbol area.
-  That is also the language the young-learner shell already uses — its folder
-  bodies are tinted and its cards are white — so the two shells stay
-  consistent about what a folder is.
+  The filing-cabinet tab that used to do this job is gone from the markup
+  entirely. A five-year-old has no reference for a manila folder, and it was the
+  single most dated element on the board.
 */
-[data-shell='neutral'] [data-part='folder-tab'] { display: none; }
-[data-shell='neutral'] [data-part='folder-surface'] { padding-top: 0 !important; }
 [data-shell='neutral'] [data-part='folder-surface'] [data-part='folder-body'] {
   border-radius: var(--n-radius) !important;
   background-color: var(--cell-wash, rgba(100,116,139,.16)) !important;
@@ -226,6 +220,109 @@ body {
   box-shadow: none !important;
 }
 [data-shell='neutral'] [data-part='folder-art'] svg { color: var(--cell-ink, #1e293b); }
+
+/*
+  Young-learner shell.
+
+  The counterpart to the neutral one: same grid, same slots, same Fitzgerald
+  colours, same touch targets — a louder register. This is for the child who is
+  still learning that pressing a picture makes a voice happen, so the surfaces
+  should look pressable and the category colour should be unmissable.
+
+  What it replaced was not "fun", it was dated: a 4px hard offset shadow in a
+  dark tint of each hue, 2px outlines around washed-out pastel-50 fills, a
+  manila folder tab, and font-black on every label. Chunky-skeuomorphic, the
+  house style of about 2014.
+
+  Fun here comes from colour and from feedback, not from fake depth:
+    - the category colour at 30% rather than the old 5% wash, so a class of
+      word is legible across a room
+    - elevation as a soft shadow tinted with that same colour — the card looks
+      lit rather than stamped out of plastic
+    - a press that settles and squashes slightly, which reads as responsive
+      touch rather than a button falling into a hole
+    - Nunito's round forms kept, at 800 instead of 900, which stops the labels
+      shouting and makes them easier to read
+*/
+[data-shell='youngLearner'] {
+  /* A light lavender-white: warmer than the neutral shell's grey, and it agrees
+     with the app's violet primary instead of the old blue-grey fighting it. */
+  --y-canvas: #f7f6fd;
+  --y-surface: #ffffff;
+  --y-radius: 1.25rem;
+}
+
+[data-shell='youngLearner'].bg-background,
+[data-shell='youngLearner'] .bg-background { background-color: var(--y-canvas); }
+
+/* Generous, but one scale rather than 24px on everything. */
+[data-shell='youngLearner'] .rounded-3xl { border-radius: var(--y-radius); }
+[data-shell='youngLearner'] .rounded-2xl { border-radius: 1rem; }
+
+/* 900 was the shout. */
+[data-shell='youngLearner'] .font-black { font-weight: 800; }
+
+/* ---- Cards and folders ---- */
+
+[data-shell='youngLearner'] [data-part='card-surface'] {
+  background-color: var(--y-surface) !important;
+}
+[data-shell='youngLearner'] [data-part='folder-surface'] [data-part='folder-body'] {
+  background-color: var(--cell-fill, rgba(100,116,139,.30)) !important;
+}
+
+[data-shell='youngLearner'] [data-part='card-surface'],
+[data-shell='youngLearner'] [data-part='folder-surface'] [data-part='folder-body'] {
+  border: 2px solid var(--cell-accent, #64748b) !important;
+  border-radius: var(--y-radius) !important;
+  /* Lit, not stamped: the lift is tinted with the card's own category colour. */
+  box-shadow:
+    0 6px 14px -6px var(--cell-fill, rgba(100,116,139,.30)),
+    0 2px 4px rgba(16, 24, 40, 0.06) !important;
+  overflow: hidden;
+}
+
+@media (hover: hover) {
+  [data-shell='youngLearner'] [data-part='card-surface']:hover,
+  [data-shell='youngLearner'] [data-part='folder-surface']:hover [data-part='folder-body'] {
+    box-shadow:
+      0 10px 22px -8px var(--cell-fill, rgba(100,116,139,.30)),
+      0 3px 6px rgba(16, 24, 40, 0.08) !important;
+  }
+}
+
+/* Press: settle and squash. !important because Tailwind's group-active utilities
+   on the folder body carry the same specificity and would otherwise win on
+   source order alone. */
+[data-shell='youngLearner'] [data-part='card-surface']:active,
+[data-shell='youngLearner'] [data-part='folder-surface']:active [data-part='folder-body'] {
+  transform: translateY(2px) scale(0.985) !important;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.12) !important;
+}
+
+/* The label band carries the category loudly, separated from the artwork by the
+   same accent as the border. */
+[data-shell='youngLearner'] [data-part='card-label'],
+[data-shell='youngLearner'] [data-part='folder-label'] {
+  background-color: var(--cell-fill, rgba(100,116,139,.30)) !important;
+  border-top: 2px solid var(--cell-accent, #64748b) !important;
+}
+[data-shell='youngLearner'] [data-part='card-label'] > *,
+[data-shell='youngLearner'] [data-part='folder-label'] > * {
+  color: var(--cell-ink, #1e293b) !important;
+  font-weight: 800;
+}
+
+/* A white badge behind a folder's symbol: line art needs a light ground to stay
+   legible on a 30% fill, and the rounded panel reads as friendly rather than as
+   the bordered, shadowed plate it used to be. */
+[data-shell='youngLearner'] [data-part='folder-art'] {
+  background: rgba(255, 255, 255, 0.72) !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0.875rem !important;
+}
+[data-shell='youngLearner'] [data-part='folder-art'] svg { color: var(--cell-ink, #1e293b); }
 
 /* ---- Chrome ---- */
 
