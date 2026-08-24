@@ -347,16 +347,41 @@ export const BoardPage: React.FC = () => {
                   </span>
                 </GridCellButton>
 
+                {/*
+                  Edit affordance for a rail card.
+
+                  Without it a pinned card was unreachable. Core cards are
+                  excluded from the grid, so the rail is the only place they
+                  exist — and the rail had no gear, so "Always on screen" was a
+                  one-way door: no way to unpin, edit or delete afterwards. That
+                  included the four seed cards, which ship pinned, so a parent
+                  could not touch "I want", "Yes", "No" or "Stop" at all.
+
+                  Positioned inside the cell rather than overhanging it: the rail
+                  scrolls on its Y axis, which makes the X axis a scroll
+                  container too, so anything at a negative offset gets clipped.
+                */}
+                {isEditMode && (
+                  <button
+                    type="button"
+                    aria-label={t('modal.create.title_edit')}
+                    onClick={() => setEditOptionsItem({ item: card, type: 'card' })}
+                    className="absolute top-1 right-1 z-30 bg-white/95 backdrop-blur-sm rounded-full w-6 h-6 flex items-center justify-center shadow-sm border border-slate-200 text-slate-700 hover:border-primary hover:text-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary"
+                  >
+                    <Settings2 size={13} strokeWidth={2.5} />
+                  </button>
+                )}
+
                 {/* After the cell in DOM order on purpose: saying the word is the
                     primary action and should come first for keyboard and switch
-                    users. Absolutely positioned, so visual placement is
-                    unaffected. */}
+                    users. Positioned inside the cell for the same clipping
+                    reason as the gear above. */}
                 {!isEditMode && hasForms && (
                   <button
                     type="button"
                     aria-label={`${t('forms.title')}: ${label}`}
                     onClick={() => setFormsCard(card)}
-                    className={`absolute -top-1 -right-1 z-30 bg-white/95 rounded-full w-6 h-6 flex items-center justify-center shadow-sm border-2 border-slate-200 text-slate-600 hover:border-primary hover:text-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary ${scanner.focusedId === `core-forms:${card.id}` ? 'ring-4 ring-sky-500 ring-offset-2' : ''}`}
+                    className={`absolute top-1 right-1 z-30 bg-white/95 rounded-full w-6 h-6 flex items-center justify-center shadow-sm border-2 border-slate-200 text-slate-600 hover:border-primary hover:text-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary ${scanner.focusedId === `core-forms:${card.id}` ? 'ring-4 ring-sky-500 ring-offset-2' : ''}`}
                   >
                     <Type size={12} strokeWidth={2.5} />
                   </button>

@@ -576,6 +576,26 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           const old = library.find(i => i.id === existingId);
           if (old) {
             const updated = { ...old, ...data, labelKey: undefined };
+
+            /*
+             * A card coming off the core rail needs a slot of its own.
+             *
+             * Core cards are rail-scoped and ignore their slot entirely, so the
+             * one they still carry is whatever they held before being pinned —
+             * usually stale, often already taken. Unpinning used to drop the
+             * card straight onto an occupied cell, and the collision handler
+             * then pushed the incumbent to the end of the board. Unpinning
+             * "I want" moved "People" from the first cell to the last, which is
+             * exactly the reflow every slot in this app exists to prevent.
+             *
+             * The reverse needs nothing: pinning a card leaves its grid slot
+             * empty, and an empty slot staying empty is the intended behaviour.
+             */
+            if (old.isCore && updated.isCore === false) {
+                updated.slot = nextFreeSlot();
+                updated.category = currentFolderId;
+            }
+
             await saveItem(updated);
             setSentence(prev => prev.map(p => p.id === existingId ? updated : p));
           }
