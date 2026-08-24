@@ -1,0 +1,15 @@
+Pictographic symbols used in SpeakEasy AAC are the property of the Government
+of Aragón and have been created by Sergio Palao for ARASAAC
+(https://arasaac.org), which distributes them under a Creative Commons
+BY-NC-SA licence.
+
+Licence: https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+NOTE ON THE NON-COMMERCIAL CLAUSE: BY-NC-SA permits free distribution but not
+commercial use. SpeakEasy is distributed free of charge, which is compatible.
+If the app ever carries a price, paid tier, or advertising, these symbols must
+be relicensed or replaced first.
+
+Files here are named by their ARASAAC pictogram id. utils/starterVocabulary.ts
+maps each vocabulary word to the id it uses, and scripts/fetch-pictograms.mjs
+regenerates this directory.

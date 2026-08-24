@@ -46,3 +46,6 @@ android/.kotlin/
 ios/App/Pods/
 ios/App/App/public/
 ios/DerivedData/
+
+# Generated review sheet (1.9MB of embedded symbols); rebuild with scripts/build-review-sheet.mjs
+scripts/vocabulary-review.html

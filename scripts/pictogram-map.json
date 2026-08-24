@@ -1,0 +1,722 @@
+[
+  {
+    "id": "i_want",
+    "oldArasaac": 5441,
+    "en": "I want",
+    "q": "want",
+    "arasaac": 5441,
+    "keyword": "want"
+  },
+  {
+    "id": "more",
+    "oldArasaac": 5508,
+    "en": "more",
+    "q": "more",
+    "arasaac": 5508,
+    "keyword": "more"
+  },
+  {
+    "id": "help",
+    "oldArasaac": 32648,
+    "en": "help",
+    "q": "help",
+    "arasaac": 32648,
+    "keyword": "help"
+  },
+  {
+    "id": "like",
+    "oldArasaac": 37826,
+    "en": "I like",
+    "q": "like",
+    "arasaac": 37826,
+    "keyword": "like"
+  },
+  {
+    "id": "dont_like",
+    "oldArasaac": 37825,
+    "en": "I don't like",
+    "q": "(hand-picked)",
+    "arasaac": 37825,
+    "keyword": "(hand-picked)"
+  },
+  {
+    "id": "finished",
+    "oldArasaac": 28429,
+    "en": "finished",
+    "q": "finished",
+    "arasaac": 28429,
+    "keyword": "finish"
+  },
+  {
+    "id": "again",
+    "oldArasaac": 37163,
+    "en": "again",
+    "q": "again",
+    "arasaac": 37163,
+    "keyword": "again"
+  },
+  {
+    "id": "yes",
+    "oldArasaac": 5584,
+    "en": "Yes",
+    "q": "Yes",
+    "arasaac": 5584,
+    "keyword": "yes"
+  },
+  {
+    "id": "no",
+    "oldArasaac": 5526,
+    "en": "No",
+    "q": "No",
+    "arasaac": 5526,
+    "keyword": "no"
+  },
+  {
+    "id": "stop",
+    "oldArasaac": 7196,
+    "en": "Stop",
+    "q": "Stop",
+    "arasaac": 7196,
+    "keyword": "stop"
+  },
+  {
+    "id": "i",
+    "oldArasaac": 6632,
+    "en": "I",
+    "q": "I",
+    "arasaac": 6632,
+    "keyword": "I"
+  },
+  {
+    "id": "you",
+    "oldArasaac": 6625,
+    "en": "you",
+    "q": "you",
+    "arasaac": 6625,
+    "keyword": "you"
+  },
+  {
+    "id": "we",
+    "oldArasaac": 7185,
+    "en": "we",
+    "q": "we",
+    "arasaac": 7185,
+    "keyword": "us"
+  },
+  {
+    "id": "mum",
+    "oldArasaac": 2458,
+    "en": "mum",
+    "q": "mother",
+    "arasaac": 2458,
+    "keyword": "mum"
+  },
+  {
+    "id": "dad",
+    "oldArasaac": 2497,
+    "en": "dad",
+    "q": "father",
+    "arasaac": 2497,
+    "keyword": "father"
+  },
+  {
+    "id": "baby",
+    "oldArasaac": 6060,
+    "en": "baby",
+    "q": "baby",
+    "arasaac": 6060,
+    "keyword": "baby"
+  },
+  {
+    "id": "friend",
+    "oldArasaac": 25790,
+    "en": "friend",
+    "q": "friend",
+    "arasaac": 25790,
+    "keyword": "friend"
+  },
+  {
+    "id": "teacher",
+    "oldArasaac": 6556,
+    "en": "teacher",
+    "q": "teacher",
+    "arasaac": 6556,
+    "keyword": "schoolteacher"
+  },
+  {
+    "id": "boy",
+    "oldArasaac": 7176,
+    "en": "boy",
+    "q": "boy",
+    "arasaac": 7176,
+    "keyword": "boy"
+  },
+  {
+    "id": "girl",
+    "oldArasaac": 27509,
+    "en": "girl",
+    "q": "girl",
+    "arasaac": 27509,
+    "keyword": "girl"
+  },
+  {
+    "id": "go",
+    "oldArasaac": 8142,
+    "en": "go",
+    "q": "go",
+    "arasaac": 8142,
+    "keyword": "go"
+  },
+  {
+    "id": "come",
+    "oldArasaac": 32669,
+    "en": "come",
+    "q": "come",
+    "arasaac": 32669,
+    "keyword": "come"
+  },
+  {
+    "id": "eat",
+    "oldArasaac": 6456,
+    "en": "eat",
+    "q": "eat",
+    "arasaac": 6456,
+    "keyword": "eat"
+  },
+  {
+    "id": "drink",
+    "oldArasaac": 6061,
+    "en": "drink",
+    "q": "drink",
+    "arasaac": 6061,
+    "keyword": "drink"
+  },
+  {
+    "id": "play",
+    "oldArasaac": 23392,
+    "en": "play",
+    "q": "play",
+    "arasaac": 23392,
+    "keyword": "play"
+  },
+  {
+    "id": "look",
+    "oldArasaac": 6564,
+    "en": "look",
+    "q": "look",
+    "arasaac": 6564,
+    "keyword": "see"
+  },
+  {
+    "id": "open",
+    "oldArasaac": 24825,
+    "en": "open",
+    "q": "open",
+    "arasaac": 24825,
+    "keyword": "open"
+  },
+  {
+    "id": "give",
+    "oldArasaac": 28431,
+    "en": "give",
+    "q": "give",
+    "arasaac": 28431,
+    "keyword": "give"
+  },
+  {
+    "id": "make",
+    "oldArasaac": 32751,
+    "en": "make",
+    "q": "make",
+    "arasaac": 32751,
+    "keyword": "make"
+  },
+  {
+    "id": "sleep",
+    "oldArasaac": 6479,
+    "en": "sleep",
+    "q": "sleep",
+    "arasaac": 6479,
+    "keyword": "sleep"
+  },
+  {
+    "id": "toy",
+    "oldArasaac": 9813,
+    "en": "toy",
+    "q": "toy",
+    "arasaac": 9813,
+    "keyword": "toys"
+  },
+  {
+    "id": "ball",
+    "oldArasaac": 3241,
+    "en": "ball",
+    "q": "ball",
+    "arasaac": 3241,
+    "keyword": "ball"
+  },
+  {
+    "id": "book",
+    "oldArasaac": 25191,
+    "en": "book",
+    "q": "book",
+    "arasaac": 25191,
+    "keyword": "book"
+  },
+  {
+    "id": "car",
+    "oldArasaac": 2339,
+    "en": "car",
+    "q": "car",
+    "arasaac": 2339,
+    "keyword": "car"
+  },
+  {
+    "id": "phone",
+    "oldArasaac": 26479,
+    "en": "phone",
+    "q": "phone",
+    "arasaac": 26479,
+    "keyword": "telephone"
+  },
+  {
+    "id": "shoes",
+    "oldArasaac": 2775,
+    "en": "shoes",
+    "q": "shoes",
+    "arasaac": 2775,
+    "keyword": "shoes"
+  },
+  {
+    "id": "bed",
+    "oldArasaac": 25900,
+    "en": "bed",
+    "q": "bed",
+    "arasaac": 25900,
+    "keyword": "bed"
+  },
+  {
+    "id": "chair",
+    "oldArasaac": 3155,
+    "en": "chair",
+    "q": "chair",
+    "arasaac": 3155,
+    "keyword": "chair"
+  },
+  {
+    "id": "tv",
+    "oldArasaac": 25498,
+    "en": "TV",
+    "q": "television",
+    "arasaac": 25498,
+    "keyword": "television"
+  },
+  {
+    "id": "bag",
+    "oldArasaac": 23849,
+    "en": "bag",
+    "q": "bag",
+    "arasaac": 23849,
+    "keyword": "bag"
+  },
+  {
+    "id": "big",
+    "oldArasaac": 4658,
+    "en": "big",
+    "q": "big",
+    "arasaac": 4658,
+    "keyword": "large"
+  },
+  {
+    "id": "little",
+    "oldArasaac": 25839,
+    "en": "little",
+    "q": "(hand-picked)",
+    "arasaac": 4716,
+    "keyword": "(hand-picked)"
+  },
+  {
+    "id": "hot",
+    "oldArasaac": 2300,
+    "en": "hot",
+    "q": "hot",
+    "arasaac": 2300,
+    "keyword": "hot"
+  },
+  {
+    "id": "cold",
+    "oldArasaac": 4652,
+    "en": "cold",
+    "q": "cold",
+    "arasaac": 4652,
+    "keyword": "cold"
+  },
+  {
+    "id": "good",
+    "oldArasaac": 4581,
+    "en": "good",
+    "q": "good",
+    "arasaac": 4581,
+    "keyword": "good"
+  },
+  {
+    "id": "bad",
+    "oldArasaac": 5504,
+    "en": "bad",
+    "q": "bad",
+    "arasaac": 5504,
+    "keyword": "bad"
+  },
+  {
+    "id": "happy",
+    "oldArasaac": 35533,
+    "en": "happy",
+    "q": "happy",
+    "arasaac": 35533,
+    "keyword": "happy"
+  },
+  {
+    "id": "sad",
+    "oldArasaac": 35545,
+    "en": "sad",
+    "q": "sad",
+    "arasaac": 35545,
+    "keyword": "sad"
+  },
+  {
+    "id": "tired",
+    "oldArasaac": 35537,
+    "en": "tired",
+    "q": "tired",
+    "arasaac": 35537,
+    "keyword": "tired"
+  },
+  {
+    "id": "hurt",
+    "oldArasaac": 30620,
+    "en": "it hurts",
+    "q": "(hand-picked)",
+    "arasaac": 30620,
+    "keyword": "(hand-picked)"
+  },
+  {
+    "id": "hello",
+    "oldArasaac": 6522,
+    "en": "hello",
+    "q": "hello",
+    "arasaac": 6522,
+    "keyword": "hello"
+  },
+  {
+    "id": "goodbye",
+    "oldArasaac": 6028,
+    "en": "goodbye",
+    "q": "goodbye",
+    "arasaac": 6028,
+    "keyword": "goodbye"
+  },
+  {
+    "id": "please",
+    "oldArasaac": 8195,
+    "en": "please",
+    "q": "please",
+    "arasaac": 8195,
+    "keyword": "please"
+  },
+  {
+    "id": "thanks",
+    "oldArasaac": 8129,
+    "en": "thank you",
+    "q": "thank you",
+    "arasaac": 8129,
+    "keyword": "thanks"
+  },
+  {
+    "id": "sorry",
+    "oldArasaac": 11625,
+    "en": "sorry",
+    "q": "sorry",
+    "arasaac": 11625,
+    "keyword": "sorry"
+  },
+  {
+    "id": "my_turn",
+    "oldArasaac": 7158,
+    "en": "my turn",
+    "q": "my turn",
+    "arasaac": 7158,
+    "keyword": "my turn"
+  },
+  {
+    "id": "your_turn",
+    "oldArasaac": 6006,
+    "en": "your turn",
+    "q": "(hand-picked)",
+    "arasaac": 6006,
+    "keyword": "(hand-picked)"
+  },
+  {
+    "id": "love_you",
+    "oldArasaac": 11519,
+    "en": "I love you",
+    "q": "(hand-picked)",
+    "arasaac": 11519,
+    "keyword": "(hand-picked)"
+  },
+  {
+    "id": "funny",
+    "oldArasaac": 24733,
+    "en": "funny",
+    "q": "funny",
+    "arasaac": 24733,
+    "keyword": "fun"
+  },
+  {
+    "id": "what",
+    "oldArasaac": 22620,
+    "en": "what?",
+    "q": "what",
+    "arasaac": 22620,
+    "keyword": "what"
+  },
+  {
+    "id": "home",
+    "oldArasaac": 6964,
+    "en": "home",
+    "q": "home",
+    "arasaac": 6964,
+    "keyword": "house"
+  },
+  {
+    "id": "school",
+    "oldArasaac": 32446,
+    "en": "school",
+    "q": "school",
+    "arasaac": 32446,
+    "keyword": "school"
+  },
+  {
+    "id": "outside",
+    "oldArasaac": 5475,
+    "en": "outside",
+    "q": "outside",
+    "arasaac": 5475,
+    "keyword": "outside"
+  },
+  {
+    "id": "inside",
+    "oldArasaac": 5439,
+    "en": "inside",
+    "q": "inside",
+    "arasaac": 5439,
+    "keyword": "inside"
+  },
+  {
+    "id": "toilet",
+    "oldArasaac": 5921,
+    "en": "toilet",
+    "q": "toilet",
+    "arasaac": 5921,
+    "keyword": "toilet"
+  },
+  {
+    "id": "park",
+    "oldArasaac": 5379,
+    "en": "park",
+    "q": "park",
+    "arasaac": 5379,
+    "keyword": "park"
+  },
+  {
+    "id": "shop",
+    "oldArasaac": 35695,
+    "en": "shop",
+    "q": "shop",
+    "arasaac": 35695,
+    "keyword": "shop"
+  },
+  {
+    "id": "bedroom",
+    "oldArasaac": 5988,
+    "en": "bedroom",
+    "q": "bedroom",
+    "arasaac": 5988,
+    "keyword": "bedroom"
+  },
+  {
+    "id": "kitchen",
+    "oldArasaac": 10752,
+    "en": "kitchen",
+    "q": "kitchen",
+    "arasaac": 10752,
+    "keyword": "kitchen"
+  },
+  {
+    "id": "garden",
+    "oldArasaac": 2974,
+    "en": "garden",
+    "q": "garden",
+    "arasaac": 2974,
+    "keyword": "garden"
+  },
+  {
+    "id": "water",
+    "oldArasaac": 32464,
+    "en": "water",
+    "q": "water",
+    "arasaac": 32464,
+    "keyword": "water"
+  },
+  {
+    "id": "milk",
+    "oldArasaac": 2445,
+    "en": "milk",
+    "q": "milk",
+    "arasaac": 2445,
+    "keyword": "milk"
+  },
+  {
+    "id": "juice",
+    "oldArasaac": 11461,
+    "en": "juice",
+    "q": "juice",
+    "arasaac": 11461,
+    "keyword": "juice"
+  },
+  {
+    "id": "apple",
+    "oldArasaac": 2462,
+    "en": "apple",
+    "q": "apple",
+    "arasaac": 2462,
+    "keyword": "apple"
+  },
+  {
+    "id": "banana",
+    "oldArasaac": 2530,
+    "en": "banana",
+    "q": "banana",
+    "arasaac": 2530,
+    "keyword": "banana"
+  },
+  {
+    "id": "bread",
+    "oldArasaac": 2494,
+    "en": "bread",
+    "q": "bread",
+    "arasaac": 2494,
+    "keyword": "bread"
+  },
+  {
+    "id": "biscuit",
+    "oldArasaac": 8312,
+    "en": "biscuit",
+    "q": "cookie",
+    "arasaac": 8312,
+    "keyword": "biscuit"
+  },
+  {
+    "id": "cheese",
+    "oldArasaac": 2541,
+    "en": "cheese",
+    "q": "cheese",
+    "arasaac": 2541,
+    "keyword": "cheese"
+  },
+  {
+    "id": "pasta",
+    "oldArasaac": 8652,
+    "en": "pasta",
+    "q": "pasta",
+    "arasaac": 8652,
+    "keyword": "pasta"
+  },
+  {
+    "id": "ice_cream",
+    "oldArasaac": 3348,
+    "en": "ice cream",
+    "q": "ice cream",
+    "arasaac": 3348,
+    "keyword": "ice cream"
+  },
+  {
+    "id": "now",
+    "oldArasaac": 32747,
+    "en": "now",
+    "q": "now",
+    "arasaac": 32747,
+    "keyword": "now"
+  },
+  {
+    "id": "later",
+    "oldArasaac": 13080,
+    "en": "later",
+    "q": "(hand-picked)",
+    "arasaac": 13080,
+    "keyword": "(hand-picked)"
+  },
+  {
+    "id": "today",
+    "oldArasaac": 7131,
+    "en": "today",
+    "q": "today",
+    "arasaac": 7131,
+    "keyword": "today"
+  },
+  {
+    "id": "tomorrow",
+    "oldArasaac": 38278,
+    "en": "tomorrow",
+    "q": "tomorrow",
+    "arasaac": 38278,
+    "keyword": "tomorrow"
+  },
+  {
+    "id": "morning",
+    "oldArasaac": 25704,
+    "en": "morning",
+    "q": "morning",
+    "arasaac": 25704,
+    "keyword": "morning"
+  },
+  {
+    "id": "night",
+    "oldArasaac": 26997,
+    "en": "night",
+    "q": "night",
+    "arasaac": 26997,
+    "keyword": "night"
+  },
+  {
+    "id": "wait",
+    "oldArasaac": 36914,
+    "en": "wait",
+    "q": "wait",
+    "arasaac": 36914,
+    "keyword": "wait"
+  },
+  {
+    "id": "soon",
+    "oldArasaac": 33044,
+    "en": "soon",
+    "q": "soon",
+    "arasaac": 33044,
+    "keyword": "bassoon"
+  },
+  {
+    "id": "before",
+    "oldArasaac": 32745,
+    "en": "before",
+    "q": "before",
+    "arasaac": 32745,
+    "keyword": "before"
+  },
+  {
+    "id": "after",
+    "oldArasaac": 7818,
+    "en": "after",
+    "q": "(hand-picked)",
+    "arasaac": 7818,
+    "keyword": "(hand-picked)"
+  }
+]

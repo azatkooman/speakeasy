@@ -1,5 +1,6 @@
 
 import { AppLanguage } from '../types';
+import { vocabLabel } from '../utils/starterVocabulary';
 
 export type TranslationKey = 
   | 'app.title'
@@ -1160,6 +1161,18 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
   }
 };
 
-export const getTranslation = (lang: AppLanguage, key: TranslationKey): string => {
-  return translations[lang][key] || translations['en'][key] || key;
+/**
+ * Starter-vocabulary words are keyed `vocab.<id>` and live in
+ * utils/starterVocabulary.ts, not in the tables above. That is deliberate: they
+ * are clinical content an SLP revises, not interface copy, and keeping 90 words
+ * x 4 languages out of here keeps both files readable. Resolution still goes
+ * through `t()`, so a seeded card re-labels itself on a language change exactly
+ * like any other translated string — which is what keeps a word in the same
+ * cell when a bilingual child switches language.
+ */
+export type VocabKey = `vocab.${string}`;
+
+export const getTranslation = (lang: AppLanguage, key: TranslationKey | VocabKey): string => {
+  if (key.startsWith('vocab.')) return vocabLabel(key, lang) ?? key;
+  return translations[lang][key as TranslationKey] || translations['en'][key as TranslationKey] || key;
 };

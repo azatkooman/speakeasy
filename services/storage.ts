@@ -1,6 +1,7 @@
 
 import { Capacitor } from '@capacitor/core';
 import { AACItem, Category, Board, ChildProfile, ColorTheme } from '../types';
+import { CORE_RAIL, FOLDER_VOCAB, VocabEntry } from '../utils/starterVocabulary';
 import { Filesystem as CapFilesystem, Directory as CapDirectory, Encoding as CapEncoding } from '@capacitor/filesystem';
 import { TranslationKey } from './translations';
 import { SEED_PICTOGRAMS, resolveSeedPictogram, isBundledAsset } from '../utils/seedPictograms';
@@ -390,11 +391,13 @@ export const initializeBoards = async (defaultName: string, profileId: string, t
     };
     await saveBoard(defaultBoard);
 
-    let foodCategoryId = '';
+    // Template id -> the id the folder actually got, so the starter vocabulary
+    // can be filed into the right folders.
+    const folderIdByTemplate: Record<string, string> = {};
 
     const catsToCreate: Category[] = DEFAULT_CATEGORIES_TEMPLATE.map(c => {
         const newId = crypto.randomUUID();
-        if (c.id === 'FOOD') foodCategoryId = newId;
+        folderIdByTemplate[c.id] = newId;
         return {
             ...c, 
             id: newId,
@@ -425,20 +428,52 @@ export const initializeBoards = async (defaultName: string, profileId: string, t
         isVisible: true
     });
 
-    const defaultCards: AACItem[] = [
-        // Seeded onto the core rail: board-scoped, so they stay reachable in
-        // every folder. `slot` here is the position in the rail, not the grid.
-        createDefaultCard(crypto.randomUUID(), 'default.card.i_want', 'I want', SEED_PICTOGRAMS.iWant, ROOT_FOLDER, 'green', 0, true),
-        createDefaultCard(crypto.randomUUID(), 'default.card.yes', 'Yes', SEED_PICTOGRAMS.yes, ROOT_FOLDER, 'green', 1, true),
-        createDefaultCard(crypto.randomUUID(), 'default.card.no', 'No', SEED_PICTOGRAMS.no, ROOT_FOLDER, 'red', 2, true),
-        createDefaultCard(crypto.randomUUID(), 'default.card.stop', 'Stop', SEED_PICTOGRAMS.stop, ROOT_FOLDER, 'red', 3, true),
-    ];
+    /*
+     * Seed the starter vocabulary. Both the rail and each folder take their
+     * order straight from utils/starterVocabulary.ts, and the slot is the index
+     * in that array — so the same word lands in the same cell on every device,
+     * in every language, for every child. An SLP editing that file changes what
+     * a new board contains without touching anything here.
+     */
+    const createVocabCard = (
+        entry: VocabEntry,
+        catId: string,
+        slot: number,
+        isCore: boolean,
+    ): AACItem => {
+        const key = `vocab.${entry.id}`;
+        return {
+            id: crypto.randomUUID(),
+            profileId,
+            boardId: defaultBoard.id,
+            label: t ? t(key as TranslationKey) : entry.labels.en,
+            labelKey: key,
+            imageUrl: `/pictograms/${entry.arasaac}.png`,
+            imageFit: 'contain',
+            category: catId,
+            colorTheme: entry.color as ColorTheme | undefined,
+            createdAt: Date.now(),
+            slot,
+            isCore,
+            isVisible: true,
+        };
+    };
 
-    if (foodCategoryId) {
-        defaultCards.push(
-            createDefaultCard(crypto.randomUUID(), 'default.card.apple', 'Apple', SEED_PICTOGRAMS.apple, foodCategoryId, 'orange', 0)
-        );
-    }
+    const defaultCards: AACItem[] = [
+        // The core rail: board-scoped, so these stay reachable inside every
+        // folder. `slot` here is the position in the rail, not in the grid.
+        ...CORE_RAIL.map((entry, i) => createVocabCard(entry, ROOT_FOLDER, i, true)),
+        ...Object.entries(FOLDER_VOCAB).flatMap(([template, entries]) => {
+            const catId = folderIdByTemplate[template];
+            // A folder the template no longer defines would silently drop its
+            // words; better to notice than to ship a board missing a category.
+            if (!catId) {
+                console.warn(`Starter vocabulary references unknown folder "${template}"`);
+                return [];
+            }
+            return entries.map((entry, i) => createVocabCard(entry, catId, i, false));
+        }),
+    ];
 
     await saveItemsBatch(defaultCards);
     return defaultBoard.id;
