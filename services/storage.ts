@@ -104,6 +104,23 @@ const getStorageUrl = (path: string | undefined): string | undefined => {
 
 // --- DB HELPERS ---
 
+/**
+ * Which default folder each block of starter vocabulary belongs in, keyed by the
+ * template id used in utils/starterVocabulary.ts. Exported so "add starter
+ * words" can find the equivalent folder on a board that already exists: folders
+ * there have their own random ids, but a seeded one still carries the labelKey.
+ */
+export const STARTER_FOLDER_LABEL_KEYS: Record<string, TranslationKey> = {
+  PEOPLE: 'folder.default.people',
+  VERB: 'folder.default.actions',
+  NOUN: 'folder.default.things',
+  ADJECTIVE: 'folder.default.desc',
+  SOCIAL: 'folder.default.social',
+  PLACES: 'folder.default.places',
+  FOOD: 'folder.default.food',
+  TIME: 'folder.default.time',
+};
+
 const DEFAULT_CATEGORIES_TEMPLATE: Array<{
     id: string;
     labelKey: TranslationKey;

@@ -8,11 +8,13 @@ import {
   deleteItem, deleteCategory, deleteBoard, deleteProfile,
   saveItemsBatch, saveCategoriesBatch, saveBoardsBatch,
   initializeBoards, createNewBoard, ROOT_FOLDER,
-  DEFAULT_GRID_ROWS, DEFAULT_GRID_COLS, GRID_PRESETS
+  DEFAULT_GRID_ROWS, DEFAULT_GRID_COLS, GRID_PRESETS,
+    STARTER_FOLDER_LABEL_KEYS,
 } from '../services/storage.ts';
 import { voiceService } from '../services/voice.ts';
 import { audioPlayer } from '../services/audioPlayer.ts';
 import { pushHistory, clearHistory, isLegacyWord, HistoryEntry } from '../utils/history.ts';
+import { CORE_RAIL, FOLDER_VOCAB, VocabEntry } from '../utils/starterVocabulary.ts';
 import { detectDeviceLanguage } from '../utils/languages.ts';
 
 interface SpeakEasyContextType {
@@ -74,6 +76,8 @@ interface SpeakEasyContextType {
   reorderGrid: (itemId: string, direction: -1 | 1) => Promise<void>;
   /** Move a card up or down the core rail. */
   reorderCore: (itemId: string, direction: -1 | 1) => Promise<void>;
+  /** Add the starter vocabulary to an existing board without moving anything on it. */
+  addStarterVocabulary: (opts?: { dryRun?: boolean }) => Promise<{ added: number; skipped: number; missingFolders: string[] }>;
   moveItemToFolder: (item: AACItem | Category, type: 'card' | 'folder', targetFolderId: string) => Promise<void>;
 
   /**
@@ -805,6 +809,115 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
    * These numbers cannot collide with the grid: core cards are filtered out of
    * gridCells, so the two live in separate spaces.
    */
+
+  /**
+   * Add the starter vocabulary to a board that already exists.
+   *
+   * Seeding only runs for a brand-new board, and rightly so — a board a parent
+   * has spent months building must never be overwritten. But that left the
+   * richer vocabulary invisible to everyone already using the app. This is the
+   * explicit way to ask for it.
+   *
+   * Three rules it will not break:
+   *
+   * 1. Nothing already on the board moves. New words go *after* the last
+   *    occupied slot in each folder, never into the gaps between existing
+   *    cards. Gaps are meaningful here — a hidden or deleted card deliberately
+   *    leaves one rather than pulling the rest forward, and a parent may have
+   *    left space on purpose. Filling them would rearrange a board silently.
+   * 2. Nothing is duplicated. A word is skipped if the board already has it,
+   *    matched either by its vocabulary key or by its visible label in the
+   *    current language — so a parent who typed "water" themselves does not
+   *    end up with two.
+   * 3. Words for a folder the parent renamed or deleted are skipped, not
+   *    dumped at the root. They are reported instead.
+   *
+   * `dryRun` answers "what would this do" without writing, so the parent can be
+   * told the count before agreeing to it.
+   */
+  const addStarterVocabulary = async (
+      opts?: { dryRun?: boolean },
+  ): Promise<{ added: number; skipped: number; missingFolders: string[] }> => {
+      if (!currentBoardId || !currentProfileId) return { added: 0, skipped: 0, missingFolders: [] };
+
+      const onBoard = library.filter(i => i.boardId === currentBoardId);
+      const boardCats = categories.filter(c => c.boardId === currentBoardId);
+
+      const existingKeys = new Set(onBoard.map(i => i.labelKey).filter(Boolean) as string[]);
+      const existingLabels = new Set(
+          onBoard.map(i => (i.labelKey ? t(i.labelKey as TranslationKey) : i.label) || '')
+                 .map(l => l.trim().toLowerCase())
+                 .filter(Boolean),
+      );
+      const alreadyPresent = (entry: VocabEntry) =>
+          existingKeys.has(`vocab.${entry.id}`) ||
+          existingLabels.has(entry.labels[settings.language].trim().toLowerCase()) ||
+          existingLabels.has(entry.labels.en.trim().toLowerCase());
+
+      /** One past the last slot anything occupies in a container. */
+      const nextSlotIn = (containerId: string) => {
+          let max = -1;
+          onBoard.forEach(i => {
+              if (!i.isCore && (i.category || ROOT_FOLDER) === containerId && typeof i.slot === 'number') {
+                  max = Math.max(max, i.slot);
+              }
+          });
+          boardCats.forEach(c => {
+              if ((c.parentId || ROOT_FOLDER) === containerId && typeof c.slot === 'number') {
+                  max = Math.max(max, c.slot);
+              }
+          });
+          return max + 1;
+      };
+
+      const toAdd: AACItem[] = [];
+      let skipped = 0;
+      const missingFolders: string[] = [];
+
+      const make = (entry: VocabEntry, catId: string, slot: number, isCore: boolean): AACItem => ({
+          id: crypto.randomUUID(),
+          profileId: currentProfileId,
+          boardId: currentBoardId,
+          label: t(`vocab.${entry.id}` as TranslationKey),
+          labelKey: `vocab.${entry.id}`,
+          imageUrl: `/pictograms/${entry.arasaac}.png`,
+          imageFit: 'contain',
+          category: catId,
+          colorTheme: entry.color as ColorTheme | undefined,
+          createdAt: Date.now(),
+          slot,
+          isCore,
+          isVisible: true,
+      });
+
+      let railSlot = Math.max(-1, ...onBoard.filter(i => i.isCore).map(i => i.slot ?? -1)) + 1;
+      CORE_RAIL.forEach(entry => {
+          if (alreadyPresent(entry)) { skipped++; return; }
+          toAdd.push(make(entry, ROOT_FOLDER, railSlot++, true));
+      });
+
+      Object.entries(FOLDER_VOCAB).forEach(([template, entries]) => {
+          const labelKey = STARTER_FOLDER_LABEL_KEYS[template];
+          const folder = boardCats.find(c => c.labelKey === labelKey);
+          if (!folder) {
+              missingFolders.push(t(labelKey));
+              skipped += entries.length;
+              return;
+          }
+          let slot = nextSlotIn(folder.id);
+          entries.forEach(entry => {
+              if (alreadyPresent(entry)) { skipped++; return; }
+              toAdd.push(make(entry, folder.id, slot++, false));
+          });
+      });
+
+      if (!opts?.dryRun && toAdd.length > 0) {
+          await saveItemsBatch(toAdd);
+          await reloadCurrentData();
+      }
+      return { added: toAdd.length, skipped, missingFolders };
+  };
+
   const reorderCore = async (itemId: string, direction: -1 | 1) => {
       const from = coreItems.findIndex(i => i.id === itemId);
       if (from === -1) return;
@@ -1063,7 +1176,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setEditMode: setIsEditMode, setSearchQuery, setIsSearchActive,
       switchProfile, switchBoard, navigateToFolder, navigateBackFolder, navigateBackBoard,
       createProfile, updateProfile, removeProfile, createBoard, updateBoard, removeBoard, setBoardGridSize,
-      saveCard, saveFolderObj, saveLinkBoard, deleteCard, deleteFolderObj, reorderCore, reorderGrid, moveItemToFolder,
+      saveCard, saveFolderObj, saveLinkBoard, deleteCard, deleteFolderObj, reorderCore, addStarterVocabulary, reorderGrid, moveItemToFolder,
       selectItem, addTypedWord, vocabulary, previewItemId, addToSentence, removeFromSentence, removeLastFromSentence, clearSentence, playSentence, setSentenceFromHistory
   };
 

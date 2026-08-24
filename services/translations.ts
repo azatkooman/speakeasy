@@ -34,6 +34,15 @@ export type TranslationKey =
   | 'modal.settings.shell_young'
   | 'modal.settings.shell_neutral'
   | 'modal.settings.shell_desc'
+  | 'modal.settings.starter_words'
+  | 'modal.settings.starter_words_desc'
+  | 'modal.settings.starter_words_check'
+  | 'modal.settings.starter_words_plan'
+  | 'modal.settings.starter_words_safe'
+  | 'modal.settings.starter_words_none'
+  | 'modal.settings.starter_words_confirm'
+  | 'modal.settings.starter_words_added'
+  | 'modal.settings.starter_words_missing'
   | 'modal.settings.access'
   | 'modal.settings.select_release'
   | 'modal.settings.select_press'
@@ -259,6 +268,15 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.shell_young': 'Young learner',
     'modal.settings.shell_neutral': 'Neutral',
     'modal.settings.shell_desc': 'Same board and colours, calmer styling for older users',
+    'modal.settings.starter_words': 'Starter words',
+    'modal.settings.starter_words_desc': 'Adds the built-in starter vocabulary to this board. Existing cards are never moved or changed.',
+    'modal.settings.starter_words_check': 'See what would be added',
+    'modal.settings.starter_words_plan': 'Add {n} words to this board?',
+    'modal.settings.starter_words_safe': 'New words go after the cards you already have. Nothing on the board moves.',
+    'modal.settings.starter_words_none': 'This board already has all the starter words.',
+    'modal.settings.starter_words_confirm': 'Add them',
+    'modal.settings.starter_words_added': 'Added {n} words.',
+    'modal.settings.starter_words_missing': 'Skipped words for folders this board does not have: {folders}',
     'modal.settings.access': 'How cards are chosen',
     'modal.settings.select_release': 'On lift',
     'modal.settings.select_press': 'On touch',
@@ -492,6 +510,15 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.shell_young': 'Для малышей',
     'modal.settings.shell_neutral': 'Нейтральное',
     'modal.settings.shell_desc': 'Та же доска и цвета, спокойнее вид для старших',
+    'modal.settings.starter_words': 'Начальные слова',
+    'modal.settings.starter_words_desc': 'Добавляет встроенный начальный словарь на эту доску. Существующие карточки не двигаются и не меняются.',
+    'modal.settings.starter_words_check': 'Посмотреть, что добавится',
+    'modal.settings.starter_words_plan': 'Добавить {n} слов на эту доску?',
+    'modal.settings.starter_words_safe': 'Новые слова встанут после уже существующих карточек. Ничего на доске не сдвинется.',
+    'modal.settings.starter_words_none': 'На этой доске уже есть все начальные слова.',
+    'modal.settings.starter_words_confirm': 'Добавить',
+    'modal.settings.starter_words_added': 'Добавлено слов: {n}.',
+    'modal.settings.starter_words_missing': 'Пропущены слова для папок, которых нет на этой доске: {folders}',
     'modal.settings.access': 'Как выбираются карточки',
     'modal.settings.select_release': 'При отпускании',
     'modal.settings.select_press': 'При касании',
@@ -725,6 +752,15 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.shell_young': 'Jeune enfant',
     'modal.settings.shell_neutral': 'Neutre',
     'modal.settings.shell_desc': 'Même tableau et mêmes couleurs, style plus sobre',
+    'modal.settings.starter_words': 'Mots de départ',
+    'modal.settings.starter_words_desc': 'Ajoute le vocabulaire de départ intégré à ce tableau. Les cartes existantes ne sont jamais déplacées ni modifiées.',
+    'modal.settings.starter_words_check': 'Voir ce qui serait ajouté',
+    'modal.settings.starter_words_plan': 'Ajouter {n} mots à ce tableau ?',
+    'modal.settings.starter_words_safe': 'Les nouveaux mots se placent après vos cartes actuelles. Rien ne bouge sur le tableau.',
+    'modal.settings.starter_words_none': 'Ce tableau contient déjà tous les mots de départ.',
+    'modal.settings.starter_words_confirm': 'Les ajouter',
+    'modal.settings.starter_words_added': '{n} mots ajoutés.',
+    'modal.settings.starter_words_missing': 'Mots ignorés pour les dossiers absents de ce tableau : {folders}',
     'modal.settings.access': 'Choix des cartes',
     'modal.settings.select_release': 'Au relâchement',
     'modal.settings.select_press': 'Au contact',
@@ -958,6 +994,15 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.shell_young': 'Primeros años',
     'modal.settings.shell_neutral': 'Neutro',
     'modal.settings.shell_desc': 'Mismo tablero y colores, estilo más sobrio',
+    'modal.settings.starter_words': 'Palabras iniciales',
+    'modal.settings.starter_words_desc': 'Añade el vocabulario inicial incorporado a este tablero. Las tarjetas existentes nunca se mueven ni se cambian.',
+    'modal.settings.starter_words_check': 'Ver qué se añadiría',
+    'modal.settings.starter_words_plan': '¿Añadir {n} palabras a este tablero?',
+    'modal.settings.starter_words_safe': 'Las palabras nuevas van después de las tarjetas que ya tienes. Nada se mueve en el tablero.',
+    'modal.settings.starter_words_none': 'Este tablero ya tiene todas las palabras iniciales.',
+    'modal.settings.starter_words_confirm': 'Añadirlas',
+    'modal.settings.starter_words_added': 'Se añadieron {n} palabras.',
+    'modal.settings.starter_words_missing': 'Se omitieron palabras de carpetas que este tablero no tiene: {folders}',
     'modal.settings.access': 'Cómo se eligen las tarjetas',
     'modal.settings.select_release': 'Al soltar',
     'modal.settings.select_press': 'Al tocar',

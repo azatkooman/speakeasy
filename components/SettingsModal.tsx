@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
-import { X, Monitor, Volume2, Grid, Languages, Sparkles, AlertTriangle, Home, Palette, Hand, ScanLine } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Monitor, Volume2, Grid, Languages, Sparkles, AlertTriangle, Home, Palette, Hand, ScanLine, BookPlus, Check } from 'lucide-react';
 import { AppSettings } from '../types';
 import { voiceService } from '../services/voice';
 import { LANGUAGES, getLanguageOption } from '../utils/languages';
 import Dialog from './Dialog.tsx';
+import { useSpeakEasy } from '../contexts/SpeakEasyContext.tsx';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -26,6 +27,47 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
   currentBoardLabel,
   t,
 }) => {
+  /*
+   * "Add starter words" for a board that already exists. Seeding only runs for
+   * a brand-new board — a built board must never be overwritten — which left
+   * the starter vocabulary invisible to everyone already using the app. This is
+   * the explicit way to ask for it.
+   *
+   * Two-step on purpose: the parent is told the exact number first. It writes to
+   * their board, and a count is the difference between a considered yes and a
+   * button they regret.
+   */
+  const { addStarterVocabulary } = useSpeakEasy();
+  const [vocabPlan, setVocabPlan] = useState<{ added: number; skipped: number; missingFolders: string[] } | null>(null);
+  const [vocabResult, setVocabResult] = useState<number | null>(null);
+  const [vocabBusy, setVocabBusy] = useState(false);
+
+  /*
+   * Reset when the dialog closes. Returning null from a component does not
+   * unmount it — BoardPage always renders <SettingsModal>, so this state
+   * outlives the dialog being dismissed. Without this, a parent who adds words
+   * once sees "Added 86 words." forever and never gets the button back, so they
+   * could not run it again after adding a folder or after the vocabulary grows.
+   */
+  useEffect(() => {
+    if (!isOpen) { setVocabPlan(null); setVocabResult(null); }
+  }, [isOpen]);
+
+  const planStarterWords = async () => {
+    setVocabBusy(true);
+    try { setVocabPlan(await addStarterVocabulary({ dryRun: true })); }
+    finally { setVocabBusy(false); }
+  };
+
+  const applyStarterWords = async () => {
+    setVocabBusy(true);
+    try {
+      const res = await addStarterVocabulary();
+      setVocabResult(res.added);
+      setVocabPlan(null);
+    } finally { setVocabBusy(false); }
+  };
+
   const [testStatus, setTestStatus] = useState<'idle' | 'playing' | 'error'>('idle');
 
   const handleTestVoice = async () => {
@@ -377,6 +419,63 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                   )}
                </div>
              )}
+          </section>
+
+          {/* Starter vocabulary */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2 text-slate-800">
+              <BookPlus size={18} />
+              <h3 className="font-bold">{t('modal.settings.starter_words')}</h3>
+            </div>
+            <p className="text-xs text-slate-400 font-medium">{t('modal.settings.starter_words_desc')}</p>
+
+            {vocabResult !== null ? (
+              <p className="flex items-center gap-2 text-sm font-bold text-green-700 bg-green-50 border-2 border-green-200 rounded-xl px-4 py-3">
+                <Check size={16} /> {t('modal.settings.starter_words_added').replace('{n}', String(vocabResult))}
+              </p>
+            ) : vocabPlan === null ? (
+              <button
+                type="button"
+                onClick={planStarterWords}
+                disabled={vocabBusy}
+                className="w-full px-4 py-3 rounded-xl bg-slate-100 font-bold text-slate-700 hover:bg-slate-200 active:scale-95 transition-all disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary"
+              >
+                {t('modal.settings.starter_words_check')}
+              </button>
+            ) : vocabPlan.added === 0 ? (
+              <p className="text-sm font-semibold text-slate-500 bg-slate-50 border-2 border-slate-200 rounded-xl px-4 py-3">
+                {t('modal.settings.starter_words_none')}
+              </p>
+            ) : (
+              <div className="space-y-2 bg-slate-50 border-2 border-slate-200 rounded-xl p-4">
+                <p className="text-sm font-bold text-slate-700">
+                  {t('modal.settings.starter_words_plan').replace('{n}', String(vocabPlan.added))}
+                </p>
+                <p className="text-xs text-slate-500 font-medium">{t('modal.settings.starter_words_safe')}</p>
+                {vocabPlan.missingFolders.length > 0 && (
+                  <p className="text-xs text-amber-700 font-medium">
+                    {t('modal.settings.starter_words_missing').replace('{folders}', vocabPlan.missingFolders.join(', '))}
+                  </p>
+                )}
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={applyStarterWords}
+                    disabled={vocabBusy}
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white font-bold active:scale-95 transition-transform disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary"
+                  >
+                    {t('modal.settings.starter_words_confirm')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVocabPlan(null)}
+                    className="px-4 py-2.5 rounded-xl bg-white border-2 border-slate-200 font-bold text-slate-600 active:scale-95 transition-transform"
+                  >
+                    {t('modal.categories.cancel')}
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
 
           {/* Visual shell */}
