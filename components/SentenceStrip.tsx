@@ -94,41 +94,14 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
       */}
       <div className="h-24 sm:h-28 w-full bg-slate-50/50 relative flex items-center">
         {items.length === 0 && (
-            /*
-              Mirrors the control bar's three-part structure exactly — same
-              padding, same gap, same 10rem left spacer (three 3rem buttons plus
-              two 0.5rem gaps) and 3rem right spacer — so this hint shares an
-              axis with the Speak button it refers to at every width.
-
-              Centring it on the full width instead, as it was, put it ~56px
-              left of the button: Speak is centred inside the flex-1 middle
-              section, and that section is not itself centred on the bar because
-              the group on its left is three buttons wide and the group on its
-              right is one. True geometric centring of Speak is not available —
-              on a 393px phone those three utility buttons alone take 43% of the
-              width — so the fix is to give both elements one shared axis rather
-              than two nearly-equal ones.
-            */
-            <div className="absolute inset-0 flex items-center gap-3 px-3 sm:px-4 text-slate-400 pointer-events-none select-none">
-                <div className="w-40 shrink-0" aria-hidden="true" />
-                {/*
-                  `min-w-0` is load-bearing: it keeps this column exactly as wide
-                  as the control bar's middle column, which is what puts its centre
-                  on the Speak button's axis. Without it the column grows to fit the
-                  text and the hint drifts right — 38px on a phone.
-
-                  The hint is then wider than the column and overflows it, which is
-                  fine and deliberate: the spacers either side are empty, and the
-                  sentence area behind is empty whenever this hint is showing, so
-                  there is nothing to collide with. `truncate` here instead of
-                  overflow clipped "Нажмите, чтобы сказать" down to "Нажмите, ...".
-                */}
-                <div className="flex-1 min-w-0 flex justify-center px-2">
-                    <span className="text-base sm:text-lg font-semibold tracking-tight border-2 border-dashed border-slate-300/60 bg-slate-50/50 px-5 py-2.5 rounded-2xl whitespace-nowrap">
-                        {t('strip.tap_instruction')}
-                    </span>
-                </div>
-                <div className="w-12 shrink-0" aria-hidden="true" />
+            /* Centred on the screen, not on the Speak button. An earlier version
+               mirrored the control bar's three-part structure so this hint shared
+               an axis with Speak; centring on the full width reads better, which
+               is the call the button's own off-centre position has to live with. */
+            <div className="absolute inset-0 flex items-center justify-center px-3 text-slate-400 pointer-events-none select-none">
+                <span className="text-base sm:text-lg font-semibold tracking-tight border-2 border-dashed border-slate-300/60 bg-slate-50/50 px-5 py-2.5 rounded-2xl whitespace-nowrap">
+                    {t('strip.tap_instruction')}
+                </span>
             </div>
         )}
 

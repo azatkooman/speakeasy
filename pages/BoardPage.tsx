@@ -102,18 +102,44 @@ export const BoardPage: React.FC = () => {
     }
   }, [breadcrumbs]);
 
-  // UX Improvement: Scroll to bottom when new items are added
+  /**
+   * Scroll behaviour on the board.
+   *
+   * Navigating anywhere returns to the top. This used to be broken in a way
+   * that was easy to miss: the only rule here was "if the item count grew,
+   * scroll to the bottom", meant for a parent who has just added a card. Going
+   * from a folder holding one card back to a home screen holding eight looks
+   * identical to that rule — the count grew — so coming out of a folder
+   * dumped you at the bottom of the board, below every folder on it.
+   *
+   * The count is therefore tracked per location, and only a growth *within the
+   * same folder* counts as something being added. That is also gated to parent
+   * mode, since nothing is added to a grid in child mode and a board should
+   * never move on its own under a child.
+   */
+  const prevLocation = useRef<string>('');
   useEffect(() => {
-    if (gridItems.length > prevGridLength.current) {
-        if (mainRef.current) {
-            // Small delay to ensure DOM update is rendered
-            setTimeout(() => {
-                mainRef.current?.scrollTo({ top: mainRef.current.scrollHeight, behavior: 'smooth' });
-            }, 100);
-        }
+    // Mode is part of the location: switching to parent mode reveals hidden
+    // cards, so the count grows without anything having been added — the same
+    // trap that sent you to the bottom on leaving a folder.
+    const location = `${currentBoardId}/${currentFolderId}/${isEditMode}`;
+    const moved = location !== prevLocation.current;
+
+    if (moved) {
+        // Instant, not smooth: this is a navigation landing, and the board
+        // sliding under someone who has just tapped a folder is motion for its
+        // own sake.
+        mainRef.current?.scrollTo({ top: 0 });
+    } else if (isEditMode && gridItems.length > prevGridLength.current) {
+        // A card was just added — bring it into view.
+        setTimeout(() => {
+            mainRef.current?.scrollTo({ top: mainRef.current.scrollHeight, behavior: 'smooth' });
+        }, 100);
     }
+
+    prevLocation.current = location;
     prevGridLength.current = gridItems.length;
-  }, [gridItems.length]);
+  }, [gridItems.length, currentFolderId, currentBoardId, isEditMode]);
 
   /**
    * The scan sequence: core rail first, then the grid row-major. The rail is a
