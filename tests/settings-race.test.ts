@@ -171,4 +171,36 @@ describe('settings writes follow the profile they belong to', () => {
     expect(stored?.name, 'the rename was reverted').toBe('Ada B');
     expect(stored?.settings?.voiceRate, 'the pending setting was dropped').toBe(1.4);
   });
+
+  /**
+   * Restoring a backup has to bring the child's settings with it. The board is
+   * only half of what was lost: voice speed, language and access method are the
+   * part that took a clinician to get right.
+   *
+   * This is the first-run case — a replacement tablet with no profiles yet.
+   */
+  it('adopts the restored child’s settings, not the defaults', async () => {
+    const { get, storage, delay } = await mountApp();
+    const backupSvc = await import('../services/backup');
+
+    await act(async () => { await get().createProfile('Ada', 6, 'blue'); });
+    const ada = get().currentProfileId;
+    await act(async () => {
+      get().setSettings((prev: any) => ({ ...prev, language: 'ru', voiceRate: 1.4 }));
+    });
+    await act(async () => { await new Promise(r => setTimeout(r, delay * 3)); });
+
+    const { backup } = await backupSvc.exportProfile(ada);
+    const text = backupSvc.serializeBackup(backup);
+
+    // Wipe the device, as a new tablet would be.
+    await act(async () => { await get().removeProfile(ada); });
+    expect((await storage.getAllProfiles())).toHaveLength(0);
+
+    const file = new File([text], 'backup.json', { type: 'application/json' });
+    await act(async () => { await get().importProfileFile(file); });
+
+    expect(get().settings.language, 'the restored language was lost').toBe('ru');
+    expect(get().settings.voiceRate, 'the restored voice speed was lost').toBe(1.4);
+  });
 });

@@ -3,6 +3,8 @@ import { AppLanguage } from '../types';
 import { vocabLabel } from '../utils/starterVocabulary';
 
 export type TranslationKey = 
+  | 'profile.restore'
+  | 'profile.restore_desc'
   | 'modal.settings.backup'
   | 'modal.settings.backup_desc'
   | 'modal.settings.export'
@@ -263,6 +265,8 @@ export type TranslationKey =
 
 const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
   en: {
+    'profile.restore': 'Restore from a backup',
+    'profile.restore_desc': 'Moving from another tablet? Bring the boards across instead of starting again.',
     'modal.settings.backup': 'Backup',
     'modal.settings.backup_desc': 'Boards live only on this device. Save a backup before changing tablets, and keep it somewhere safe.',
     'modal.settings.export': 'Save a backup',
@@ -531,6 +535,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'onboarding.dismiss': 'Got it',
   },
   ru: {
+    'profile.restore': 'Восстановить из копии',
+    'profile.restore_desc': 'Переходите с другого планшета? Перенесите доски вместо того, чтобы начинать заново.',
     'modal.settings.backup': 'Резервная копия',
     'modal.settings.backup_desc': 'Планшеты хранят доски только у себя. Сохраните копию перед сменой устройства и держите её в надёжном месте.',
     'modal.settings.export': 'Сохранить копию',
@@ -799,6 +805,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'onboarding.dismiss': 'Понятно',
   },
   fr: {
+    'profile.restore': 'Restaurer une sauvegarde',
+    'profile.restore_desc': 'Vous changez de tablette ? Transférez les tableaux au lieu de tout recommencer.',
     'modal.settings.backup': 'Sauvegarde',
     'modal.settings.backup_desc': 'Les tableaux n’existent que sur cet appareil. Enregistrez une sauvegarde avant de changer de tablette et conservez-la en sécurité.',
     'modal.settings.export': 'Enregistrer une sauvegarde',
@@ -1067,6 +1075,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'onboarding.dismiss': 'Compris',
   },
   es: {
+    'profile.restore': 'Restaurar desde una copia',
+    'profile.restore_desc': '¿Cambias de tableta? Trae los tableros en lugar de empezar de nuevo.',
     'modal.settings.backup': 'Copia de seguridad',
     'modal.settings.backup_desc': 'Los tableros solo existen en este dispositivo. Guarda una copia antes de cambiar de tableta y consérvala en un lugar seguro.',
     'modal.settings.export': 'Guardar una copia',

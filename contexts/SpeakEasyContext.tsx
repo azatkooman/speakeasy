@@ -577,7 +577,14 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       };
   }, [flushSettings]);
 
-  const switchProfile = async (id: string) => {
+  /**
+   * `known` is for callers that have just written the profile and therefore hold
+   * a fresher copy than component state does. setProfiles does not update the
+   * `profiles` value captured by this closure, so a restore looked it up, found
+   * nothing, and adopted DEFAULT_SETTINGS — silently resetting the restored
+   * child's language, voice speed and access method.
+   */
+  const switchProfile = async (id: string, known?: ChildProfile) => {
       if (id === currentProfileId) return;
 
       /*
@@ -589,7 +596,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
        */
       flushSettings();
 
-      const targetProfile = profiles.find(p => p.id === id);
+      const targetProfile = known ?? profiles.find(p => p.id === id);
       adoptSettings(targetProfile?.settings ?? DEFAULT_SETTINGS);
 
       setCurrentProfileId(id);
@@ -736,8 +743,11 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const backup = parseBackup(text);
       const result = await importProfile(backup);
 
-      setProfiles(await getAllProfiles());
-      await switchProfile(result.profileId);
+      const all = await getAllProfiles();
+      setProfiles(all);
+      // Pass the profile explicitly: component state has not caught up yet, and
+      // the settings that came with the backup are the point of restoring it.
+      await switchProfile(result.profileId, all.find(p => p.id === result.profileId));
       return result;
   };
 

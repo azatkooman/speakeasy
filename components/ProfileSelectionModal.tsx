@@ -1,10 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, Plus, Check, X, Trash2, Baby, Loader2, Globe, Pencil } from 'lucide-react';
+import { User, Plus, Check, X, Trash2, Baby, Loader2, Globe, Pencil, Upload, AlertTriangle } from 'lucide-react';
 import { ChildProfile, ColorTheme, AppLanguage } from '../types';
 import { TranslationKey } from '../services/translations';
 import { LANGUAGES } from '../utils/languages';
 import Dialog from './Dialog.tsx';
+import { useSpeakEasy } from '../contexts/SpeakEasyContext.tsx';
+import { TransferCancelledError } from '../utils/fileTransfer';
 
 interface ProfileSelectionModalProps {
   isOpen: boolean;
@@ -45,6 +47,34 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
   onUpdateLanguage
 }) => {
   const [view, setView] = useState<'list' | 'create' | 'edit'>('list');
+
+  /*
+   * Restoring from here, not only from Settings. Backup lives behind parent
+   * mode, which needs a board — so on a replacement tablet the parent had to
+   * invent a throwaway child before they could get the real one back. This is
+   * the screen they are actually looking at when that happens.
+   */
+  const { importProfileFile } = useSpeakEasy();
+  const [restoring, setRestoring] = useState(false);
+  const [restoreError, setRestoreError] = useState<string | null>(null);
+  const restoreInput = React.useRef<HTMLInputElement>(null);
+
+  const runRestore = async (file: File) => {
+      setRestoring(true);
+      setRestoreError(null);
+      try {
+          await importProfileFile(file);
+          // The app has switched to the restored child; get out of the way so
+          // the parent can see their board.
+          onClose();
+      } catch (e) {
+          if (!(e instanceof TransferCancelledError)) {
+              setRestoreError(e instanceof Error ? e.message : String(e));
+          }
+      } finally {
+          setRestoring(false);
+      }
+  };
   const [editingProfile, setEditingProfile] = useState<ChildProfile | null>(null);
   
   const [newName, setNewName] = useState('');
@@ -70,6 +100,9 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
         setProfileToDelete(null);
         setIsProcessing(false);
         setIsLanguageMenuOpen(false);
+        // Returning null does not unmount, so a stale error would reappear.
+        setRestoreError(null);
+        setRestoring(false);
     }
   }, [isOpen, forceCreate, profiles.length]);
 
@@ -386,6 +419,43 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
                         {view === 'edit' ? t('common.save') : t('profile.create')}
                      </button>
                  </div>
+
+                 {view === 'create' && (
+                    <div className="pt-5 mt-1 border-t border-slate-100 space-y-3">
+                       <button
+                          type="button"
+                          onClick={() => restoreInput.current?.click()}
+                          disabled={isProcessing || restoring}
+                          className="w-full min-h-[44px] py-3 rounded-xl border-2 border-slate-200 font-bold text-slate-600 hover:border-indigo-600 hover:text-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-all active:scale-95"
+                       >
+                          {restoring
+                            ? <Loader2 size={18} className="animate-spin" />
+                            : <Upload size={18} />}
+                          <span>{restoring ? t('modal.settings.backup_working') : t('profile.restore')}</span>
+                       </button>
+                       <input
+                          ref={restoreInput}
+                          type="file"
+                          accept="application/json,.json"
+                          className="hidden"
+                          aria-hidden="true"
+                          tabIndex={-1}
+                          onChange={e => {
+                              const f = e.target.files?.[0];
+                              // Reset first, so picking the same file twice still fires.
+                              e.target.value = '';
+                              if (f) void runRestore(f);
+                          }}
+                       />
+                       <p className="text-xs text-slate-400 font-medium text-center">{t('profile.restore_desc')}</p>
+                       {restoreError && (
+                          <div className="flex items-start gap-2 bg-red-50 border border-red-100 p-3 rounded-xl" role="alert">
+                             <AlertTriangle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+                             <p className="text-xs text-red-700 font-semibold break-words">{restoreError}</p>
+                          </div>
+                       )}
+                    </div>
+                 )}
             </form>
         )}
     </Dialog>

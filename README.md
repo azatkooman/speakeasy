@@ -61,6 +61,8 @@ key), so it has to survive every visual change.
 - Export a child to one file and restore it on another device — the system share sheet on Android,
   a download on the web. Slots are copied verbatim, and a restore always adds a new child rather
   than overwriting one
+- Restore is offered on the Create Profile screen as well as in Settings, so a replacement tablet
+  can be set up straight from a backup without inventing a throwaway child first
 
 **Parents and professionals**
 - Multiple child profiles per device, each with its own boards and settings
@@ -148,7 +150,7 @@ services/     storage.ts (IndexedDB), backup.ts (export/import), translations.ts
               arasaac.ts, audioPlayer.ts
 utils/        starterVocabulary.ts, keyboardLayouts.ts, useScanner.ts, useSelectable.ts,
               useRenderedCols.ts, history.ts, languages.ts, seedPictograms.ts, icons.ts
-tests/        15 suites, 112 tests
+tests/        15 suites, 113 tests
 scripts/      fetch-pictograms.mjs, build-review-sheet.mjs
 public/       92 bundled ARASAAC pictograms, manifest, icons
 android/      Capacitor Android project
@@ -185,7 +187,7 @@ android/      Capacitor Android project
 npm test
 ```
 
-112 tests over 15 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
+113 tests over 15 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
 history snapshots, asset paths, starter-vocabulary integrity, delete ordering, blocked database
 upgrades, the settings write race, hook ordering, dependency declarations, accessible names,
 backup round trips, and native asset handling.
@@ -257,10 +259,6 @@ else works with the network off.
 
 Honest list, roughly in order of how much they matter:
 
-- **A brand-new device cannot restore until a profile exists.** Backup lives in Settings, which
-  needs parent mode, which needs a board — so a parent setting up a replacement tablet has to create
-  a throwaway child first, then restore, then delete it. That is precisely the scenario the feature
-  exists for, so the Create Profile screen should offer "Restore from a backup" instead.
 - **The starter vocabulary needs clinical review.** Symbol choices remain the weak point, and the
   verb/adjective forms in ru/fr/es are compromises an SLP should settle.
   `scripts/build-review-sheet.mjs` generates the review artefact.
