@@ -129,7 +129,7 @@ const FolderCard: React.FC<FolderCardProps> = ({
           <div className="absolute bottom-[3.25rem] sm:bottom-[3.5rem] inset-x-3 flex justify-between z-30 pointer-events-none">
             <button
               type="button"
-              aria-label={t('move.title')}
+              aria-label={t('a11y.move_left')}
               onClick={onReorderLeft}
               disabled={!canMoveLeft}
               className={`pointer-events-auto w-7 h-7 flex items-center justify-center rounded-full shadow-lg border-2 transition-all active:scale-95 backdrop-blur-md ${!canMoveLeft ? 'bg-slate-100/50 border-slate-200/50 text-slate-300 cursor-not-allowed opacity-50' : 'bg-white border-slate-200 text-slate-700 hover:border-primary hover:text-primary hover:bg-slate-50'}`}
@@ -138,7 +138,7 @@ const FolderCard: React.FC<FolderCardProps> = ({
             </button>
             <button
               type="button"
-              aria-label={t('move.title')}
+              aria-label={t('a11y.move_right')}
               onClick={onReorderRight}
               disabled={!canMoveRight}
               className={`pointer-events-auto w-7 h-7 flex items-center justify-center rounded-full shadow-lg border-2 transition-all active:scale-95 backdrop-blur-md ${!canMoveRight ? 'bg-slate-100/50 border-slate-200/50 text-slate-300 cursor-not-allowed opacity-50' : 'bg-white border-slate-200 text-slate-700 hover:border-primary hover:text-primary hover:bg-slate-50'}`}

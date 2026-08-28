@@ -360,3 +360,54 @@ body {
   from { transform: scaleX(0); }
   to   { transform: scaleX(1); }
 }
+
+/* Range inputs.
+ *
+ * A thin track reads better, but an 8px-tall control is genuinely hard to hit —
+ * and these are the controls a parent uses to set speech rate and scan speed on
+ * a tablet. So the element itself is 44px tall and transparent, and the visible
+ * 8px track is drawn by the track pseudo-element inside it. The hit area grows;
+ * the appearance does not change.
+ */
+.sa-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 44px;
+  background: transparent;
+  cursor: pointer;
+}
+.sa-range:focus-visible {
+  outline: 3px solid #4f46e5;
+  outline-offset: 2px;
+  border-radius: 9999px;
+}
+.sa-range::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 9999px;
+  background: #e2e8f0;
+}
+.sa-range::-moz-range-track {
+  height: 8px;
+  border-radius: 9999px;
+  background: #e2e8f0;
+}
+.sa-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -6px;          /* centre the 20px thumb on the 8px track */
+  border-radius: 9999px;
+  background: #4f46e5;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+}
+.sa-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background: #4f46e5;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+}

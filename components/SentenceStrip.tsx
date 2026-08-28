@@ -220,7 +220,7 @@ const SentenceStrip: React.FC<SentenceStripProps> = ({
                 <Keyboard size={20} strokeWidth={2.5} />
             </button>
 
-            <button 
+            <button aria-label={t('strip.history')} 
                 onClick={onShowHistory}
                 className="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 hover:bg-blue-50 hover:text-blue-500 flex items-center justify-center transition-all active:scale-95"
                 title={t('strip.history')}

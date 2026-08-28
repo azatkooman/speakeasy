@@ -60,7 +60,7 @@ const EditOptionsModal: React.FC<EditOptionsModalProps> = ({
                  <h2 className="text-lg font-black text-slate-800 truncate">{displayLabel}</h2>
                  <p className="text-xs text-slate-500 font-bold uppercase">{type === 'card' ? t('modal.create.title_edit') : t('folder.edit')}</p>
              </div>
-             <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-400">
+             <button aria-label={t('common.close')} onClick={onClose} className="p-2.5 rounded-full hover:bg-slate-200 text-slate-400">
                 <X size={24} />
              </button>
         </div>

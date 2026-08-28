@@ -113,7 +113,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
              </div>
              <h2 className="text-2xl font-black text-slate-800">{t('modal.settings.title')}</h2>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-600 transition-colors">
+          <button aria-label={t('common.close')} onClick={onClose} className="p-2.5 rounded-full hover:bg-slate-200 text-slate-600 transition-colors">
             <X size={24} />
           </button>
         </div>
@@ -155,14 +155,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                             <label className="text-sm font-bold text-slate-500 uppercase">{t('modal.settings.speed')}</label>
                             <span className="text-sm font-bold text-slate-700">{settings.voiceRate.toFixed(1)}x</span>
                         </div>
-                        <input 
+                        <input aria-label={t('modal.settings.speed')} 
                             type="range" 
                             min="0.5" 
                             max="1.5" 
                             step="0.1" 
                             value={settings.voiceRate}
                             onChange={(e) => onUpdateSettings(prev => ({...prev, voiceRate: parseFloat(e.target.value)}))}
-                            className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                            className="sa-range"
                         />
                     </div>
                     <div>
@@ -170,14 +170,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                             <label className="text-sm font-bold text-slate-500 uppercase">{t('modal.settings.pitch')}</label>
                             <span className="text-sm font-bold text-slate-700">{settings.voicePitch.toFixed(1)}</span>
                         </div>
-                        <input 
+                        <input aria-label={t('modal.settings.pitch')} 
                             type="range" 
                             min="0.5" 
                             max="1.5" 
                             step="0.1" 
                             value={settings.voicePitch}
                             onChange={(e) => onUpdateSettings(prev => ({...prev, voicePitch: parseFloat(e.target.value)}))}
-                            className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                            className="sa-range"
                         />
                     </div>
                 </div>
@@ -230,14 +230,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                            {settings.maxSentenceLength === 0 ? t('modal.settings.max_length_none') : settings.maxSentenceLength}
                        </span>
                    </div>
-                   <input 
+                   <input aria-label={t('modal.settings.max_length')} 
                        type="range" 
                        min="0" 
                        max="5" 
                        step="1" 
                        value={settings.maxSentenceLength}
                        onChange={(e) => onUpdateSettings(prev => ({...prev, maxSentenceLength: parseInt(e.target.value)}))}
-                       className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                       className="sa-range"
                    />
                 </div>
 
@@ -247,7 +247,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         <p className="font-bold text-slate-700">{t('modal.settings.auto_clear')}</p>
                         <p className="text-xs text-slate-400 font-medium">{t('modal.settings.auto_clear_desc')}</p>
                     </div>
-                    <button 
+                    <button role="switch" aria-checked={settings.autoClearSentence} aria-label={t('modal.settings.auto_clear')} 
                         onClick={() => onUpdateSettings(prev => ({...prev, autoClearSentence: !prev.autoClearSentence}))}
                         className={`relative inline-flex h-9 w-16 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none border-2 border-transparent ${settings.autoClearSentence ? 'bg-indigo-600' : 'bg-slate-300'}`}
                     >
@@ -335,11 +335,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         <label className="text-sm font-bold text-slate-500 uppercase">{t('modal.settings.dwell_time')}</label>
                         <span className="text-sm font-bold text-slate-700">{((settings.dwellMs || 600) / 1000).toFixed(1)}s</span>
                     </div>
-                    <input
+                    <input aria-label={t('modal.settings.dwell_time')}
                         type="range" min="200" max="2000" step="100"
                         value={settings.dwellMs || 600}
                         onChange={(e) => onUpdateSettings(prev => ({...prev, dwellMs: parseInt(e.target.value)}))}
-                        className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                        className="sa-range"
                     />
                 </div>
              )}
@@ -408,11 +408,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                           <label className="text-sm font-bold text-slate-500 uppercase">{t('modal.settings.scan_rate')}</label>
                           <span className="text-sm font-bold text-slate-700">{(settings.scan.rateMs / 1000).toFixed(1)}s</span>
                        </div>
-                       <input
+                       <input aria-label={t('modal.settings.scan_rate')}
                           type="range" min="400" max="4000" step="100"
                           value={settings.scan.rateMs}
                           onChange={(e) => onUpdateSettings(prev => ({...prev, scan: { ...prev.scan!, rateMs: parseInt(e.target.value) }}))}
-                          className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                          className="sa-range"
                        />
                     </div>
                   )}
@@ -470,7 +470,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                     onClick={() => setVocabPlan(null)}
                     className="px-4 py-2.5 rounded-xl bg-white border-2 border-slate-200 font-bold text-slate-600 active:scale-95 transition-transform"
                   >
-                    {t('modal.categories.cancel')}
+                    {t('common.cancel')}
                   </button>
                 </div>
               </div>

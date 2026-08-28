@@ -52,3 +52,6 @@ scripts/vocabulary-review.html
 
 # Vitest coverage output
 coverage/
+
+# Local dev-server launch config (port choice is machine-specific)
+.claude/launch.json

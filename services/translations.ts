@@ -3,6 +3,28 @@ import { AppLanguage } from '../types';
 import { vocabLabel } from '../utils/starterVocabulary';
 
 export type TranslationKey = 
+  | 'a11y.move_left'
+  | 'a11y.move_right'
+  | 'common.close'
+  | 'common.delete'
+  | 'a11y.clear_search'
+  | 'a11y.capture_photo'
+  | 'a11y.switch_camera'
+  | 'a11y.close_camera'
+  | 'a11y.stop_recording'
+  | 'a11y.play_recording'
+  | 'a11y.pause_recording'
+  | 'a11y.delete_recording'
+  | 'a11y.space'
+  | 'a11y.fit_cover'
+  | 'a11y.fit_contain'
+  | 'a11y.symbol'
+  | 'a11y.color_blue'
+  | 'a11y.color_pink'
+  | 'a11y.color_green'
+  | 'a11y.color_purple'
+  | 'a11y.color_orange'
+  | 'a11y.color_yellow'
   | 'app.title'
   | 'app.new_folder'
   | 'app.empty_folder'
@@ -127,8 +149,8 @@ export type TranslationKey =
   | 'modal.settings.auto_clear_desc'
   | 'modal.settings.test_voice'
   | 'modal.settings.test_error'
-  | 'modal.categories.cancel'
-  | 'modal.categories.save'
+  | 'common.cancel'
+  | 'common.save'
   | 'modal.confirm.delete_title'
   | 'modal.confirm.delete_desc'
   | 'modal.confirm.delete_folder_desc'
@@ -232,6 +254,28 @@ export type TranslationKey =
 
 const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
   en: {
+    'a11y.move_left': 'Move left',
+    'a11y.move_right': 'Move right',
+    'common.close': 'Close',
+    'common.delete': 'Delete',
+    'a11y.clear_search': 'Clear search',
+    'a11y.capture_photo': 'Take photo',
+    'a11y.switch_camera': 'Switch camera',
+    'a11y.close_camera': 'Close camera',
+    'a11y.stop_recording': 'Stop recording',
+    'a11y.play_recording': 'Play recording',
+    'a11y.pause_recording': 'Pause',
+    'a11y.delete_recording': 'Delete recording',
+    'a11y.space': 'Space',
+    'a11y.fit_cover': 'Fill the frame',
+    'a11y.fit_contain': 'Show the whole image',
+    'a11y.symbol': 'Symbol',
+    'a11y.color_blue': 'Blue',
+    'a11y.color_pink': 'Pink',
+    'a11y.color_green': 'Green',
+    'a11y.color_purple': 'Purple',
+    'a11y.color_orange': 'Orange',
+    'a11y.color_yellow': 'Yellow',
     'app.title': 'SpeakEasy',
     'app.new_folder': 'New Folder',
     'app.empty_folder': 'Empty Folder',
@@ -356,8 +400,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.auto_clear_desc': 'Remove cards automatically after speech finishes.',
     'modal.settings.test_voice': 'Test Voice',
     'modal.settings.test_error': 'Error',
-    'modal.categories.cancel': 'Cancel',
-    'modal.categories.save': 'Save',
+    'common.cancel': 'Cancel',
+    'common.save': 'Save',
     'modal.confirm.delete_title': 'Delete this item?',
     'modal.confirm.delete_desc': 'Are you sure? It will be gone forever.',
     'modal.confirm.delete_folder_desc': 'Deleting this folder will move all its cards to the Home screen.',
@@ -469,6 +513,28 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'onboarding.dismiss': 'Got it',
   },
   ru: {
+    'a11y.move_left': 'Переместить влево',
+    'a11y.move_right': 'Переместить вправо',
+    'common.close': 'Закрыть',
+    'common.delete': 'Удалить',
+    'a11y.clear_search': 'Очистить поиск',
+    'a11y.capture_photo': 'Сделать снимок',
+    'a11y.switch_camera': 'Переключить камеру',
+    'a11y.close_camera': 'Закрыть камеру',
+    'a11y.stop_recording': 'Остановить запись',
+    'a11y.play_recording': 'Воспроизвести запись',
+    'a11y.pause_recording': 'Пауза',
+    'a11y.delete_recording': 'Удалить запись',
+    'a11y.space': 'Пробел',
+    'a11y.fit_cover': 'Заполнить рамку',
+    'a11y.fit_contain': 'Показать всё изображение',
+    'a11y.symbol': 'Символ',
+    'a11y.color_blue': 'Синий',
+    'a11y.color_pink': 'Розовый',
+    'a11y.color_green': 'Зелёный',
+    'a11y.color_purple': 'Фиолетовый',
+    'a11y.color_orange': 'Оранжевый',
+    'a11y.color_yellow': 'Жёлтый',
     'app.title': 'SpeakEasy',
     'app.new_folder': 'Новая папка',
     'app.empty_folder': 'Пустая папка',
@@ -593,8 +659,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.auto_clear_desc': 'Удалять карточки после произношения.',
     'modal.settings.test_voice': 'Проверить голос',
     'modal.settings.test_error': 'Ошибка',
-    'modal.categories.cancel': 'Отмена',
-    'modal.categories.save': 'Сохранить',
+    'common.cancel': 'Отмена',
+    'common.save': 'Сохранить',
     'modal.confirm.delete_title': 'Удалить элемент?',
     'modal.confirm.delete_desc': 'Вы уверены? Это действие нельзя отменить.',
     'modal.confirm.delete_folder_desc': 'При удалении папки все карточки из неё переместятся на Главную.',
@@ -706,6 +772,28 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'onboarding.dismiss': 'Понятно',
   },
   fr: {
+    'a11y.move_left': 'Déplacer à gauche',
+    'a11y.move_right': 'Déplacer à droite',
+    'common.close': 'Fermer',
+    'common.delete': 'Supprimer',
+    'a11y.clear_search': 'Effacer la recherche',
+    'a11y.capture_photo': 'Prendre une photo',
+    'a11y.switch_camera': 'Changer de caméra',
+    'a11y.close_camera': 'Fermer la caméra',
+    'a11y.stop_recording': 'Arrêter l\'enregistrement',
+    'a11y.play_recording': 'Écouter l\'enregistrement',
+    'a11y.pause_recording': 'Pause',
+    'a11y.delete_recording': 'Supprimer l\'enregistrement',
+    'a11y.space': 'Espace',
+    'a11y.fit_cover': 'Remplir le cadre',
+    'a11y.fit_contain': 'Afficher toute l’image',
+    'a11y.symbol': 'Symbole',
+    'a11y.color_blue': 'Bleu',
+    'a11y.color_pink': 'Rose',
+    'a11y.color_green': 'Vert',
+    'a11y.color_purple': 'Violet',
+    'a11y.color_orange': 'Orange',
+    'a11y.color_yellow': 'Jaune',
     'app.title': 'SpeakEasy',
     'app.new_folder': 'Nouveau Dossier',
     'app.empty_folder': 'Dossier Vide',
@@ -830,8 +918,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.auto_clear_desc': 'Supprime automatiquement les cartes.',
     'modal.settings.test_voice': 'Tester la Voix',
     'modal.settings.test_error': 'Erreur',
-    'modal.categories.cancel': 'Annuler',
-    'modal.categories.save': 'Enregistrer',
+    'common.cancel': 'Annuler',
+    'common.save': 'Enregistrer',
     'modal.confirm.delete_title': 'Supprimer cet élément ?',
     'modal.confirm.delete_desc': 'Êtes-vous sûr ? Il sera supprimé définitivement.',
     'modal.confirm.delete_folder_desc': 'Supprimer ce dossier déplacera toutes ses cartes vers l\'écran d\'Accueil.',
@@ -943,6 +1031,28 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'onboarding.dismiss': 'Compris',
   },
   es: {
+    'a11y.move_left': 'Mover a la izquierda',
+    'a11y.move_right': 'Mover a la derecha',
+    'common.close': 'Cerrar',
+    'common.delete': 'Eliminar',
+    'a11y.clear_search': 'Borrar búsqueda',
+    'a11y.capture_photo': 'Tomar foto',
+    'a11y.switch_camera': 'Cambiar de cámara',
+    'a11y.close_camera': 'Cerrar la cámara',
+    'a11y.stop_recording': 'Detener la grabación',
+    'a11y.play_recording': 'Reproducir la grabación',
+    'a11y.pause_recording': 'Pausa',
+    'a11y.delete_recording': 'Eliminar la grabación',
+    'a11y.space': 'Espacio',
+    'a11y.fit_cover': 'Rellenar el marco',
+    'a11y.fit_contain': 'Mostrar la imagen completa',
+    'a11y.symbol': 'Símbolo',
+    'a11y.color_blue': 'Azul',
+    'a11y.color_pink': 'Rosa',
+    'a11y.color_green': 'Verde',
+    'a11y.color_purple': 'Morado',
+    'a11y.color_orange': 'Naranja',
+    'a11y.color_yellow': 'Amarillo',
     'app.title': 'SpeakEasy',
     'app.new_folder': 'Nueva Carpeta',
     'app.empty_folder': 'Carpeta Vacía',
@@ -1067,8 +1177,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.auto_clear_desc': 'Quitar tarjetas automáticamente después de hablar.',
     'modal.settings.test_voice': 'Probar Voz',
     'modal.settings.test_error': 'Error',
-    'modal.categories.cancel': 'Cancelar',
-    'modal.categories.save': 'Guardar',
+    'common.cancel': 'Cancelar',
+    'common.save': 'Guardar',
     'modal.confirm.delete_title': '¿Borrar esto?',
     'modal.confirm.delete_desc': '¿Estás seguro? Es irrevesible.',
     'modal.confirm.delete_folder_desc': 'Borrar la carpeta moverá todas sus tarjetas al Inicio.',

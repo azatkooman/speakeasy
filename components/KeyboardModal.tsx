@@ -107,7 +107,7 @@ const KeyboardModal: React.FC<KeyboardModalProps> = ({ isOpen, onClose, vocabula
             inputMode="none"
             className="flex-1 min-w-0 px-4 py-3 bg-white rounded-xl border-2 border-slate-200 focus:border-primary outline-none text-lg font-semibold text-slate-900"
           />
-          <button onClick={onClose} aria-label={t('modal.categories.cancel')} className="p-2 rounded-full hover:bg-slate-200 text-slate-500">
+          <button onClick={onClose} aria-label={t('common.cancel')} className="p-2.5 rounded-full hover:bg-slate-200 text-slate-500">
             <X size={24} />
           </button>
         </div>
@@ -156,7 +156,7 @@ const KeyboardModal: React.FC<KeyboardModalProps> = ({ isOpen, onClose, vocabula
             </div>
           )}
           <div className="flex justify-center gap-1.5 pt-0.5">
-            <button
+            <button aria-label={t('a11y.space')}
               onClick={() => setText(prev => prev + ' ')}
               className="flex-1 max-w-[16rem] min-h-[44px] rounded-lg bg-white border border-slate-200 font-semibold text-slate-600 hover:border-primary active:scale-95"
             >

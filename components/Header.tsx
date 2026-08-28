@@ -79,9 +79,9 @@ export const Header: React.FC = () => {
         <>
                 <div className="flex items-center gap-3">
                     {boardHistory.length > 0 ? (
-                        <button 
+                        <button aria-label={t('header.back')} 
                             onClick={navigateBackBoard}
-                            className="bg-white border-2 border-slate-200 text-slate-700 hover:text-primary hover:border-primary px-3 py-2 rounded-xl flex items-center gap-2 font-bold shadow-sm active:scale-95 transition-all"
+                            className="bg-white border-2 border-slate-200 text-slate-700 hover:text-primary hover:border-primary px-3 py-3 rounded-xl flex items-center gap-2 font-bold shadow-sm active:scale-95 transition-all"
                         >
                             <ChevronLeft size={24} strokeWidth={3} />
                             <span className="hidden sm:inline">{t('header.back')}</span>
@@ -99,7 +99,7 @@ export const Header: React.FC = () => {
                         board underneath, but it is still a parent's tool: it exists
                         to answer "where did I put that card". */}
                     {isEditMode && (
-                        <button aria-label={t('search.placeholder')} onClick={() => setIsSearchActive(true)} className="p-2.5 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 active:bg-slate-300 transition-colors"><Search size={20} /></button>
+                        <button aria-label={t('search.placeholder')} onClick={() => setIsSearchActive(true)} className="p-3 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 active:bg-slate-300 transition-colors"><Search size={20} /></button>
                     )}
                     
                     {/* Lock Button */}
@@ -134,7 +134,7 @@ export const Header: React.FC = () => {
                                         </p>
                                         <button 
                                             onClick={() => { localStorage.setItem('aac_onboarding_completed', 'true'); setShowOnboardingHint(false); }}
-                                            className="py-2 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-colors w-full active:bg-indigo-700"
+                                            className="py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition-colors w-full active:bg-indigo-700"
                                         >
                                             {t('onboarding.dismiss')}
                                         </button>

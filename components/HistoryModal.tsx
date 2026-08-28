@@ -55,7 +55,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, entries, l
              <div className="p-2 bg-blue-100 text-blue-600 rounded-xl"><Clock size={24} /></div>
              <h2 className="text-2xl font-black text-slate-800">{t('modal.history.title')}</h2>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-600"><X size={24} /></button>
+          <button aria-label={t('common.close')} onClick={onClose} className="p-2.5 rounded-full hover:bg-slate-200 text-slate-600"><X size={24} /></button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">

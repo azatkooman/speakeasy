@@ -21,13 +21,13 @@ interface ProfileSelectionModalProps {
   onUpdateLanguage: (lang: AppLanguage) => void;
 }
 
-const AVATAR_COLORS: { theme: ColorTheme; bg: string; border: string; text: string }[] = [
-  { theme: 'blue', bg: 'bg-blue-200', border: 'border-blue-500', text: 'text-blue-900' },
-  { theme: 'pink', bg: 'bg-pink-200', border: 'border-pink-500', text: 'text-pink-900' },
-  { theme: 'green', bg: 'bg-green-200', border: 'border-green-500', text: 'text-green-900' },
-  { theme: 'purple', bg: 'bg-purple-200', border: 'border-purple-500', text: 'text-purple-900' },
-  { theme: 'orange', bg: 'bg-orange-200', border: 'border-orange-500', text: 'text-orange-900' },
-  { theme: 'yellow', bg: 'bg-yellow-200', border: 'border-yellow-500', text: 'text-yellow-900' },
+const AVATAR_COLORS: { theme: ColorTheme; bg: string; border: string; text: string; labelKey: TranslationKey }[] = [
+  { theme: 'blue', bg: 'bg-blue-200', border: 'border-blue-500', text: 'text-blue-900', labelKey: 'a11y.color_blue' },
+  { theme: 'pink', bg: 'bg-pink-200', border: 'border-pink-500', text: 'text-pink-900', labelKey: 'a11y.color_pink' },
+  { theme: 'green', bg: 'bg-green-200', border: 'border-green-500', text: 'text-green-900', labelKey: 'a11y.color_green' },
+  { theme: 'purple', bg: 'bg-purple-200', border: 'border-purple-500', text: 'text-purple-900', labelKey: 'a11y.color_purple' },
+  { theme: 'orange', bg: 'bg-orange-200', border: 'border-orange-500', text: 'text-orange-900', labelKey: 'a11y.color_orange' },
+  { theme: 'yellow', bg: 'bg-yellow-200', border: 'border-yellow-500', text: 'text-yellow-900', labelKey: 'a11y.color_yellow' },
 ];
 
 const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
@@ -203,7 +203,7 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
             </div>
 
             {!forceCreate && (
-                <button onClick={onClose} disabled={isProcessing} className="p-2 rounded-full hover:bg-slate-200 text-slate-600 disabled:opacity-50">
+                <button aria-label={t('common.close')} onClick={onClose} disabled={isProcessing} className="p-2.5 rounded-full hover:bg-slate-200 text-slate-600 disabled:opacity-50">
                     <X size={24} />
                 </button>
             )}
@@ -269,7 +269,7 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
                              </div>
                              
                              <div className="flex items-center gap-1 pl-2">
-                                 <button 
+                                 <button aria-label={t('modal.profile.edit_hover')} 
                                     onClick={(e) => handleStartEdit(profile, e)}
                                     className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all"
                                     title={t('modal.profile.edit_hover')}
@@ -278,7 +278,7 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
                                  </button>
                                  
                                  {!isCurrent && (
-                                     <button 
+                                     <button aria-label={t('modal.profile.delete_hover')} 
                                         onClick={(e) => { e.stopPropagation(); setProfileToDelete(profile.id); }}
                                         className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                                         title={t('modal.profile.delete_hover')}
@@ -354,7 +354,7 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
                      <label className="block text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">{t('profile.avatar_color')}</label>
                      <div className="flex gap-3 justify-center">
                          {AVATAR_COLORS.map(c => (
-                             <button
+                             <button aria-label={t(c.labelKey)}
                                 key={c.theme}
                                 type="button"
                                 onClick={() => setNewColor(c.theme)}
@@ -374,7 +374,7 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
                             disabled={isProcessing}
                             className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200"
                         >
-                            {t('modal.categories.cancel')}
+                            {t('common.cancel')}
                         </button>
                      )}
                      <button 
@@ -383,7 +383,7 @@ const ProfileSelectionModal: React.FC<ProfileSelectionModalProps> = ({
                         className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2"
                      >
                         {isProcessing && <Loader2 size={20} className="animate-spin" />}
-                        {view === 'edit' ? t('modal.categories.save') : t('profile.create')}
+                        {view === 'edit' ? t('common.save') : t('profile.create')}
                      </button>
                  </div>
             </form>

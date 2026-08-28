@@ -104,7 +104,7 @@ const MoveItemModal: React.FC<MoveItemModalProps> = ({ isOpen, onClose, itemToMo
                 {t('move.moving')} <span className="text-primary">{movingItemLabel}</span>
             </p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-600 transition-colors">
+          <button aria-label={t('common.close')} onClick={onClose} className="p-2.5 rounded-full hover:bg-slate-200 text-slate-600 transition-colors">
             <X size={24} />
           </button>
         </div>

@@ -77,7 +77,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
         </div>
         <button
           onClick={onClose}
-          aria-label={t('modal.categories.cancel')}
+          aria-label={t('common.cancel')}
           className="p-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 active:scale-95 transition-all shrink-0"
         >
           <X size={20} />

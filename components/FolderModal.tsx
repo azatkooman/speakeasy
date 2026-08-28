@@ -164,7 +164,7 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSave, edit
                {editFolder ? t('folder.edit') : t('folder.new')}
              </h2>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-600"><X size={24} /></button>
+          <button aria-label={t('common.close')} onClick={onClose} className="p-2.5 rounded-full hover:bg-slate-200 text-slate-600"><X size={24} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
@@ -261,7 +261,7 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSave, edit
                           </div>
                           <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
                              {webSymbols.map((symbol) => (
-                                  <button
+                                  <button aria-label={symbol.keywords[0] || t('a11y.symbol')}
                                       key={symbol.id}
                                       type="button"
                                       onClick={() => setSelectedIcon(symbol.url)}
@@ -296,7 +296,7 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSave, edit
                           const IconComp = getIconComponent(iconName);
                           const isSelected = selectedIcon === iconName;
                           return (
-                              <button
+                              <button aria-label={iconName}
                                   key={iconName}
                                   type="button"
                                   onClick={() => setSelectedIcon(iconName)}

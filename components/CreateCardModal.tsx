@@ -408,9 +408,9 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                     {flashTrigger && <div className="absolute inset-0 bg-white animate-out fade-out duration-300 pointer-events-none z-50"></div>}
                  </div>
                  <div className="h-32 bg-black/90 backdrop-blur-md flex items-center justify-between px-10 pb-4 pt-2 z-50">
-                     <button onClick={stopCamera} className="p-4 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all active:scale-95"><X size={24} /></button>
-                     <button onClick={capturePhoto} className="w-20 h-20 rounded-full bg-white border-[6px] border-slate-300 ring-4 ring-white/10 active:scale-95 active:ring-white/30 transition-all shadow-xl" />
-                    <button onClick={switchCamera} className="p-4 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all active:scale-95"><RefreshCcw size={24} /></button>
+                     <button aria-label={t('a11y.close_camera')} onClick={stopCamera} className="p-4 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all active:scale-95"><X size={24} /></button>
+                     <button aria-label={t('a11y.capture_photo')} onClick={capturePhoto} className="w-20 h-20 rounded-full bg-white border-[6px] border-slate-300 ring-4 ring-white/10 active:scale-95 active:ring-white/30 transition-all shadow-xl" />
+                    <button aria-label={t('a11y.switch_camera')} onClick={switchCamera} className="p-4 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all active:scale-95"><RefreshCcw size={24} /></button>
                  </div>
              </div>
         )}
@@ -421,15 +421,15 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                      <div className="relative flex-1">
                          <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                          <input autoFocus className="w-full pl-10 pr-10 py-3 bg-white border-2 border-slate-200 rounded-xl text-lg font-bold text-slate-800 placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all" placeholder={t('search.placeholder')} value={symbolQuery} onChange={(e) => setSymbolQuery(e.target.value)} />
-                         {symbolQuery && <button onClick={() => setSymbolQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 bg-slate-100 rounded-full text-slate-400 hover:text-slate-600"><X size={14} /></button>}
+                         {symbolQuery && <button aria-label={t('a11y.clear_search')} onClick={() => setSymbolQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 bg-slate-100 rounded-full text-slate-400 hover:text-slate-600"><X size={14} /></button>}
                      </div>
-                     <button onClick={() => setShowSymbolSearch(false)} className="p-3 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 font-bold">{t('modal.categories.cancel')}</button>
+                     <button onClick={() => setShowSymbolSearch(false)} className="p-3 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 font-bold">{t('common.cancel')}</button>
                  </div>
                  <div className="flex-1 overflow-y-auto p-4 bg-slate-50">
                       {isLoadingSymbols ? (
                           <div className="flex flex-col items-center justify-center h-40 space-y-4"><Loader2 size={40} className="animate-spin text-primary" /><p className="text-slate-400 font-bold">{t('folder.searching')}</p></div>
                       ) : symbols.length > 0 ? (
-                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">{symbols.map(s => <button key={s.id} onClick={() => handleSymbolSelect(s.url, s.keywords[0])} className="aspect-square bg-white rounded-xl border-2 border-slate-200 hover:border-primary hover:shadow-lg transition-all p-2 flex items-center justify-center active:scale-95 group"><img src={s.url} className="w-full h-full object-contain group-hover:scale-110 transition-transform" alt="" /></button>)}</div>
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">{symbols.map(s => <button aria-label={s.keywords[0] || t('a11y.symbol')} key={s.id} onClick={() => handleSymbolSelect(s.url, s.keywords[0])} className="aspect-square bg-white rounded-xl border-2 border-slate-200 hover:border-primary hover:shadow-lg transition-all p-2 flex items-center justify-center active:scale-95 group"><img src={s.url} className="w-full h-full object-contain group-hover:scale-110 transition-transform" alt="" /></button>)}</div>
                       ) : (
                           <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-4 opacity-50"><Globe size={64} /><p className="font-bold text-center">{symbolQuery.length < 3 ? t('create.search_type_hint') : t('create.no_results')}</p></div>
                       )}
@@ -445,7 +445,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">{t('create.in_folder')} {currentFolderName}</p>
             )}
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-600 transition-colors">
+          <button aria-label={t('common.close')} onClick={onClose} className="p-2.5 rounded-full hover:bg-slate-200 text-slate-600 transition-colors">
             <X size={28} />
           </button>
         </div>
@@ -464,10 +464,10 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                                 className={`w-full h-full bg-white transition-all duration-300 ${imageFit === 'contain' ? 'object-contain' : 'object-cover'}`} 
                             />
                             {/* Toggle Fit Button */}
-                            <button
+                            <button aria-label={imageFit === 'cover' ? t('a11y.fit_contain') : t('a11y.fit_cover')}
                                 onClick={() => setImageFit(prev => prev === 'cover' ? 'contain' : 'cover')}
                                 className="absolute bottom-2 right-2 bg-black/50 text-white p-1.5 rounded-lg hover:bg-black/70 backdrop-blur-sm transition-all"
-                                title={imageFit === 'cover' ? "Show full image (Fit)" : "Fill card (Cover)"}
+                                title={imageFit === 'cover' ? t('a11y.fit_contain') : t('a11y.fit_cover')}
                             >
                                 {imageFit === 'cover' ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
                             </button>
@@ -540,7 +540,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                   </div>
                   <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar snap-x">
                       {THEMES.map((c) => (
-                          <button
+                          <button aria-label={t(c.labelKey)}
                             key={c.theme}
                             onClick={() => setColorTheme(c.theme)}
                             className={`
@@ -583,7 +583,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
                         <div className={`p-2 rounded-full ${isVisible ? 'bg-primary/10 text-primary' : 'bg-slate-200 text-slate-400'}`}>{isVisible ? <Eye size={20} /> : <EyeOff size={20} />}</div>
                         <div><p className="text-sm font-bold text-slate-700">{t('modal.create.visibility')}</p><p className="text-xs text-slate-400">{isVisible ? t('modal.create.visible') : t('modal.create.hidden')}</p></div>
                     </div>
-                    <button onClick={() => setIsVisible(!isVisible)} className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${isVisible ? 'bg-primary' : 'bg-slate-300'}`}><div className={`absolute top-1 left-1 bg-white w-5 h-5 rounded-full shadow-sm transition-transform duration-200 ${isVisible ? 'translate-x-5' : 'translate-x-0'}`} /></button>
+                    <button role="switch" aria-checked={isVisible} aria-label={t('modal.create.visibility')} onClick={() => setIsVisible(!isVisible)} className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${isVisible ? 'bg-primary' : 'bg-slate-300'}`}><div className={`absolute top-1 left-1 bg-white w-5 h-5 rounded-full shadow-sm transition-transform duration-200 ${isVisible ? 'translate-x-5' : 'translate-x-0'}`} /></button>
                </div>
             </div>
           </div>

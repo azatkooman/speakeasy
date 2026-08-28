@@ -207,7 +207,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ initialAudioUrl, onRecord
 
           <div className="flex items-center space-x-3">
             {!isRecording && !audioUrl && (
-            <button
+            <button aria-label={t('recorder.start_recording')}
                 onClick={startRecording}
                 className="w-12 h-12 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center text-white shadow-btn active:shadow-btn-active active:translate-y-1 transition-all"
                 type="button"
@@ -218,7 +218,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ initialAudioUrl, onRecord
             )}
 
             {isRecording && (
-            <button
+            <button aria-label={t('a11y.stop_recording')}
                 onClick={stopRecording}
                 className="w-12 h-12 rounded-full bg-slate-800 hover:bg-black flex items-center justify-center text-white shadow-lg animate-pulse"
                 type="button"
@@ -229,7 +229,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ initialAudioUrl, onRecord
 
             {audioUrl && !isRecording && (
             <>
-                <button
+                <button aria-label={isPlaying ? t('a11y.pause_recording') : t('a11y.play_recording')}
                 onClick={togglePlayback}
                 className={`
                     w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all shadow-sm active:scale-95
@@ -241,7 +241,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ initialAudioUrl, onRecord
                 >
                 {isPlaying ? <Square size={18} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
                 </button>
-                <button
+                <button aria-label={t('a11y.delete_recording')}
                 onClick={deleteRecording}
                 className="w-10 h-10 rounded-full bg-white border-2 border-slate-200 hover:border-red-500 hover:text-red-500 flex items-center justify-center text-slate-400 transition-colors"
                 type="button"

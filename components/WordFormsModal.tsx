@@ -68,7 +68,7 @@ const WordFormsModal: React.FC<WordFormsModalProps> = ({ card, baseLabel, onClos
             <div className="p-2 bg-primary/10 text-primary rounded-xl"><Type size={22} /></div>
             <h2 className="text-lg font-bold text-slate-800">{t('forms.title')}</h2>
           </div>
-          <button onClick={onClose} aria-label={t('modal.categories.cancel')} className={`p-2 rounded-full hover:bg-slate-200 text-slate-500 ${scanner.focusedId === 'form:close' ? 'ring-4 ring-sky-500' : ''}`}>
+          <button onClick={onClose} aria-label={t('common.cancel')} className={`p-2.5 rounded-full hover:bg-slate-200 text-slate-500 ${scanner.focusedId === 'form:close' ? 'ring-4 ring-sky-500' : ''}`}>
             <X size={24} />
           </button>
         </div>

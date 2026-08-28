@@ -135,7 +135,7 @@ const LinkBoardModal: React.FC<LinkBoardModalProps> = ({
              <div className="p-2 bg-purple-100 text-purple-600 rounded-xl"><Layout size={24} /></div>
              <h2 className="text-xl font-black text-slate-800">{t('link.title')}</h2>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-600">
+          <button aria-label={t('common.close')} onClick={onClose} className="p-2.5 rounded-full hover:bg-slate-200 text-slate-600">
             <X size={24} />
           </button>
         </div>

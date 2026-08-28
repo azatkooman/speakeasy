@@ -49,6 +49,8 @@ key), so it has to survive every visual change.
   the Speak button and the folder controls, not only the vocabulary, so a switch user can compose,
   correct and speak a sentence unaided
 - Semantic buttons throughout, `aria-live` announcements, visible focus, `prefers-reduced-motion`
+- Every control has an accessible name, verified against the browser's own accessibility tree rather
+  than by reading the source. No target is below the WCAG 2.5.8 AA minimum of 24×24 px
 
 **Vocabulary**
 - 90 starter words with bundled symbols, in four languages, seeded into every new board
@@ -142,7 +144,7 @@ pages/        BoardPage.tsx — the board, the rail, the scan graph
 services/     storage.ts (IndexedDB), translations.ts, voice.ts, arasaac.ts, audioPlayer.ts
 utils/        starterVocabulary.ts, keyboardLayouts.ts, useScanner.ts, useSelectable.ts,
               useRenderedCols.ts, history.ts, languages.ts, seedPictograms.ts, icons.ts
-tests/        12 suites, 85 tests
+tests/        13 suites, 88 tests
 scripts/      fetch-pictograms.mjs, build-review-sheet.mjs
 public/       91 bundled ARASAAC pictograms, manifest, icons
 android/      Capacitor Android project
@@ -171,9 +173,9 @@ android/      Capacitor Android project
 npm test
 ```
 
-85 tests over 12 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
+88 tests over 13 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
 history snapshots, asset paths, starter-vocabulary integrity, delete ordering, blocked database
-upgrades, the settings write race, hook ordering, and dependency declarations.
+upgrades, the settings write race, hook ordering, dependency declarations, and accessible names.
 
 Every suite was mutation-checked — deliberate regressions introduced one at a time to confirm the
 tests actually fail. A suite that passes against broken code is worse than no suite, and this project
@@ -235,7 +237,10 @@ Honest list, roughly in order of how much they matter:
 - **Parent mode is not keyboard-operable** — it needs a 1.5s pointer hold, which a keyboard or
   screen-reader user cannot perform.
 - **Parent mode is visually crowded on a phone**; edit controls overlap the artwork. Child mode is
-  unaffected.
+  unaffected. This got slightly worse, deliberately: the card reorder arrows were 20×20, below the
+  WCAG 2.5.8 AA minimum, and are now 24×24. On a 95×80 card carrying three overlaid controls, 44×44
+  each is geometrically impossible — the real fix is a different editing affordance for phones, not
+  bigger badges.
 - **The keyboard and history dialogs are not scannable**, so switch scanning deliberately does not
   offer them — reaching a dialog you cannot operate or dismiss is worse than not reaching it.
 - **No VoiceOver or TalkBack pass on a real device.** The iOS platform is not in the project.

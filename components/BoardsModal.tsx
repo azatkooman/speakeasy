@@ -152,7 +152,7 @@ const BoardsModal: React.FC<BoardsModalProps> = ({
              <div className="p-2 bg-purple-100 text-purple-600 rounded-xl"><Layers size={24} /></div>
              <h2 className="text-2xl font-black text-slate-800">{t('boards.title')}</h2>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-600">
+          <button aria-label={t('common.close')} onClick={onClose} className="p-2.5 rounded-full hover:bg-slate-200 text-slate-600">
             <X size={24} />
           </button>
         </div>
@@ -172,10 +172,10 @@ const BoardsModal: React.FC<BoardsModalProps> = ({
                                 className="flex-1 px-3 py-2 rounded-lg border-2 border-slate-200 focus:border-primary focus:outline-none font-bold text-slate-800 bg-white"
                                 autoFocus
                              />
-                             <button onClick={(e) => saveEdit(board, e)} disabled={isProcessing} className="p-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                             <button aria-label={t('common.save')} onClick={(e) => saveEdit(board, e)} disabled={isProcessing} className="p-2 bg-primary text-white rounded-lg hover:bg-primary/90">
                                  {isProcessing ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
                              </button>
-                             <button onClick={cancelEdit} className="p-2 bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300">
+                             <button aria-label={t('common.cancel')} onClick={cancelEdit} className="p-2 bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300">
                                  <X size={18} />
                              </button>
                         </div>
@@ -212,7 +212,7 @@ const BoardsModal: React.FC<BoardsModalProps> = ({
                         </div>
 
                         <div className="flex items-center gap-1 relative z-10">
-                            <button 
+                            <button aria-label={t('boards.rename')} 
                                 onClick={(e) => startEdit(board, e)}
                                 className="p-2 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all"
                                 title={t('boards.rename')}
@@ -221,10 +221,10 @@ const BoardsModal: React.FC<BoardsModalProps> = ({
                             </button>
                             {/* Prevent deleting the last board */}
                             {boards.length > 1 && (
-                                <button 
+                                <button aria-label={t('common.delete')} 
                                     onClick={(e) => promptDelete(board, e)}
                                     className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                                    title="Delete"
+                                    title={t('common.delete')}
                                 >
                                     <Trash2 size={18} />
                                 </button>
@@ -249,14 +249,14 @@ const BoardsModal: React.FC<BoardsModalProps> = ({
                             autoFocus
                             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
                         />
-                        <button 
+                        <button aria-label={t('boards.create')} 
                             onClick={handleCreate}
                             disabled={!newBoardName.trim() || isProcessing}
                             className="bg-purple-600 text-white p-3 rounded-xl hover:bg-purple-700 disabled:opacity-50"
                         >
                             {isProcessing ? <Loader2 size={24} className="animate-spin" /> : <Check size={24} />}
                         </button>
-                        <button 
+                        <button aria-label={t('common.cancel')} 
                             onClick={() => setIsCreating(false)}
                             className="bg-slate-100 text-slate-500 p-3 rounded-xl hover:bg-slate-200"
                         >

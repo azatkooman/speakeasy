@@ -48,7 +48,7 @@ const CreateSelectionModal: React.FC<CreateSelectionModalProps> = ({
                  </div>
                  <h2 className="text-xl font-black text-slate-800">{t('create.menu_title')}</h2>
              </div>
-             <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-400">
+             <button aria-label={t('common.close')} onClick={onClose} className="p-2.5 rounded-full hover:bg-slate-200 text-slate-400">
                 <X size={24} />
              </button>
         </div>
