@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, Monitor, Volume2, Grid, Languages, Sparkles, AlertTriangle, Home, Palette, Hand, ScanLine, BookPlus, Check } from 'lucide-react';
+import { X, Monitor, Volume2, Grid, Languages, Sparkles, AlertTriangle, Home, Palette, Hand, ScanLine, BookPlus, Check, Download, Upload, Save } from 'lucide-react';
 import { AppSettings } from '../types';
 import { voiceService } from '../services/voice';
 import { LANGUAGES, getLanguageOption } from '../utils/languages';
@@ -37,7 +37,45 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
    * their board, and a count is the difference between a considered yes and a
    * button they regret.
    */
-  const { addStarterVocabulary } = useSpeakEasy();
+  const { addStarterVocabulary, exportCurrentProfile, importProfileFile } = useSpeakEasy();
+
+  /*
+   * Backup. Kept deliberately plain: two buttons and a sentence of plain
+   * outcome. This is the control a parent reaches for when something has
+   * already gone wrong, so it must not need interpreting.
+   */
+  const [busy, setBusy] = useState<null | 'export' | 'import'>(null);
+  const [backupNote, setBackupNote] = useState<string | null>(null);
+  const [backupError, setBackupError] = useState<string | null>(null);
+  const fileInput = React.useRef<HTMLInputElement>(null);
+
+  const runExport = async () => {
+      setBusy('export'); setBackupNote(null); setBackupError(null);
+      try {
+          const r = await exportCurrentProfile();
+          const mb = (r.bytes / (1024 * 1024));
+          const size = mb >= 0.1 ? `${mb.toFixed(1)} MB` : `${Math.max(1, Math.round(r.bytes / 1024))} KB`;
+          setBackupNote(`${t('modal.settings.export_saved')} — ${r.filename} (${size})`
+              + (r.missingAssets > 0 ? ` · ${t('modal.settings.backup_missing')}` : ''));
+      } catch (e) {
+          setBackupError(e instanceof Error ? e.message : String(e));
+      } finally {
+          setBusy(null);
+      }
+  };
+
+  const runImport = async (file: File) => {
+      setBusy('import'); setBackupNote(null); setBackupError(null);
+      try {
+          const r = await importProfileFile(file);
+          setBackupNote(`${t('modal.settings.import_done')}: ${r.name} — `
+              + `${r.items} / ${r.categories} / ${r.boards}`);
+      } catch (e) {
+          setBackupError(e instanceof Error ? e.message : String(e));
+      } finally {
+          setBusy(null);
+      }
+  };
   const [vocabPlan, setVocabPlan] = useState<{ added: number; skipped: number; missingFolders: string[] } | null>(null);
   const [vocabResult, setVocabResult] = useState<number | null>(null);
   const [vocabBusy, setVocabBusy] = useState(false);
@@ -50,7 +88,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
    * could not run it again after adding a folder or after the vocabulary grows.
    */
   useEffect(() => {
-    if (!isOpen) { setVocabPlan(null); setVocabResult(null); }
+    if (!isOpen) { setVocabPlan(null); setVocabResult(null); setBackupNote(null); setBackupError(null); }
   }, [isOpen]);
 
   const planStarterWords = async () => {
@@ -499,6 +537,64 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                 })}
              </div>
              <p className="text-xs text-slate-400 font-medium">{t('modal.settings.shell_desc')}</p>
+          </section>
+
+          {/* Backup — export and restore */}
+          <section className="space-y-4">
+             <div className="flex items-center space-x-2 text-slate-800 font-bold text-lg">
+                <Save size={20} className="text-indigo-600" />
+                <h3>{t('modal.settings.backup')}</h3>
+             </div>
+             <p className="text-xs text-slate-500 font-medium">{t('modal.settings.backup_desc')}</p>
+
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                   onClick={runExport}
+                   disabled={busy !== null}
+                   className="flex items-center justify-center gap-2 min-h-[44px] py-3 px-3 rounded-xl border-2 border-slate-200 font-bold text-slate-700 hover:border-indigo-600 hover:text-indigo-700 disabled:opacity-50 transition-all active:scale-95"
+                >
+                   <Download size={18} />
+                   <span>{busy === 'export' ? t('modal.settings.backup_working') : t('modal.settings.export')}</span>
+                </button>
+
+                <button
+                   onClick={() => fileInput.current?.click()}
+                   disabled={busy !== null}
+                   className="flex items-center justify-center gap-2 min-h-[44px] py-3 px-3 rounded-xl border-2 border-slate-200 font-bold text-slate-700 hover:border-indigo-600 hover:text-indigo-700 disabled:opacity-50 transition-all active:scale-95"
+                >
+                   <Upload size={18} />
+                   <span>{busy === 'import' ? t('modal.settings.backup_working') : t('modal.settings.import')}</span>
+                </button>
+                <input
+                   ref={fileInput}
+                   type="file"
+                   accept="application/json,.json"
+                   className="hidden"
+                   aria-hidden="true"
+                   tabIndex={-1}
+                   onChange={e => {
+                       const f = e.target.files?.[0];
+                       // Reset first, so picking the same file twice still fires.
+                       e.target.value = '';
+                       if (f) void runImport(f);
+                   }}
+                />
+             </div>
+
+             <p className="text-xs text-slate-400 font-medium">{t('modal.settings.import_note')}</p>
+
+             {backupNote && (
+                <div className="flex items-start gap-2 bg-green-50 border border-green-100 p-3 rounded-xl" role="status">
+                   <Check size={16} className="text-green-600 mt-0.5 flex-shrink-0" />
+                   <p className="text-xs text-green-800 font-semibold break-words">{backupNote}</p>
+                </div>
+             )}
+             {backupError && (
+                <div className="flex items-start gap-2 bg-red-50 border border-red-100 p-3 rounded-xl" role="alert">
+                   <AlertTriangle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+                   <p className="text-xs text-red-700 font-semibold break-words">{backupError}</p>
+                </div>
+             )}
           </section>
 
         </div>

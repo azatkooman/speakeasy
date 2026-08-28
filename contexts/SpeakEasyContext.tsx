@@ -1,5 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { exportProfile, importProfile, parseBackup, serializeBackup, backupFilename, ImportResult } from '../services/backup';
+import { saveTextFile, readTextFile } from '../utils/fileTransfer';
 import { AACItem, Category, Board, ChildProfile, AppSettings, ColorTheme, GridSize, SearchHit } from '../types.ts';
 import { TranslationKey, getTranslation } from '../services/translations.ts';
 import { 
@@ -81,6 +83,10 @@ interface SpeakEasyContextType {
   reorderCore: (itemId: string, direction: -1 | 1) => Promise<void>;
   /** Add the starter vocabulary to an existing board without moving anything on it. */
   addStarterVocabulary: (opts?: { dryRun?: boolean }) => Promise<{ added: number; skipped: number; missingFolders: string[] }>;
+  /** Write the current child's boards to a file the parent keeps. */
+  exportCurrentProfile: () => Promise<{ filename: string; bytes: number; missingAssets: number }>;
+  /** Read a backup in as a NEW child, and switch to it. Never overwrites. */
+  importProfileFile: (file: File) => Promise<ImportResult>;
   moveItemToFolder: (item: AACItem | Category, type: 'card' | 'folder', targetFolderId: string) => Promise<void>;
 
   /**
@@ -699,6 +705,42 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
   };
 
+  /**
+   * Export the child currently open.
+   *
+   * Settings are flushed first: a backup that silently omits the voice speed the
+   * parent set thirty seconds ago is a bad backup, and the debounce means the
+   * value may still be in memory only.
+   */
+  const exportCurrentProfile = async () => {
+      if (!currentProfileId) throw new Error('No child profile is open.');
+      flushSettings();
+      await settingsWriteChain.current;
+
+      const { backup, missingAssets } = await exportProfile(currentProfileId);
+      const text = serializeBackup(backup);
+      const filename = backupFilename(backup.profile.name, backup.exportedAt);
+      await saveTextFile(filename, text);
+      return { filename, bytes: new Blob([text]).size, missingAssets };
+  };
+
+  /**
+   * Import a backup as a new child and open it.
+   *
+   * Switching to it is part of the feature, not a convenience: the parent needs
+   * to see the restored board to know the import worked before they consider
+   * deleting anything.
+   */
+  const importProfileFile = async (file: File): Promise<ImportResult> => {
+      const text = await readTextFile(file);
+      const backup = parseBackup(text);
+      const result = await importProfile(backup);
+
+      setProfiles(await getAllProfiles());
+      await switchProfile(result.profileId);
+      return result;
+  };
+
   const createBoard = async (label: string) => {
       if (!currentProfileId) return;
       const id = await createNewBoard(label, currentProfileId, t);
@@ -1267,7 +1309,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setEditMode: setIsEditMode, setSearchQuery, setIsSearchActive,
       switchProfile, switchBoard, navigateToFolder, navigateBackFolder, navigateBackBoard,
       createProfile, updateProfile, removeProfile, createBoard, updateBoard, removeBoard, setBoardGridSize,
-      saveCard, saveFolderObj, saveLinkBoard, deleteCard, deleteFolderObj, reorderCore, addStarterVocabulary, reorderGrid, moveItemToFolder,
+      saveCard, saveFolderObj, saveLinkBoard, deleteCard, deleteFolderObj, reorderCore, addStarterVocabulary, exportCurrentProfile, importProfileFile, reorderGrid, moveItemToFolder,
       selectItem, addTypedWord, vocabulary, previewItemId, addToSentence, removeFromSentence, removeLastFromSentence, clearSentence, playSentence, setSentenceFromHistory
   };
 

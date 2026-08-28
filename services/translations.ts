@@ -3,6 +3,15 @@ import { AppLanguage } from '../types';
 import { vocabLabel } from '../utils/starterVocabulary';
 
 export type TranslationKey = 
+  | 'modal.settings.backup'
+  | 'modal.settings.backup_desc'
+  | 'modal.settings.export'
+  | 'modal.settings.import'
+  | 'modal.settings.import_note'
+  | 'modal.settings.backup_working'
+  | 'modal.settings.export_saved'
+  | 'modal.settings.import_done'
+  | 'modal.settings.backup_missing'
   | 'a11y.move_left'
   | 'a11y.move_right'
   | 'common.close'
@@ -254,6 +263,15 @@ export type TranslationKey =
 
 const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
   en: {
+    'modal.settings.backup': 'Backup',
+    'modal.settings.backup_desc': 'Boards live only on this device. Save a backup before changing tablets, and keep it somewhere safe.',
+    'modal.settings.export': 'Save a backup',
+    'modal.settings.import': 'Restore from a file',
+    'modal.settings.import_note': 'A restore always adds a new child. Nothing already on this device is changed or replaced.',
+    'modal.settings.backup_working': 'Working…',
+    'modal.settings.export_saved': 'Backup saved',
+    'modal.settings.import_done': 'Restored as a new child',
+    'modal.settings.backup_missing': 'Some pictures or recordings were missing and could not be included.',
     'a11y.move_left': 'Move left',
     'a11y.move_right': 'Move right',
     'common.close': 'Close',
@@ -513,6 +531,15 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'onboarding.dismiss': 'Got it',
   },
   ru: {
+    'modal.settings.backup': 'Резервная копия',
+    'modal.settings.backup_desc': 'Планшеты хранят доски только у себя. Сохраните копию перед сменой устройства и держите её в надёжном месте.',
+    'modal.settings.export': 'Сохранить копию',
+    'modal.settings.import': 'Восстановить из файла',
+    'modal.settings.import_note': 'Восстановление всегда добавляет нового ребёнка. Ничего из того, что уже есть на устройстве, не меняется.',
+    'modal.settings.backup_working': 'Идёт работа…',
+    'modal.settings.export_saved': 'Копия сохранена',
+    'modal.settings.import_done': 'Восстановлено как новый профиль',
+    'modal.settings.backup_missing': 'Некоторые изображения или записи не найдены и не вошли в копию.',
     'a11y.move_left': 'Переместить влево',
     'a11y.move_right': 'Переместить вправо',
     'common.close': 'Закрыть',
@@ -772,6 +799,15 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'onboarding.dismiss': 'Понятно',
   },
   fr: {
+    'modal.settings.backup': 'Sauvegarde',
+    'modal.settings.backup_desc': 'Les tableaux n’existent que sur cet appareil. Enregistrez une sauvegarde avant de changer de tablette et conservez-la en sécurité.',
+    'modal.settings.export': 'Enregistrer une sauvegarde',
+    'modal.settings.import': 'Restaurer depuis un fichier',
+    'modal.settings.import_note': 'Une restauration ajoute toujours un nouvel enfant. Rien de ce qui est déjà sur l’appareil n’est modifié.',
+    'modal.settings.backup_working': 'En cours…',
+    'modal.settings.export_saved': 'Sauvegarde enregistrée',
+    'modal.settings.import_done': 'Restauré comme nouvel enfant',
+    'modal.settings.backup_missing': 'Certaines images ou enregistrements manquaient et n’ont pas pu être inclus.',
     'a11y.move_left': 'Déplacer à gauche',
     'a11y.move_right': 'Déplacer à droite',
     'common.close': 'Fermer',
@@ -1031,6 +1067,15 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'onboarding.dismiss': 'Compris',
   },
   es: {
+    'modal.settings.backup': 'Copia de seguridad',
+    'modal.settings.backup_desc': 'Los tableros solo existen en este dispositivo. Guarda una copia antes de cambiar de tableta y consérvala en un lugar seguro.',
+    'modal.settings.export': 'Guardar una copia',
+    'modal.settings.import': 'Restaurar desde un archivo',
+    'modal.settings.import_note': 'Una restauración siempre añade un niño nuevo. Nada de lo que ya está en el dispositivo se modifica.',
+    'modal.settings.backup_working': 'Trabajando…',
+    'modal.settings.export_saved': 'Copia guardada',
+    'modal.settings.import_done': 'Restaurado como nuevo niño',
+    'modal.settings.backup_missing': 'Faltaban algunas imágenes o grabaciones y no se pudieron incluir.',
     'a11y.move_left': 'Mover a la izquierda',
     'a11y.move_right': 'Mover a la derecha',
     'common.close': 'Cerrar',

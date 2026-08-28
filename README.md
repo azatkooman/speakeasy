@@ -58,6 +58,8 @@ key), so it has to survive every visual change.
   child keeps their motor plan
 - Parent-mode action to add the starter words to a board that already exists, without moving
   anything on it
+- Export a child to one file and restore it on another device. Slots are copied verbatim, and a
+  restore always adds a new child rather than overwriting one
 
 **Parents and professionals**
 - Multiple child profiles per device, each with its own boards and settings
@@ -141,10 +143,11 @@ a release-signed install, and forcing it would mean uninstalling and taking a ch
 components/   21 files — UI, all dialogs via components/Dialog.tsx
 contexts/     SpeakEasyContext.tsx — app state, persistence, playback
 pages/        BoardPage.tsx — the board, the rail, the scan graph
-services/     storage.ts (IndexedDB), translations.ts, voice.ts, arasaac.ts, audioPlayer.ts
+services/     storage.ts (IndexedDB), backup.ts (export/import), translations.ts, voice.ts,
+              arasaac.ts, audioPlayer.ts
 utils/        starterVocabulary.ts, keyboardLayouts.ts, useScanner.ts, useSelectable.ts,
               useRenderedCols.ts, history.ts, languages.ts, seedPictograms.ts, icons.ts
-tests/        13 suites, 93 tests
+tests/        14 suites, 107 tests
 scripts/      fetch-pictograms.mjs, build-review-sheet.mjs
 public/       92 bundled ARASAAC pictograms, manifest, icons
 android/      Capacitor Android project
@@ -163,6 +166,11 @@ android/      Capacitor Android project
 - **`components/Dialog.tsx`** — the one accessible dialog: `aria-modal`, focus trap, focus
   restoration, Escape, and the app behind it made `inert`. Portalled to `body`, which is what makes
   inertness possible.
+- **`services/backup.ts`** — export and import. Two rules it exists to keep: `slot` is copied
+  verbatim and never recomputed, because a restore that returns the right words in the wrong cells
+  has destroyed what was worth restoring; and import regenerates every id and rewrites every
+  reference, so it adds a child rather than overwriting one. Bundled pictograms stay as paths, which
+  is why a 90-card board exports as 34 KB rather than megabytes.
 - **`index.css`** — the two visual shells, expressed as CSS custom properties per Fitzgerald colour.
 
 ---
@@ -173,9 +181,10 @@ android/      Capacitor Android project
 npm test
 ```
 
-93 tests over 13 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
+107 tests over 14 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
 history snapshots, asset paths, starter-vocabulary integrity, delete ordering, blocked database
-upgrades, the settings write race, hook ordering, dependency declarations, and accessible names.
+upgrades, the settings write race, hook ordering, dependency declarations, accessible names,
+and backup round trips.
 
 Every suite was mutation-checked — deliberate regressions introduced one at a time to confirm the
 tests actually fail. A suite that passes against broken code is worse than no suite, and this project
@@ -244,9 +253,12 @@ else works with the network off.
 
 Honest list, roughly in order of how much they matter:
 
-- **No export or import.** Boards live only in that device's IndexedDB. A parent replacing a tablet
-  loses months of work, and a failed migration has no recovery path. This is the largest outstanding
-  risk and should land before the next schema change.
+- **Export and import do not work in the Android app yet.** The logic is platform-independent and
+  the web build is complete, but handing a file to the person using the app needs the system share
+  sheet, which means adding `@capacitor/share`. Writing to `Directory.Documents` instead is not a
+  substitute: on Android 11 and later that path lives under `Android/data/<package>`, which the file
+  manager will not open, so the parent could not find the backup. Until the plugin is added, the app
+  says so rather than writing a file nobody can reach.
 - **The starter vocabulary needs clinical review.** Symbol choices remain the weak point, and the
   verb/adjective forms in ru/fr/es are compromises an SLP should settle.
   `scripts/build-review-sheet.mjs` generates the review artefact.

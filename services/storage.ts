@@ -64,6 +64,62 @@ const saveAssetToFile = async (dataUrl: string | undefined): Promise<string | un
     }
 };
 
+/**
+ * Read a stored asset back as a `data:` URL, for export.
+ *
+ * Assets live in two different places depending on platform: on the web the
+ * `data:` URL sits in IndexedDB already, while on a device it was written to
+ * Directory.Data and the record holds a file URI. An export has to carry the
+ * bytes either way, or it is just a list of paths that mean nothing on the
+ * tablet the family moves to.
+ *
+ * Bundled pictograms are deliberately NOT inlined. They ship inside every copy
+ * of the app, so the path resolves on the destination device and inlining 90 of
+ * them would add megabytes to every backup for nothing.
+ *
+ * Returns undefined if the file has gone missing, so the caller can count the
+ * loss and say so, rather than writing a dangling path into a backup that looks
+ * complete.
+ */
+export const readAssetAsDataUrl = async (url: string | undefined): Promise<string | undefined> => {
+    if (!url) return undefined;
+    if (url.startsWith('data:')) return url;
+    if (isBundledAsset(url)) return url;
+    // Remote (legacy seed) URLs cannot be inlined offline; keep them as they are.
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        if (!url.includes('_capacitor_file_')) return url;
+    }
+    if (!isNative) return url;
+
+    // Mirror deleteAssetFile: the writer stored a bare filename under Directory.Data.
+    const storage = getStorageUrl(url) || url;
+    const name = storage.substring(storage.lastIndexOf('/') + 1);
+    if (!name) return undefined;
+
+    const ext = (name.split('.').pop() || '').toLowerCase();
+    const MIME: Record<string, string> = {
+        png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp',
+        gif: 'image/gif', svg: 'image/svg+xml',
+        webm: 'audio/webm', mp4: 'audio/mp4', m4a: 'audio/mp4',
+        aac: 'audio/aac', ogg: 'audio/ogg', wav: 'audio/wav', mp3: 'audio/mpeg',
+    };
+    const mime = MIME[ext] || 'application/octet-stream';
+
+    try {
+        const targetDirectory = (Directory && Directory.Data) ? Directory.Data : 'DATA';
+        const res = (await Filesystem.readFile({
+            path: name,
+            directory: targetDirectory as Parameters<typeof Filesystem.readFile>[0]['directory'],
+        })) as { data?: string | Blob };
+        const data = typeof res.data === 'string' ? res.data : '';
+        if (!data) return undefined;
+        return `data:${mime};base64,${data}`;
+    } catch (e) {
+        console.warn('Could not read asset for export', name, e);
+        return undefined;
+    }
+};
+
 const deleteAssetFile = async (path: string | undefined) => {
     if (!path || !isNative) return;
     let cleanPath = path;
