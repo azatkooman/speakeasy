@@ -85,6 +85,15 @@ export const readAssetAsDataUrl = async (url: string | undefined): Promise<strin
     if (!url) return undefined;
     if (url.startsWith('data:')) return url;
     if (isBundledAsset(url)) return url;
+    /*
+     * A Category.icon is usually an ICON_MAP key — a bare token like 'people' —
+     * not a path at all. getDisplayUrl applies the same rule. Without this the
+     * native branch below tried to read a file called 'people', failed, and
+     * returned undefined, which silently erased the artwork of every default
+     * folder on export. It only showed up on a device: the web path returns
+     * early, so a browser round trip looked perfect.
+     */
+    if (!url.includes('/')) return url;
     // Remote (legacy seed) URLs cannot be inlined offline; keep them as they are.
     if (url.startsWith('http://') || url.startsWith('https://')) {
         if (!url.includes('_capacitor_file_')) return url;

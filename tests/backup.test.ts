@@ -292,3 +292,30 @@ describe('a file chosen by a parent is untrusted', () => {
     expect(link.label).toBe('school');
   });
 });
+
+describe('encoding the file for a device', () => {
+  it('round-trips UTF-8, including the Cyrillic labels this app actually stores', async () => {
+    const { encodeUtf8Base64 } = await import('../utils/fileTransfer');
+    const decode = (b64: string) =>
+      new TextDecoder().decode(Uint8Array.from(atob(b64), c => c.charCodeAt(0)));
+
+    for (const sample of [
+      'plain ascii',
+      'Я хочу — ещё раз',            // ru labels, em dash
+      "J'aime · por la mañana",      // fr/es with accents and a middle dot
+      '{"emoji":"🙂","tab":"\t"}',
+    ]) {
+      expect(decode(encodeUtf8Base64(sample))).toBe(sample);
+    }
+  });
+
+  it('handles a payload larger than one chunk without overflowing', async () => {
+    const { encodeUtf8Base64 } = await import('../utils/fileTransfer');
+    // Comfortably past the 0x8000 chunk boundary, in multi-byte characters.
+    const big = 'ё'.repeat(200_000);
+    const out = encodeUtf8Base64(big);
+    const decoded = new TextDecoder().decode(Uint8Array.from(atob(out), c => c.charCodeAt(0)));
+    expect(decoded).toBe(big);
+    expect(decoded.length).toBe(200_000);
+  });
+});

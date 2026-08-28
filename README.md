@@ -58,8 +58,9 @@ key), so it has to survive every visual change.
   child keeps their motor plan
 - Parent-mode action to add the starter words to a board that already exists, without moving
   anything on it
-- Export a child to one file and restore it on another device. Slots are copied verbatim, and a
-  restore always adds a new child rather than overwriting one
+- Export a child to one file and restore it on another device — the system share sheet on Android,
+  a download on the web. Slots are copied verbatim, and a restore always adds a new child rather
+  than overwriting one
 
 **Parents and professionals**
 - Multiple child profiles per device, each with its own boards and settings
@@ -79,7 +80,7 @@ key), so it has to survive every visual change.
 |---|---|
 | UI | React 19, TypeScript 5.8, Vite 6 |
 | Styling | Tailwind 3.4 (deliberately not v4 — the class renames aren't worth the churn) |
-| Native | Capacitor 8 (WebView wrapper, Android) |
+| Native | Capacitor 8 (WebView wrapper, Android) — filesystem, share, haptics, splash, TTS |
 | Storage | IndexedDB, `speakeasy_aac_db` schema v7 |
 | Tests | Vitest 4 with fake-indexeddb |
 | Symbols | ARASAAC, bundled locally |
@@ -147,7 +148,7 @@ services/     storage.ts (IndexedDB), backup.ts (export/import), translations.ts
               arasaac.ts, audioPlayer.ts
 utils/        starterVocabulary.ts, keyboardLayouts.ts, useScanner.ts, useSelectable.ts,
               useRenderedCols.ts, history.ts, languages.ts, seedPictograms.ts, icons.ts
-tests/        14 suites, 107 tests
+tests/        15 suites, 112 tests
 scripts/      fetch-pictograms.mjs, build-review-sheet.mjs
 public/       92 bundled ARASAAC pictograms, manifest, icons
 android/      Capacitor Android project
@@ -171,6 +172,9 @@ android/      Capacitor Android project
   has destroyed what was worth restoring; and import regenerates every id and rewrites every
   reference, so it adds a child rather than overwriting one. Bundled pictograms stay as paths, which
   is why a 90-card board exports as 34 KB rather than megabytes.
+- **`utils/fileTransfer.ts`** — how the file leaves and re-enters the app. A download on the web; on
+  a device, staged in `Directory.Cache` and handed to the system share sheet, which is the only
+  route that puts it somewhere the family still has after the tablet is gone.
 - **`index.css`** — the two visual shells, expressed as CSS custom properties per Fitzgerald colour.
 
 ---
@@ -181,10 +185,10 @@ android/      Capacitor Android project
 npm test
 ```
 
-107 tests over 14 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
+112 tests over 15 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
 history snapshots, asset paths, starter-vocabulary integrity, delete ordering, blocked database
 upgrades, the settings write race, hook ordering, dependency declarations, accessible names,
-and backup round trips.
+backup round trips, and native asset handling.
 
 Every suite was mutation-checked — deliberate regressions introduced one at a time to confirm the
 tests actually fail. A suite that passes against broken code is worse than no suite, and this project
@@ -253,12 +257,10 @@ else works with the network off.
 
 Honest list, roughly in order of how much they matter:
 
-- **Export and import do not work in the Android app yet.** The logic is platform-independent and
-  the web build is complete, but handing a file to the person using the app needs the system share
-  sheet, which means adding `@capacitor/share`. Writing to `Directory.Documents` instead is not a
-  substitute: on Android 11 and later that path lives under `Android/data/<package>`, which the file
-  manager will not open, so the parent could not find the backup. Until the plugin is added, the app
-  says so rather than writing a file nobody can reach.
+- **A brand-new device cannot restore until a profile exists.** Backup lives in Settings, which
+  needs parent mode, which needs a board — so a parent setting up a replacement tablet has to create
+  a throwaway child first, then restore, then delete it. That is precisely the scenario the feature
+  exists for, so the Create Profile screen should offer "Restore from a backup" instead.
 - **The starter vocabulary needs clinical review.** Symbol choices remain the weak point, and the
   verb/adjective forms in ru/fr/es are compromises an SLP should settle.
   `scripts/build-review-sheet.mjs` generates the review artefact.

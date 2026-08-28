@@ -6,6 +6,7 @@ import { voiceService } from '../services/voice';
 import { LANGUAGES, getLanguageOption } from '../utils/languages';
 import Dialog from './Dialog.tsx';
 import { useSpeakEasy } from '../contexts/SpeakEasyContext.tsx';
+import { TransferCancelledError } from '../utils/fileTransfer';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -58,7 +59,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           setBackupNote(`${t('modal.settings.export_saved')} — ${r.filename} (${size})`
               + (r.missingAssets > 0 ? ` · ${t('modal.settings.backup_missing')}` : ''));
       } catch (e) {
-          setBackupError(e instanceof Error ? e.message : String(e));
+          // Dismissing the share sheet is a decision, not a failure.
+          if (!(e instanceof TransferCancelledError)) {
+              setBackupError(e instanceof Error ? e.message : String(e));
+          }
       } finally {
           setBusy(null);
       }
