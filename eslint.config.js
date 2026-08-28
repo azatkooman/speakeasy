@@ -22,7 +22,7 @@ import globals from 'globals';
  * step that is red by default gets ignored, which is worse than none.
  *
  * The warnings are ratcheted rather than ignored: `npm run lint` passes
- * `--max-warnings 64`, the count at the time this was introduced, so the number
+ * `--max-warnings 63`, the current count, so the number
  * can be lowered as things are fixed but cannot grow. Without that, a warning
  * list is just a list nobody reads.
  */

@@ -127,11 +127,6 @@ export type TranslationKey =
   | 'modal.settings.auto_clear_desc'
   | 'modal.settings.test_voice'
   | 'modal.settings.test_error'
-  | 'modal.categories.title'
-  | 'modal.categories.add'
-  | 'modal.categories.note'
-  | 'modal.categories.name'
-  | 'modal.categories.theme'
   | 'modal.categories.cancel'
   | 'modal.categories.save'
   | 'modal.confirm.delete_title'
@@ -361,11 +356,6 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.auto_clear_desc': 'Remove cards automatically after speech finishes.',
     'modal.settings.test_voice': 'Test Voice',
     'modal.settings.test_error': 'Error',
-    'modal.categories.title': 'Manage Categories',
-    'modal.categories.add': 'Add Custom Category',
-    'modal.categories.note': 'Note: Deleting a category does <strong>not</strong> delete the cards inside it. They will turn gray and appear in the "All" tab until you reassign them.',
-    'modal.categories.name': 'Name',
-    'modal.categories.theme': 'Color Theme',
     'modal.categories.cancel': 'Cancel',
     'modal.categories.save': 'Save',
     'modal.confirm.delete_title': 'Delete this item?',
@@ -603,11 +593,6 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.auto_clear_desc': 'Удалять карточки после произношения.',
     'modal.settings.test_voice': 'Проверить голос',
     'modal.settings.test_error': 'Ошибка',
-    'modal.categories.title': 'Управление категориями',
-    'modal.categories.add': 'Добавить категорию',
-    'modal.categories.note': 'Примечание: Удаление категории <strong>не</strong> удаляет карточки. Они станут серыми, пока вы не назначите им новую категорию.',
-    'modal.categories.name': 'Название',
-    'modal.categories.theme': 'Цвет',
     'modal.categories.cancel': 'Отмена',
     'modal.categories.save': 'Сохранить',
     'modal.confirm.delete_title': 'Удалить элемент?',
@@ -845,11 +830,6 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.auto_clear_desc': 'Supprime automatiquement les cartes.',
     'modal.settings.test_voice': 'Tester la Voix',
     'modal.settings.test_error': 'Erreur',
-    'modal.categories.title': 'Gérer les Catégories',
-    'modal.categories.add': 'Ajouter une Catégorie Personnalisée',
-    'modal.categories.note': 'Remarque : Supprimer une catégorie <strong>ne supprime pas</strong> les cartes qui s\'y trouvent. Elles deviendront grises.',
-    'modal.categories.name': 'Nom',
-    'modal.categories.theme': 'Thème de Couleur',
     'modal.categories.cancel': 'Annuler',
     'modal.categories.save': 'Enregistrer',
     'modal.confirm.delete_title': 'Supprimer cet élément ?',
@@ -1087,11 +1067,6 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'modal.settings.auto_clear_desc': 'Quitar tarjetas automáticamente después de hablar.',
     'modal.settings.test_voice': 'Probar Voz',
     'modal.settings.test_error': 'Error',
-    'modal.categories.title': 'Manejar Categorías',
-    'modal.categories.add': 'Añadir Categoría',
-    'modal.categories.note': 'Nota: Borrar una categoría <strong>no</strong> borra las tarjetas. Se verán grises hasta que les cambies de categoría.',
-    'modal.categories.name': 'Nombre',
-    'modal.categories.theme': 'Color o Tema',
     'modal.categories.cancel': 'Cancelar',
     'modal.categories.save': 'Guardar',
     'modal.confirm.delete_title': '¿Borrar esto?',

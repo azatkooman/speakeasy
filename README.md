@@ -110,7 +110,7 @@ Node 20 or newer (`.nvmrc` pins 20, which is what CI treats as the floor).
 `build` type-checks before bundling on purpose: Vite transpiles without consulting the type
 checker, so a build that skipped this step would happily deploy a type error to production.
 
-Lint warnings are ratcheted, not ignored — `lint` passes `--max-warnings 64`, the count when the
+Lint warnings are ratcheted, not ignored — `lint` passes `--max-warnings 63`, the count when the
 config was added, so the number can be driven down but cannot creep up.
 
 ### Android
