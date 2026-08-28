@@ -144,9 +144,9 @@ pages/        BoardPage.tsx — the board, the rail, the scan graph
 services/     storage.ts (IndexedDB), translations.ts, voice.ts, arasaac.ts, audioPlayer.ts
 utils/        starterVocabulary.ts, keyboardLayouts.ts, useScanner.ts, useSelectable.ts,
               useRenderedCols.ts, history.ts, languages.ts, seedPictograms.ts, icons.ts
-tests/        13 suites, 88 tests
+tests/        13 suites, 91 tests
 scripts/      fetch-pictograms.mjs, build-review-sheet.mjs
-public/       91 bundled ARASAAC pictograms, manifest, icons
+public/       92 bundled ARASAAC pictograms, manifest, icons
 android/      Capacitor Android project
 ```
 
@@ -173,7 +173,7 @@ android/      Capacitor Android project
 npm test
 ```
 
-88 tests over 13 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
+91 tests over 13 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
 history snapshots, asset paths, starter-vocabulary integrity, delete ordering, blocked database
 upgrades, the settings write race, hook ordering, dependency declarations, and accessible names.
 
@@ -231,9 +231,20 @@ Honest list, roughly in order of how much they matter:
 - **No export or import.** Boards live only in that device's IndexedDB. A parent replacing a tablet
   loses months of work, and a failed migration has no recovery path. This is the largest outstanding
   risk and should land before the next schema change.
-- **The starter vocabulary needs clinical review.** Six symbol choices are already flagged as
-  questionable, and the verb/adjective forms in ru/fr/es are compromises an SLP should settle.
+- **The starter vocabulary needs clinical review.** Symbol choices remain the weak point, and the
+  verb/adjective forms in ru/fr/es are compromises an SLP should settle.
   `scripts/build-review-sheet.mjs` generates the review artefact.
+
+  The failure mode to look for is a *correct keyword on the wrong sense of the word*, which the
+  automatic search cannot detect and the keyword guard cannot catch. The park card shipped in 2.0
+  with ARASAAC 5379, whose English keyword is exactly "park" but whose drawing is a car reversing
+  into a parking space; every label on the card — park / парк / parc / parque — means the place.
+  Fixed, and corrected on read for boards already seeded with it.
+
+  Spot-checked the other homonym-prone entries by looking at the images: `play`, `drink` and `shop`
+  are right. `water` is ARASAAC 32464, a running tap, and it sits in the FOOD folder where the card
+  is a child asking for a drink — a glass of water would read better. Left alone pending a decision,
+  since replacing a symbol a child may already have learned is a clinical call, not a technical one.
 - **Parent mode is not keyboard-operable** — it needs a 1.5s pointer hold, which a keyboard or
   screen-reader user cannot perform.
 - **Parent mode is visually crowded on a phone**; edit controls overlap the artwork. Child mode is

@@ -40,9 +40,36 @@ const LEGACY_REMOTE_TO_LOCAL: Record<string, string> = {
   'https://static.arasaac.org/pictograms/2462/2462_500.png': SEED_PICTOGRAMS.apple,
 };
 
+/**
+ * Corrections to symbols the starter vocabulary seeded with the wrong meaning.
+ *
+ * A seeded card writes `/pictograms/<id>.png` into IndexedDB and keeps it for
+ * the life of the profile, so correcting the vocabulary only helps boards
+ * created afterwards. These are applied on read instead — no migration, and
+ * nothing in the child's board is rewritten.
+ *
+ * This cannot override a parent's own choice: picking a symbol from the ARASAAC
+ * search stores the fetched file, never one of these bundled paths, so a path
+ * in this map can only have come from seeding.
+ *
+ * The old file stays bundled deliberately. History snapshots keep a copy of the
+ * image URL they were captured with and render it directly, so removing it would
+ * leave broken images in a child's saved sentences.
+ */
+const CORRECTED_SEED_SYMBOL: Record<string, string> = {
+  // ARASAAC 5379's English keyword is exactly "park", which is why the automatic
+  // search chose it, but the drawing is a car reversing into a parking space —
+  // the verb. Every label on this card (park / парк / parc / parque) means the
+  // place. 2859 is "playground, playpark": grass, trees, swings and a slide.
+  '/pictograms/5379.png': '/pictograms/2859.png',
+};
+
 /** True for an app-bundled asset path, which must not be rewritten as a native file URL. */
 export const isBundledAsset = (path: string): boolean =>
   path.startsWith('/pictograms/') || path.startsWith('/assets/') || path.startsWith('/icons/');
 
-export const resolveSeedPictogram = (url: string | undefined): string | undefined =>
-  url ? LEGACY_REMOTE_TO_LOCAL[url] || url : url;
+export const resolveSeedPictogram = (url: string | undefined): string | undefined => {
+  if (!url) return url;
+  const bundled = LEGACY_REMOTE_TO_LOCAL[url] || url;
+  return CORRECTED_SEED_SYMBOL[bundled] || bundled;
+};

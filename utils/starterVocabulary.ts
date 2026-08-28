@@ -146,7 +146,7 @@ export const FOLDER_VOCAB: Record<string, VocabEntry[]> = {
     e('outside', 5475, 'outside',  'на улице', 'dehors',      'fuera'),
     e('inside', 5439, 'inside',   'внутри',   'dedans',      'dentro'),
     e('toilet', 5921, 'toilet',   'туалет',   'toilettes',   'baño'),
-    e('park', 5379, 'park',     'парк',     'parc',        'parque'),
+    e('park', 2859, 'park',     'парк',     'parc',        'parque'),
     e('shop', 35695, 'shop',     'магазин',  'magasin',     'tienda'),
     e('bedroom', 5988, 'bedroom',  'спальня',  'chambre',     'dormitorio'),
     e('kitchen', 10752, 'kitchen',  'кухня',    'cuisine',     'cocina'),

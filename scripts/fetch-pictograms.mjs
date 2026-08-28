@@ -41,6 +41,10 @@ const PICTOGRAM_OVERRIDES = {
   hurt:      30620,   // "hurt, suffer, ache, pain" beats the bare "pain" symbol
   love_you:  11519,   // "love"
   little:     4716,   // "small, tiny, little" — the search returned "short", a different idea
+  park:       2859,   // "playground, playpark". ARASAAC's keyword for 5379 is
+                      // literally "park", but the drawing is a car reversing
+                      // into a parking space — the verb, not the place. The
+                      // keyword guard cannot catch this: the keyword matches.
 };
 
 const src = readFileSync('utils/starterVocabulary.ts', 'utf8');

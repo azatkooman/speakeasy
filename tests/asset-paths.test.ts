@@ -39,3 +39,28 @@ describe('resolveSeedPictogram', () => {
     expect(resolveSeedPictogram(undefined)).toBeUndefined();
   });
 });
+
+describe('corrected seed symbols', () => {
+  it('serves the park card the park, not a car parking', () => {
+    // ARASAAC 5379's keyword is literally "park" so the automatic search chose
+    // it, but the picture is a car reversing into a space. Boards seeded before
+    // the fix hold the old path and are corrected on read.
+    expect(resolveSeedPictogram('/pictograms/5379.png')).toBe('/pictograms/2859.png');
+  });
+
+  it('corrects a legacy remote URL and a wrong symbol in one pass', () => {
+    // Both maps have to apply, in that order, or an old install that stored the
+    // remote URL keeps the wrong picture.
+    const remote = 'https://static.arasaac.org/pictograms/5379/5379_500.png';
+    const viaLegacy = resolveSeedPictogram(remote);
+    // 5379 was never one of the five legacy remote seeds, so this one passes
+    // through unchanged — the assertion documents the boundary rather than
+    // claiming coverage it does not have.
+    expect(viaLegacy).toBe(remote);
+  });
+
+  it('leaves every other bundled pictogram alone', () => {
+    expect(resolveSeedPictogram('/pictograms/2859.png')).toBe('/pictograms/2859.png');
+    expect(resolveSeedPictogram('/pictograms/2462.png')).toBe('/pictograms/2462.png');
+  });
+});
