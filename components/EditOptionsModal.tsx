@@ -34,7 +34,6 @@ const EditOptionsModal: React.FC<EditOptionsModalProps> = ({
   // closed dialog must not render at all — its body reads state that only
 
   // exists while it is open.
-
   if (!(isOpen && !!item)) return null;
 
 

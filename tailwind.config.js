@@ -1,3 +1,5 @@
+import tailwindcssAnimate from 'tailwindcss-animate';
+
 /** @type {import('tailwindcss').Config} */
 // Ported verbatim from the inline `tailwind.config` that used to live in a
 // <script> tag in index.html alongside the cdn.tailwindcss.com build. Keeping
@@ -41,6 +43,6 @@ export default {
     // `zoom-in-*` in 31 places. The CDN build never included this plugin, so
     // all of those were inert. They now work as authored — see the
     // prefers-reduced-motion guard in index.css.
-    require('tailwindcss-animate'),
+    tailwindcssAnimate,
   ],
 };

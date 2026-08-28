@@ -72,7 +72,15 @@ class VoiceService {
     //    Fallback to Web Speech API if native fails.
     // 3. Web: Use Web Speech API.
 
-    return new Promise(async (resolve, reject) => {
+    /*
+     * The executor is deliberately not async. An async executor discards its
+     * own returned promise, so anything that throws inside it becomes an
+     * unhandled rejection rather than reaching a caller — and this method's
+     * contract is that speaking always settles, via `finish()` or the safety
+     * timeout, so that a failed utterance can never leave the sentence frozen.
+     * The work runs in an inner function whose failure routes to finish().
+     */
+    return new Promise<void>((resolve) => { void (async () => {
       let hasResolved = false;
 
       const finish = () => {
@@ -121,13 +129,12 @@ class VoiceService {
         // Ensure voices are loaded
         if (window.speechSynthesis.getVoices().length === 0) {
              await new Promise<void>(r => {
-                 let tOut: number;
-                 const onVoices = () => {
+                 // Arm the fallback first so the listener can close over a const.
+                 const tOut = window.setTimeout(r, 500); // Don't wait forever
+                 window.speechSynthesis.addEventListener('voiceschanged', () => {
                      clearTimeout(tOut);
                      r();
-                 };
-                 window.speechSynthesis.addEventListener('voiceschanged', onVoices, { once: true });
-                 tOut = window.setTimeout(r, 500); // Don't wait forever
+                 }, { once: true });
              });
         }
 
@@ -193,7 +200,7 @@ class VoiceService {
         clearTimeout(safetyTimeout);
         finish();
       }
-    });
+    })().catch(e => { console.error('SpeechSynthesis failed unexpectedly', e); resolve(); }); });
   }
 }
 

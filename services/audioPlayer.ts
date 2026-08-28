@@ -42,7 +42,11 @@ export class AudioPlayerService {
     }
   
     public async play(url: string): Promise<void> {
-      return new Promise(async (resolve) => {
+      // The executor is deliberately not async: an async executor swallows any
+      // rejection thrown inside it, because the returned promise is discarded.
+      // The work runs in an inner function whose failure is routed to resolve,
+      // matching this method's contract that playback never rejects.
+      return new Promise<void>((resolve) => { void (async () => {
         const timeout = setTimeout(() => resolve(), 8000); // Safety timeout
   
         const fallbackToHtmlAudio = () => {
@@ -106,7 +110,7 @@ export class AudioPlayerService {
           console.warn("Web Audio API failed, trying fallback:", e);
           fallbackToHtmlAudio();
         }
-      });
+      })(); });
     }
   }
   

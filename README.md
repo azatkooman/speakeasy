@@ -1,5 +1,7 @@
 # SpeakEasy AAC
 
+[![CI](https://github.com/azatkooman/speakeasy/actions/workflows/ci.yml/badge.svg)](https://github.com/azatkooman/speakeasy/actions/workflows/ci.yml)
+
 An Augmentative and Alternative Communication (AAC) app for children who speak little or not at all.
 The child taps cards with pictures to build a sentence, and the device says it aloud.
 
@@ -93,13 +95,23 @@ npm run dev          # http://localhost:3000
 No environment variables, no API keys, no accounts. If you find a `.env.local` on your machine it is
 a leftover — nothing reads it.
 
+Node 20 or newer (`.nvmrc` pins 20, which is what CI treats as the floor).
+
 | Command | |
 |---|---|
 | `npm run dev` | Vite dev server |
-| `npm run build` | production bundle into `dist/` |
+| `npm run build` | typecheck, then production bundle into `dist/` |
+| `npm run typecheck` | `tsc --noEmit`, strict |
+| `npm run lint` | ESLint |
 | `npm test` | full suite, once |
 | `npm run test:watch` | suite in watch mode |
-| `npx tsc --noEmit` | typecheck (strict) |
+| `npm run verify` | typecheck + lint + tests — what CI runs |
+
+`build` type-checks before bundling on purpose: Vite transpiles without consulting the type
+checker, so a build that skipped this step would happily deploy a type error to production.
+
+Lint warnings are ratcheted, not ignored — `lint` passes `--max-warnings 64`, the count when the
+config was added, so the number can be driven down but cannot creep up.
 
 ### Android
 
@@ -130,7 +142,7 @@ pages/        BoardPage.tsx — the board, the rail, the scan graph
 services/     storage.ts (IndexedDB), translations.ts, voice.ts, arasaac.ts, audioPlayer.ts
 utils/        starterVocabulary.ts, keyboardLayouts.ts, useScanner.ts, useSelectable.ts,
               useRenderedCols.ts, history.ts, languages.ts, seedPictograms.ts, icons.ts
-tests/        7 suites, 62 tests
+tests/        11 suites, 79 tests
 scripts/      fetch-pictograms.mjs, build-review-sheet.mjs
 public/       91 bundled ARASAAC pictograms, manifest, icons
 android/      Capacitor Android project
@@ -159,14 +171,24 @@ android/      Capacitor Android project
 npm test
 ```
 
-62 tests over 7 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
-history snapshots, asset paths, and starter-vocabulary integrity.
+79 tests over 11 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
+history snapshots, asset paths, starter-vocabulary integrity, delete ordering, blocked database
+upgrades, the settings write race, and hook ordering.
 
 Every suite was mutation-checked — deliberate regressions introduced one at a time to confirm the
 tests actually fail. A suite that passes against broken code is worse than no suite, and this project
 had two invalid tests before that habit started.
 
 There is no UI test coverage. Interaction and accessibility behaviour is still verified by hand.
+
+### CI
+
+`.github/workflows/ci.yml` runs typecheck, lint, tests and build on every push to `main` and every
+pull request, against Node 20 and 22. It installs with `npm ci` rather than `npm install`, which
+matters here because several dependencies are still declared as `"latest"` — the lockfile is the
+only thing making a CI run reproducible, and `npm install` would quietly wander off it.
+
+Locally, `npm run verify` is the same three checks without the build.
 
 ---
 

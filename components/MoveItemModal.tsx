@@ -16,14 +16,21 @@ interface MoveItemModalProps {
 }
 
 const MoveItemModal: React.FC<MoveItemModalProps> = ({ isOpen, onClose, itemToMove, categories, onMove, t }) => {
-  if (!isOpen || !itemToMove) return null;
-
-  const { item, type } = itemToMove;
+  /*
+   * No early return above this point. The hooks below must run on every render,
+   * open or closed: a component that calls no hooks when closed and one when
+   * open is relying on React tolerating a growing hook list, which is not a
+   * guarantee. The guard sits after the hooks instead.
+   */
+  const item = itemToMove?.item;
+  const type = itemToMove?.type;
 
   // Determine current parent ID for highlighting
-  const currentParentId = type === 'card' 
-    ? (item as AACItem).category 
-    : (item as Category).parentId || ROOT_FOLDER;
+  const currentParentId = !item
+    ? ROOT_FOLDER
+    : type === 'card'
+      ? (item as AACItem).category
+      : (item as Category).parentId || ROOT_FOLDER;
 
   // Helper to check if a folder is a descendant of the folder being moved (to prevent circular nesting)
   const isDescendant = (potentialParentId: string, movingFolderId: string): boolean => {
@@ -53,7 +60,7 @@ const MoveItemModal: React.FC<MoveItemModalProps> = ({ isOpen, onClose, itemToMo
 
         children.forEach(child => {
             // If we are moving a folder, we cannot move it into itself or its children
-            if (type === 'folder') {
+            if (type === 'folder' && item) {
                 if (child.id === item.id) return; // Can't move into self
                 if (isDescendant(child.id, item.id)) return; // Can't move into children
             }
@@ -69,15 +76,16 @@ const MoveItemModal: React.FC<MoveItemModalProps> = ({ isOpen, onClose, itemToMo
     return dests;
   }, [categories, item, type, t]);
 
-  const movingItemLabel = (item as any).labelKey ? t((item as any).labelKey as TranslationKey) : item.label;
+  const movingItemLabel = !item
+    ? ''
+    : (item as any).labelKey ? t((item as any).labelKey as TranslationKey) : item.label;
 
   // Children of <Dialog> are evaluated before they are passed to it, so a
 
   // closed dialog must not render at all — its body reads state that only
 
   // exists while it is open.
-
-  if (!(isOpen)) return null;
+  if (!isOpen || !itemToMove) return null;
 
 
   return (

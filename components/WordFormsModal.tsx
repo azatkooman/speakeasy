@@ -51,8 +51,7 @@ const WordFormsModal: React.FC<WordFormsModalProps> = ({ card, baseLabel, onClos
   // closed dialog must not render at all — its body reads state that only
 
   // exists while it is open.
-
-  if (!(!!card)) return null;
+  if (!card) return null;
 
 
   return (

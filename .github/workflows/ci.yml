@@ -1,0 +1,73 @@
+name: CI
+
+# Every push and every pull request. The point of this workflow is that the
+# checks stop being something a person has to remember: four of the bugs fixed
+# recently in this repo were the kind a machine catches for free — a hook called
+# conditionally, an unreachable branch, a type error that `vite build` never
+# looked at.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # 20 is the floor declared in package.json engines; 22 is the current
+        # LTS. Development happens on a newer runtime than either, and the test
+        # suite already carries a workaround for one Node-version difference
+        # (Node 26 shadowing localStorage), so breadth here is worth the minute
+        # it costs.
+        node: [20, 22]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      # `npm ci` installs exactly the lockfile, which is the whole reason the
+      # lockfile is committed while ten dependencies are still declared as
+      # "latest". A plain `npm install` here would silently resolve new majors
+      # and the run would stop testing what actually ships.
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      # Last, because it is the slowest and the least likely to fail on its own
+      # once the three above are green. It also re-runs the typecheck, which is
+      # deliberate: `build` is what Vercel runs, so this proves that command.
+      - name: Build
+        run: npm run build
+
+  # Kept separate so a symbol or vocabulary change is checked even though it
+  # cannot break the build: the bundled pictograms and the four-language labels
+  # are the app's content, and a missing file or an untranslated word is a
+  # defect users see rather than one the compiler does.
+  content:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Starter vocabulary and bundled symbols
+        run: npx vitest run tests/starter-vocabulary.test.ts tests/keyboard-layouts.test.ts tests/asset-paths.test.ts

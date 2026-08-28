@@ -6,7 +6,7 @@ export default defineConfig({
     // exercise comes from fake-indexeddb, loaded per test file so each one gets
     // a clean database rather than inheriting another file's schema version.
     environment: 'node',
-    include: ['tests/**/*.test.ts'],
+    include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
     // Migrations open and reopen databases; serialising keeps two files from
     // fighting over the same fake-indexeddb instance.
     fileParallelism: false,

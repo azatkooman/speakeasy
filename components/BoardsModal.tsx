@@ -101,8 +101,7 @@ const BoardsModal: React.FC<BoardsModalProps> = ({
   // closed dialog must not render at all — its body reads state that only
 
   // exists while it is open.
-
-  if (!(isOpen)) return null;
+  if (!isOpen) return null;
 
 
   return (
