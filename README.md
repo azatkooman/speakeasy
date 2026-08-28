@@ -144,7 +144,7 @@ pages/        BoardPage.tsx — the board, the rail, the scan graph
 services/     storage.ts (IndexedDB), translations.ts, voice.ts, arasaac.ts, audioPlayer.ts
 utils/        starterVocabulary.ts, keyboardLayouts.ts, useScanner.ts, useSelectable.ts,
               useRenderedCols.ts, history.ts, languages.ts, seedPictograms.ts, icons.ts
-tests/        13 suites, 91 tests
+tests/        13 suites, 93 tests
 scripts/      fetch-pictograms.mjs, build-review-sheet.mjs
 public/       92 bundled ARASAAC pictograms, manifest, icons
 android/      Capacitor Android project
@@ -173,7 +173,7 @@ android/      Capacitor Android project
 npm test
 ```
 
-91 tests over 13 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
+93 tests over 13 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
 history snapshots, asset paths, starter-vocabulary integrity, delete ordering, blocked database
 upgrades, the settings write race, hook ordering, dependency declarations, and accessible names.
 

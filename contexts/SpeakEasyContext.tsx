@@ -614,6 +614,17 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const createProfile = async (name: string, age: number, color: ColorTheme) => {
+      /*
+       * Creating a profile is a switch as much as switchProfile is: it points
+       * the app at a different child and adopts that child's settings. So the
+       * pending write belongs to the child being left, and has to land before
+       * anything moves — while settingsRef and currentProfileIdRef still
+       * describe them. Without this, adoptSettings below replaces settingsRef
+       * with the new child's defaults and the outgoing change is simply gone.
+       */
+      flushSettings();
+      await settingsWriteChain.current;
+
       const id = crypto.randomUUID();
       
       // Initialize with settings, inheriting current language selection
@@ -644,10 +655,29 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const updateProfile = async (p: ChildProfile) => {
-      // Ensure we preserve existing settings when updating basic info
-      const existing = profiles.find(prof => prof.id === p.id);
+      /*
+       * Land any pending settings write first. This edits name/age/colour from
+       * a form that carries no settings, so it reads them back off the existing
+       * record — and a write still in the debounce would make that record stale
+       * in one direction or the other.
+       */
+      /*
+       * Two writers touch this record: this function, and the debounced settings
+       * flush. Each builds its write by spreading a base object it read earlier,
+       * so whichever lands second silently reverts the other's field — the flush
+       * would restore the old name, or this would restore the old settings.
+       *
+       * So land the pending write and *wait* for it before reading anything.
+       * Flushing without awaiting is not enough: the flush only queues onto the
+       * write chain, so it would still complete after the save below.
+       */
+      flushSettings();
+      await settingsWriteChain.current;
+
+      // Read the stored record, not component state: the flush just changed it.
+      const existing = (await getAllProfiles()).find(prof => prof.id === p.id);
       const updated = { ...p, settings: existing?.settings || p.settings || DEFAULT_SETTINGS };
-      
+
       await saveProfile(updated);
       setProfiles(await getAllProfiles());
   };

@@ -117,4 +117,58 @@ describe('settings writes follow the profile they belong to', () => {
     const ids = (await storage.getAllProfiles()).map((p: any) => p.id);
     expect(ids).not.toContain(ada);
   });
+
+  /**
+   * Creating a profile is a profile *switch* as much as switchProfile is: it
+   * points the app at a different child and adopts that child's settings.
+   * switchProfile flushes the pending write first, for the reason above.
+   * createProfile did not, so a setting changed in the moment before adding a
+   * sibling was overwritten in memory by the new child's defaults and never
+   * reached the outgoing child's profile.
+   *
+   * A carer setting up a second child on a shared tablet is doing exactly this:
+   * adjust something, then add the sibling.
+   */
+  it('does not lose the outgoing child’s setting when a profile is created mid-debounce', async () => {
+    const { get, storage, delay } = await mountApp();
+
+    await act(async () => { await get().createProfile('Ada', 6, 'blue'); });
+    const ada = get().currentProfileId;
+
+    // Nudge Ada's voice speed, leaving a write inside the debounce window...
+    await act(async () => { get().setSettings((prev: any) => ({ ...prev, voiceRate: 1.4 })); });
+    // ...then add a sibling before it has flushed.
+    await act(async () => { await get().createProfile('Bo', 9, 'pink'); });
+    const bo = get().currentProfileId;
+
+    await act(async () => { await new Promise(r => setTimeout(r, delay * 3)); });
+
+    expect(ada).not.toBe(bo);
+    expect((await settingsOf(storage, ada))?.voiceRate, "Ada's change was dropped").toBe(1.4);
+    expect((await settingsOf(storage, bo))?.voiceRate, "Ada's change leaked to Bo").toBe(0.9);
+  });
+
+  /**
+   * Editing name/age/colour comes from a form that carries no settings, so it
+   * reads them back off the stored record. A write still in the debounce makes
+   * that record stale, and whichever save lands second wins — so either the
+   * setting or the rename is lost.
+   */
+  it('keeps both the rename and a pending setting when a profile is edited mid-debounce', async () => {
+    const { get, storage, delay } = await mountApp();
+
+    await act(async () => { await get().createProfile('Ada', 6, 'blue'); });
+    const ada = get().currentProfileId;
+
+    await act(async () => { get().setSettings((prev: any) => ({ ...prev, voiceRate: 1.4 })); });
+    await act(async () => {
+      const p = (await storage.getAllProfiles()).find((x: any) => x.id === ada);
+      await get().updateProfile({ ...p, name: 'Ada B' });
+    });
+    await act(async () => { await new Promise(r => setTimeout(r, delay * 3)); });
+
+    const stored = (await storage.getAllProfiles()).find((p: any) => p.id === ada);
+    expect(stored?.name, 'the rename was reverted').toBe('Ada B');
+    expect(stored?.settings?.voiceRate, 'the pending setting was dropped').toBe(1.4);
+  });
 });
