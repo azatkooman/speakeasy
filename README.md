@@ -142,7 +142,7 @@ pages/        BoardPage.tsx — the board, the rail, the scan graph
 services/     storage.ts (IndexedDB), translations.ts, voice.ts, arasaac.ts, audioPlayer.ts
 utils/        starterVocabulary.ts, keyboardLayouts.ts, useScanner.ts, useSelectable.ts,
               useRenderedCols.ts, history.ts, languages.ts, seedPictograms.ts, icons.ts
-tests/        11 suites, 79 tests
+tests/        12 suites, 85 tests
 scripts/      fetch-pictograms.mjs, build-review-sheet.mjs
 public/       91 bundled ARASAAC pictograms, manifest, icons
 android/      Capacitor Android project
@@ -171,9 +171,9 @@ android/      Capacitor Android project
 npm test
 ```
 
-79 tests over 11 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
+85 tests over 12 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
 history snapshots, asset paths, starter-vocabulary integrity, delete ordering, blocked database
-upgrades, the settings write race, and hook ordering.
+upgrades, the settings write race, hook ordering, and dependency declarations.
 
 Every suite was mutation-checked — deliberate regressions introduced one at a time to confirm the
 tests actually fail. A suite that passes against broken code is worse than no suite, and this project
@@ -185,8 +185,10 @@ There is no UI test coverage. Interaction and accessibility behaviour is still v
 
 `.github/workflows/ci.yml` runs typecheck, lint, tests and build on every push to `main` and every
 pull request, against Node 20 and 22. It installs with `npm ci` rather than `npm install`, which
-matters here because several dependencies are still declared as `"latest"` — the lockfile is the
-only thing making a CI run reproducible, and `npm install` would quietly wander off it.
+matters because the lockfile is what makes a run reproducible; `npm install` is free to wander off
+it. Every dependency is declared as a caret range on a real version — `tests/dependencies.test.ts`
+fails the build if a moving tag like `"latest"` reappears, or if a Capacitor plugin drifts onto a
+different major than `@capacitor/core`.
 
 Locally, `npm run verify` is the same three checks without the build.
 
