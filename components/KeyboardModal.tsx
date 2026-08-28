@@ -78,7 +78,7 @@ const KeyboardModal: React.FC<KeyboardModalProps> = ({ isOpen, onClose, vocabula
       label={t('keyboard.title')}
       scrimClassName="fixed inset-0 z-[95] flex items-end justify-center bg-slate-900/50 backdrop-blur-sm"
       panelClassName="bg-white w-full max-w-3xl rounded-t-3xl shadow-2xl overflow-hidden"
-      panelStyle={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 0.75rem)' }}
+      panelStyle={{ paddingBottom: 'calc(var(--sa-bottom) + 0.75rem)' }}
     >
         <div className="flex items-center gap-3 p-4 border-b border-slate-100 bg-slate-50">
           <div className="p-2 bg-primary/10 text-primary rounded-xl"><KeyboardIcon size={20} /></div>

@@ -481,7 +481,7 @@ export const BoardPage: React.FC = () => {
       <main 
         ref={mainRef} 
         className="flex-1 min-w-0 overflow-y-auto p-4"
-        style={{ paddingBottom: isEditMode ? 'calc(10rem + env(safe-area-inset-bottom))' : 'calc(8rem + env(safe-area-inset-bottom))' }}
+        style={{ paddingBottom: isEditMode ? 'calc(10rem + var(--sa-bottom))' : 'calc(8rem + var(--sa-bottom))' }}
       >
         {/*
           Fixed grid. The column count comes from the board, not from Tailwind
@@ -664,7 +664,7 @@ export const BoardPage: React.FC = () => {
       {isEditMode && (
         <div 
             className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-200 p-4 z-50 flex items-center justify-between gap-4" 
-            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
+            style={{ paddingBottom: 'calc(var(--sa-bottom) + 1.5rem)' }}
         >
             <div className="flex-1 flex justify-start gap-4 sm:gap-8 pl-2">
                 <button onClick={() => setIsProfileModalOpen(true)} className="flex flex-col items-center text-slate-500 group"><div className="p-2 rounded-2xl group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors"><User size={24} /></div><span className="text-[10px] font-bold group-hover:text-indigo-600">{t('nav.profiles')}</span></button>

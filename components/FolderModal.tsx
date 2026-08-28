@@ -325,7 +325,7 @@ const FolderModal: React.FC<FolderModalProps> = ({ isOpen, onClose, onSave, edit
 
           <div 
             className="p-4 border-t border-slate-100 bg-white"
-            style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
+            style={{ paddingBottom: 'calc(var(--sa-bottom) + 1.5rem)' }}
           >
             <button
                 type="submit"

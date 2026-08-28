@@ -14,6 +14,29 @@
   color-scheme: light;
 }
 
+/*
+  Safe-area insets, from whichever mechanism actually supplies them.
+
+  From Android 15 (targetSdk 35+) the system draws the app edge-to-edge, so the
+  app is responsible for keeping content out from under the status and
+  navigation bars. Capacitor 8 supplies those insets two different ways
+  depending on the device: on a recent WebView with viewport-fit=cover it passes
+  them through natively, so `env(safe-area-inset-*)` works; on an older WebView
+  it consumes them and instead sets `--safe-area-inset-*` custom properties on
+  the root element.
+
+  minSdk here is 24, so both cases ship. Reading only `env()` — which is what
+  this app did — means the fallback path silently resolves to zero and the board
+  renders under the system bars. Taking the larger of the two is correct in
+  either case, because the one that is not in use reports 0.
+*/
+:root {
+  --sa-top: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
+  --sa-right: max(env(safe-area-inset-right, 0px), var(--safe-area-inset-right, 0px));
+  --sa-bottom: max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px));
+  --sa-left: max(env(safe-area-inset-left, 0px), var(--safe-area-inset-left, 0px));
+}
+
 body {
   background-color: #f0f4f8;
   color: #1e293b;

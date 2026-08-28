@@ -269,7 +269,21 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setCurrentFolderId(ROOT_FOLDER);
         setBoardHistory([]);
         setSentence([]);
-    } catch (e) { console.error(e); }
+    } catch (e) {
+        /*
+         * This used to be `console.error(e)` and nothing else, which turned a
+         * total failure into a silently empty board — the app opened, the
+         * chrome rendered, and the child had no words and no explanation. For a
+         * communication device that is the worst possible way to fail.
+         *
+         * An Error logged bare stringifies to "[object Object]" in a WebView, so
+         * the message and stack are spelled out; that is what made this
+         * diagnosable at all.
+         */
+        const detail = e instanceof Error ? `${e.name}: ${e.message}\n${e.stack}` : String(e);
+        console.error('Failed to load profile data —', detail);
+        setInitError(detail);
+    }
   };
 
   const reloadCurrentData = async () => {

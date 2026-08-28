@@ -623,7 +623,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
           </div>
         </div>
 
-        <div className="p-6 border-t border-slate-100 bg-white" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}>
+        <div className="p-6 border-t border-slate-100 bg-white" style={{ paddingBottom: 'calc(var(--sa-bottom) + 1.5rem)' }}>
           <button onClick={handleSave} disabled={!label || !imagePreview} className={`w-full py-4 rounded-2xl font-black text-xl flex items-center justify-center space-x-2 transition-all ${!label || !imagePreview ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : 'bg-primary text-white shadow-btn active:shadow-btn-active active:translate-y-[4px] hover:brightness-110'}`}><span>{editItem ? t('modal.create.update') : t('modal.create.save')}</span><Check size={24} strokeWidth={3} /></button>
         </div>
     </Dialog>

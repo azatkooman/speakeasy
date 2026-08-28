@@ -72,6 +72,14 @@ const MainLayout: React.FC = () => {
 
   return (
     <div data-shell={settings.shell || 'youngLearner'}
+      /*
+        Horizontal insets at the shell, so a display cutout in landscape cannot
+        sit over the core-word rail or the first column of the board. Nothing
+        handled left/right before this — only top and bottom — and the rail is
+        flush to the left edge, which is exactly where a rotated phone puts its
+        cutout.
+      */
+      style={{ paddingLeft: 'var(--sa-left)', paddingRight: 'var(--sa-right)' }}
       className="h-screen w-full bg-background flex flex-col overflow-hidden font-sans select-none">
       <Header />
       <Routes>

@@ -62,7 +62,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
     >
       <div
         className="flex items-center gap-3 px-4 py-3 border-b border-slate-200 bg-slate-50 shrink-0"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
+        style={{ paddingTop: 'calc(var(--sa-top) + 0.75rem)' }}
       >
         <div className="relative flex-1 min-w-0">
           <input
@@ -88,7 +88,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({
       <div
         className="flex-1 overflow-y-auto p-3"
         aria-live="polite"
-        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
+        style={{ paddingBottom: 'calc(var(--sa-bottom) + 1rem)' }}
       >
         {trimmed === '' ? (
           <p className="text-center text-slate-400 font-semibold py-12 px-6">{t('search.placeholder')}</p>

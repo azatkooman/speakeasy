@@ -74,7 +74,7 @@ export const Header: React.FC = () => {
   return (
       <div 
         className="flex justify-between items-center px-4 py-3 bg-white/90 backdrop-blur-sm border-b border-slate-200 z-40 shrink-0 transition-all" 
-        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 0.75rem)' }}
+        style={{ paddingTop: 'calc(var(--sa-top) + 0.75rem)' }}
       >
         <>
                 <div className="flex items-center gap-3">

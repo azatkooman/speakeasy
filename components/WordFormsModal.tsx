@@ -62,7 +62,7 @@ const WordFormsModal: React.FC<WordFormsModalProps> = ({ card, baseLabel, onClos
       label={t('forms.title')}
       scrimClassName="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-slate-900/50 backdrop-blur-sm p-0 sm:p-4"
       panelClassName="bg-white w-full max-w-sm sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden"
-      panelStyle={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}
+      panelStyle={{ paddingBottom: 'calc(var(--sa-bottom) + 1rem)' }}
     >
         <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50">
           <div className="flex items-center gap-3">

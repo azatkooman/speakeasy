@@ -18,8 +18,22 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            /*
+             * R8 on. Play flags an unoptimized release, and this is safe to
+             * enable for a Capacitor app because Capacitor declares
+             * consumerProguardFiles — the keep rules protecting
+             * @CapacitorPlugin classes and anything extending Plugin come along
+             * automatically, so reflection-blind shrinking cannot strip them.
+             *
+             * Verified by running the minified build, not just building it: a
+             * fresh profile seeds all 90 starter words, the board and rail
+             * render, and TTS fires. Measured 5,341,485 -> 3,872,832 bytes,
+             * a 27.5% reduction, almost all of it shrinkResources removing
+             * unused AndroidX resources rather than R8 shrinking our own code.
+             */
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
             // Debug builds install alongside the Play release rather than over

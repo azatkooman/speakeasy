@@ -45,7 +45,7 @@ const EditOptionsModal: React.FC<EditOptionsModalProps> = ({
       label={type === 'card' ? t('modal.create.title_edit') : t('folder.edit')}
       scrimClassName="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200"
       panelClassName="bg-white w-full max-w-sm sm:rounded-3xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col animate-in slide-in-from-bottom-10 duration-200 border-t-4 sm:border-4 border-white"
-      panelStyle={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
+      panelStyle={{ paddingBottom: 'calc(var(--sa-bottom) + 1.5rem)' }}
     >
         
         {/* Header with Preview */}
