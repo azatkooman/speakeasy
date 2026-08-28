@@ -205,11 +205,27 @@ Pictographic symbols are the property of the Government of Aragón, created by S
 The non-commercial clause is load-bearing: the app is free, which is compatible. **If it ever carries
 a price, a paid tier, or advertising, these symbols must be relicensed or replaced first.**
 
-Regenerate the symbol set with `node scripts/fetch-pictograms.mjs`. Note that the ARASAAC search API
-answers an unmatchable query with an arbitrary pictogram rather than nothing — "your turn" once came
-back as *New Year's Eve* — so the script rejects any result whose keywords don't overlap the query,
-and `scripts/build-review-sheet.mjs` produces a sheet pairing every word with its symbol for human
-review. Do not trust the automatic match.
+Regenerate the symbol set with `node scripts/fetch-pictograms.mjs`. It reports by default and writes
+nothing; `--apply` downloads and rewrites the map, and it never edits `starterVocabulary.ts`.
+
+Two failure modes, and only one of them is guardable:
+
+- The ARASAAC search answers an unmatchable query with an arbitrary pictogram rather than nothing —
+  "your turn" once came back as *New Year's Eve*. The keyword-overlap check catches that.
+- A query can match the **wrong sense** of a homonym, where the keyword is genuinely correct. No
+  keyword check can see this. The park card shipped in 2.0 with a picture of a car reversing into a
+  parking space.
+
+So the resolver searches all four languages and keeps what they agree on. Each card already carries
+four labels for one concept, and that redundancy is the signal: the parking symbol had only English's
+vote, while the right symbol led in Russian, French and Spanish — and never appeared in the English
+results at all, since its English label is "playground".
+
+Agreement is a good *detector* and a poor *chooser*. Running it over the existing 90 words proposed
+17 changes, and of the four spot-checked, two would have made the board worse — see
+`scripts/SYMBOL-REVIEW.md`. Open the image before accepting anything, and remember that replacing a
+symbol a child has already learned has its own cost. `scripts/build-review-sheet.mjs` produces a
+sheet pairing every word with its symbol for that review.
 
 ---
 
