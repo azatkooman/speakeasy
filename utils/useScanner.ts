@@ -150,6 +150,21 @@ export const useScanner = ({ settings, stops, enabled }: Options) => {
   useEffect(() => {
     if (!enabled || settings.mode === 'off') return;
     const onKey = (e: KeyboardEvent) => {
+      /*
+       * Ignore auto-repeat.
+       *
+       * An external AAC switch presents as a HID keyboard, and holding one down
+       * produces a stream of repeated keydowns exactly as a held keyboard key
+       * does. Without this guard a switch that is held — which is what happens
+       * when someone has limited motor control, or simply rests on it — fires
+       * select() over and over: a dozen words into the sentence, or a dozen
+       * folder jumps, from one intended press.
+       *
+       * The users most affected are the ones least able to undo it or report
+       * it, which is what makes a one-line omission serious here.
+       */
+      if (e.repeat) return;
+
       // Never hijack keys while a parent is typing.
       const el = document.activeElement;
       if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || (el as HTMLElement).isContentEditable)) return;

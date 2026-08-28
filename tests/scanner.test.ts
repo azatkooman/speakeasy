@@ -143,3 +143,42 @@ describe('auto scanning', () => {
     vi.useRealTimers();
   });
 });
+
+describe('held switches', () => {
+  /*
+   * An external AAC switch presents as a HID keyboard, so holding it down sends
+   * repeated keydowns with repeat=true — the same as resting on a keyboard key.
+   * Acting on those turns one intended press into a burst of selections.
+   */
+  const pressRepeat = (key: string) =>
+    act(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, repeat: true })); });
+
+  it('selects once for a press, not once per auto-repeat', () => {
+    const log: string[] = [];
+    renderHook(() => useScanner({ settings: step, enabled: true, stops: stops([['a', 0], ['b', 0]], log) }));
+
+    press(' ');                                  // the real press
+    for (let i = 0; i < 12; i++) pressRepeat(' '); // the switch being held
+    expect(log).toEqual(['a']);
+  });
+
+  it('does not advance on auto-repeat either', () => {
+    const log: string[] = [];
+    const { result } = renderHook(() =>
+      useScanner({ settings: step, enabled: true, stops: stops([['a', 0], ['b', 0], ['c', 0]], log) }));
+
+    press('ArrowRight');
+    expect(result.current.focusedId).toBe('b');
+    for (let i = 0; i < 10; i++) pressRepeat('ArrowRight');
+    expect(result.current.focusedId).toBe('b');   // still where the user left it
+  });
+
+  it('still responds to the next genuine press after a held one', () => {
+    const log: string[] = [];
+    renderHook(() => useScanner({ settings: step, enabled: true, stops: stops([['a', 0], ['b', 0]], log) }));
+
+    pressRepeat(' ');       // ignored
+    press(' ');             // honoured
+    expect(log).toEqual(['a']);
+  });
+});

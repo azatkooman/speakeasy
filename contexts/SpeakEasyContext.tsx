@@ -15,6 +15,9 @@ import { voiceService } from '../services/voice.ts';
 import { audioPlayer } from '../services/audioPlayer.ts';
 import { pushHistory, clearHistory, isLegacyWord, HistoryEntry } from '../utils/history.ts';
 import { CORE_RAIL, FOLDER_VOCAB, VocabEntry } from '../utils/starterVocabulary.ts';
+
+/** Debounce for persisting settings. Range controls fire on every pixel of a drag. */
+export const SETTINGS_FLUSH_DELAY_MS = 200;
 import { detectDeviceLanguage } from '../utils/languages.ts';
 
 interface SpeakEasyContextType {
@@ -199,16 +202,14 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
              if (currentProfile) {
                  // SETTINGS LOGIC
                  if (currentProfile.settings) {
-                     settingsRef.current = currentProfile.settings;
-                     setSettings(currentProfile.settings);
+                     adoptSettings(currentProfile.settings);
                  } else {
                      // Migration: Profile exists but has no settings (legacy).
                      // Try to grab from localStorage (legacy global settings) or use defaults.
                      const savedInfo = localStorage.getItem('aac_settings');
                      const migrationSettings = savedInfo ? { ...DEFAULT_SETTINGS, ...JSON.parse(savedInfo) } : DEFAULT_SETTINGS;
                      
-                     settingsRef.current = migrationSettings;
-                     setSettings(migrationSettings);
+                     adoptSettings(migrationSettings);
                      
                      // Save back to profile immediately to complete migration
                      const updatedProfile = { ...currentProfile, settings: migrationSettings };
@@ -485,17 +486,42 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   useEffect(() => { profilesRef.current = profiles; }, [profiles]);
   useEffect(() => { currentProfileIdRef.current = currentProfileId; }, [currentProfileId]);
 
-  const flushSettings = useCallback(() => {
+  /**
+   * Drop a pending settings write without performing it. Needed before deleting
+   * a profile: the flush calls saveProfile, which is a put, so a write still in
+   * flight would recreate the profile record that was just removed.
+   */
+  const cancelPendingSettingsWrite = useCallback(() => {
       if (settingsFlushTimer.current !== null) {
           window.clearTimeout(settingsFlushTimer.current);
           settingsFlushTimer.current = null;
       }
+  }, []);
+
+  const flushSettings = useCallback(() => {
+      // Nothing pending means nothing to write. Without this guard every caller
+      // of flushSettings — including the one at the top of switchProfile —
+      // performs a spurious saveProfile, which is a put, and so recreates a
+      // profile that was just deleted.
+      if (settingsFlushTimer.current === null) return;
+      window.clearTimeout(settingsFlushTimer.current);
+      settingsFlushTimer.current = null;
+
+      /*
+       * Both of these are captured synchronously, on purpose. The write itself
+       * is queued onto a promise chain, and by the time it runs a profile
+       * switch may already have pointed the refs at a different child — which
+       * is precisely how one child's settings ended up in another's profile.
+       * Read them now; use the captured values later.
+       */
       const pid = currentProfileIdRef.current;
+      const latest = settingsRef.current;
       if (!pid) return;
+
       settingsWriteChain.current = settingsWriteChain.current
           .then(async () => {
-              const latest = settingsRef.current;
               const profile = profilesRef.current.find(p => p.id === pid);
+              // Gone since the flush was scheduled: saving would resurrect it.
               if (!profile) return;
               const updatedProfile = { ...profile, settings: latest };
               await saveProfile(updatedProfile);
@@ -503,6 +529,23 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           })
           .catch(e => console.error('Failed to save settings to profile', e));
   }, []);
+
+  /**
+   * Adopt settings that came *from* a profile — start-up, profile switch,
+   * profile creation. State and ref move together, and no write is scheduled
+   * because nothing changed that needs saving.
+   *
+   * Distinct from handleSetSettings, which is the user-changed-a-setting path.
+   * Mixing the two is what caused the bug this exists to prevent: switchProfile
+   * called the raw state setter, so settingsRef kept the previous child's
+   * values, and a debounced flush still in flight then wrote those values into
+   * the profile just switched to. On a shared tablet that silently moves one
+   * child's voice, speed and access settings onto their sibling.
+   */
+  const adoptSettings = (next: AppSettings) => {
+      settingsRef.current = next;
+      setSettings(next);
+  };
 
   const handleSetSettings = (
       next: AppSettings | ((prev: AppSettings) => AppSettings),
@@ -513,7 +556,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           return value;
       });
       if (settingsFlushTimer.current !== null) window.clearTimeout(settingsFlushTimer.current);
-      settingsFlushTimer.current = window.setTimeout(flushSettings, 200);
+      settingsFlushTimer.current = window.setTimeout(flushSettings, SETTINGS_FLUSH_DELAY_MS);
   };
 
   // A pending debounce must not be lost when the app is backgrounded — on
@@ -530,15 +573,18 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const switchProfile = async (id: string) => {
       if (id === currentProfileId) return;
-      
+
+      /*
+       * Any settings write still sitting in the debounce belongs to the profile
+       * being left. Flush it before anything moves: at this point both
+       * settingsRef and currentProfileIdRef still describe the outgoing child,
+       * so it lands in the right place. Leaving it pending would let it fire
+       * after the switch and write these settings onto the incoming child.
+       */
+      flushSettings();
+
       const targetProfile = profiles.find(p => p.id === id);
-      if (targetProfile) {
-          if (targetProfile.settings) {
-              setSettings(targetProfile.settings);
-          } else {
-              setSettings(DEFAULT_SETTINGS);
-          }
-      }
+      adoptSettings(targetProfile?.settings ?? DEFAULT_SETTINGS);
 
       setCurrentProfileId(id);
       await loadProfileData(id);
@@ -593,7 +639,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       // Manually trigger switch to ensure settings load correctly
       setCurrentProfileId(id);
-      setSettings(startingSettings);
+      adoptSettings(startingSettings);
       await loadProfileData(id);
   };
 
@@ -607,6 +653,8 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const removeProfile = async (id: string) => {
+      // A queued settings write would put() the profile back after we remove it.
+      cancelPendingSettingsWrite();
       await deleteProfile(id);
       clearHistory(id);
       const remaining = await getAllProfiles();
@@ -615,8 +663,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setCurrentProfileId('');
           setLibrary([]);
           setBoards([]);
-          // Optionally reset settings to default
-          setSettings(DEFAULT_SETTINGS);
+          adoptSettings(DEFAULT_SETTINGS);
       } else if (id === currentProfileId) {
           switchProfile(remaining[0].id);
       }

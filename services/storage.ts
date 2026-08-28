@@ -244,11 +244,40 @@ const migrateOrderToSlot = (tx: IDBTransaction) => {
  */
 let dbPromise: Promise<IDBDatabase> | null = null;
 
+/**
+ * How long to wait for the database to open before giving up and reporting it.
+ *
+ * Armed unconditionally, not just when a `blocked` event fires. The first
+ * version of this only started the clock on `blocked`, which turned out to miss
+ * the case that matters most: a second open request, queued behind an existing
+ * version change, never fires `blocked` at all and simply never settles. A
+ * timeout that only catches the hangs which announce themselves is not a
+ * timeout.
+ *
+ * Ten seconds is far longer than any real open takes — a blocking tab closes
+ * itself in milliseconds via onversionchange — so a transient block still
+ * resolves normally rather than showing the user an error they did not need.
+ */
+export const DB_OPEN_TIMEOUT_MS = 10000;
+
 const openDB = (): Promise<IDBDatabase> => {
   if (dbPromise) return dbPromise;
 
   dbPromise = new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
+    let sawBlocked = false;
+
+    const openTimer = setTimeout(() => {
+      dbPromise = null;   // so a retry opens a fresh request rather than replaying this
+      reject(new Error(
+        sawBlocked
+          ? 'The database could not be upgraded because another copy of the app is open. ' +
+            'Close other tabs or windows and try again.'
+          : 'The database did not open in time. Close other tabs or windows and try again.'
+      ));
+    }, DB_OPEN_TIMEOUT_MS) as unknown as number;
+
+    const clearOpenTimer = () => clearTimeout(openTimer);
 
     request.onupgradeneeded = (event) => {
       const db = request.result;
@@ -299,14 +328,29 @@ const openDB = (): Promise<IDBDatabase> => {
         dbPromise = null;
       };
       db.onclose = () => { dbPromise = null; };
+      clearOpenTimer();
       resolve(db);
     };
 
     request.onerror = () => {
+      clearOpenTimer();
       dbPromise = null;
       reject(request.error);
     };
+
+    /*
+     * A blocked upgrade used to only log, and that quietly defeated the
+     * recoverable start-up screen: the promise never settled, so nothing
+     * rejected, initialisation never finished, and the app sat on the loading
+     * spinner for ever. For a communication device an indefinite spinner is the
+     * worst failure available — the child has no words and no one is told why.
+     *
+     * Give the blocking connection time to close itself, then fail loudly so
+     * the error screen can offer a retry.
+     */
     request.onblocked = () => {
+      // Recorded only so the eventual message can name the actual cause.
+      sawBlocked = true;
       console.warn('IndexedDB upgrade blocked by another open connection');
     };
   });
@@ -345,20 +389,31 @@ export const deleteProfile = async (profileId: string): Promise<void> => {
     const allBoards = await getAllBoards(profileId);
     const allCats = await getAllCategories(profileId);
 
-    await Promise.all(allItems.map(i => deleteItem(i.id)));
-    await Promise.all(allCats.map(cat => deleteAssetFile(cat.icon)));
-
+    /*
+     * One transaction for every record, then cleanup. This used to call
+     * deleteItem per item — N separate transactions, each unlinking its assets
+     * before its own commit — so a crash part-way left a half-deleted profile
+     * whose surviving cards pointed at files that were already gone. Now either
+     * the whole profile disappears or none of it does.
+     */
     const db = await openDB();
-    return new Promise((resolve, reject) => {
-        const t = db.transaction([STORE_PROFILES, STORE_BOARDS, STORE_CATEGORIES], 'readwrite');
+    await new Promise<void>((resolve, reject) => {
+        const t = db.transaction([STORE_PROFILES, STORE_BOARDS, STORE_CATEGORIES, STORE_ITEMS], 'readwrite');
         t.objectStore(STORE_PROFILES).delete(profileId);
         const bStore = t.objectStore(STORE_BOARDS);
         allBoards.forEach(b => bStore.delete(b.id));
         const cStore = t.objectStore(STORE_CATEGORIES);
         allCats.forEach(c => cStore.delete(c.id));
+        const iStore = t.objectStore(STORE_ITEMS);
+        allItems.forEach(i => iStore.delete(i.id));
         t.oncomplete = () => resolve();
         t.onerror = () => reject(t.error);
     });
+
+    await cleanupAssets([
+        ...allItems.flatMap(i => [i.imageUrl, i.audioUrl]),
+        ...allCats.map(c => c.icon),
+    ]);
 };
 
 // --- BOARDS ---
@@ -537,9 +592,17 @@ export const createNewBoard = async (label: string, profileId: string, t?: (key:
 };
 
 export const deleteBoard = async (boardId: string): Promise<void> => {
-    const allItems = await getAllItems();
+    /*
+     * Scoped to the board's own profile. This used to call getAllItems() with no
+     * filter, deserialising every card of every child on the device — including
+     * their inline images on web — to find the ones on this board. Dangling
+     * links still need a scan, because nothing indexes linkedBoardId, but one
+     * profile's worth is the correct scope: a card can only link to a board
+     * belonging to the same child.
+     */
+    const board = await getBoardById(boardId);
+    const allItems = await getAllItems(board?.profileId);
     const boardItems = allItems.filter(i => i.boardId === boardId);
-    for (const item of boardItems) await deleteItem(item.id);
 
     // Cards on *other* boards that jump to this one would otherwise keep
     // pointing at a board that no longer exists. Tapping such a card left the
@@ -551,19 +614,25 @@ export const deleteBoard = async (boardId: string): Promise<void> => {
         await saveItemsBatch(danglingLinks.map(i => ({ ...i, linkedBoardId: undefined })));
     }
 
-    const allCats = await getAllCategories();
+    const allCats = await getAllCategories(board?.profileId);
     const catsToDelete = allCats.filter(c => c.boardId === boardId);
-    for (const cat of catsToDelete) await deleteAssetFile(cat.icon);
 
     const db = await openDB();
-    return new Promise((resolve, reject) => {
-        const t = db.transaction([STORE_BOARDS, STORE_CATEGORIES], 'readwrite');
+    await new Promise<void>((resolve, reject) => {
+        const t = db.transaction([STORE_BOARDS, STORE_CATEGORIES, STORE_ITEMS], 'readwrite');
         t.objectStore(STORE_BOARDS).delete(boardId);
         const cStore = t.objectStore(STORE_CATEGORIES);
         catsToDelete.forEach(c => cStore.delete(c.id));
+        const iStore = t.objectStore(STORE_ITEMS);
+        boardItems.forEach(i => iStore.delete(i.id));
         t.oncomplete = () => resolve();
         t.onerror = () => reject(t.error);
     });
+
+    await cleanupAssets([
+        ...boardItems.flatMap(i => [i.imageUrl, i.audioUrl]),
+        ...catsToDelete.map(c => c.icon),
+    ]);
 };
 
 // --- ITEMS ---
@@ -645,19 +714,34 @@ export const getAllItems = async (profileId?: string): Promise<AACItem[]> => {
     });
 };
 
+/**
+ * Remove asset files that nothing references any more.
+ *
+ * Always called *after* the record referencing them has been committed, never
+ * before. The reverse order — which deleteItem and deleteCategory both used —
+ * means a failed or aborted transaction leaves a live record pointing at a file
+ * that is already gone: a card with a missing symbol and no way to recover it.
+ * Losing a superseded file to a failed cleanup is recoverable; losing the file
+ * a live record depends on is not.
+ */
+const cleanupAssets = async (paths: Array<string | undefined>): Promise<void> => {
+    try {
+        await Promise.all(paths.filter(Boolean).map(p => deleteAssetFile(p as string)));
+    } catch (e) {
+        console.error('Asset cleanup after delete failed', e);
+    }
+};
+
 export const deleteItem = async (id: string): Promise<void> => {
     const item = await getItemById(id);
-    if (item) {
-        await deleteAssetFile(item.imageUrl);
-        await deleteAssetFile(item.audioUrl);
-    }
     const db = await openDB();
-    return new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
         const t = db.transaction(STORE_ITEMS, 'readwrite');
         t.objectStore(STORE_ITEMS).delete(id);
         t.oncomplete = () => resolve();
         t.onerror = () => reject(t.error);
     });
+    if (item) await cleanupAssets([item.imageUrl, item.audioUrl]);
 };
 
 const getItemById = async (id: string): Promise<AACItem | undefined> => {
@@ -728,14 +812,14 @@ export const getAllCategories = async (profileId?: string): Promise<Category[]> 
 
 export const deleteCategory = async (id: string): Promise<void> => {
     const cat = await getCategoryById(id);
-    if (cat) await deleteAssetFile(cat.icon);
     const db = await openDB();
-    return new Promise((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
         const t = db.transaction(STORE_CATEGORIES, 'readwrite');
         t.objectStore(STORE_CATEGORIES).delete(id);
         t.oncomplete = () => resolve();
         t.onerror = () => reject(t.error);
     });
+    if (cat) await cleanupAssets([cat.icon]);
 };
 
 const getCategoryById = async (id: string): Promise<Category | undefined> => {
@@ -745,5 +829,15 @@ const getCategoryById = async (id: string): Promise<Category | undefined> => {
         const r = t.objectStore(STORE_CATEGORIES).get(id);
         r.onsuccess = () => resolve(r.result);
         r.onerror = () => resolve(undefined);
+    });
+};
+
+/** One board by id, so a cascade delete can scope its queries to the right profile. */
+const getBoardById = async (id: string): Promise<Board | undefined> => {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+        const r = db.transaction(STORE_BOARDS, 'readonly').objectStore(STORE_BOARDS).get(id);
+        r.onsuccess = () => resolve(r.result as Board | undefined);
+        r.onerror = () => reject(r.error);
     });
 };
