@@ -213,6 +213,18 @@ Locally, `npm run verify` is the same three checks without the build.
 
 ---
 
+## Licence
+
+The code is MIT (see `LICENSE`). Schools, clinics, therapists and other parents
+can use, change and redistribute it freely.
+
+The bundled ARASAAC symbols are **not** MIT — they are CC BY-NC-SA, and that
+non-commercial clause is load-bearing. `NOTICE` sets out exactly what belongs to
+whom. The short version: anything built from this that carries a price, a paid
+tier, or advertising has to replace those symbols first.
+
+---
+
 ## Symbols and licence
 
 Pictographic symbols are the property of the Government of Aragón, created by Sergio Palao for

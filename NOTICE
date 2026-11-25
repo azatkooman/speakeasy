@@ -1,0 +1,49 @@
+SpeakEasy AAC — third-party material
+====================================
+
+The MIT licence in LICENSE covers the source code of this project. It does not
+cover everything in this repository. Two things here belong to other people,
+and one of them carries a restriction the MIT licence does not.
+
+Read this before reusing the repository, and especially before selling anything
+built from it.
+
+
+Pictographic symbols (public/pictograms/, 92 PNG files)
+-------------------------------------------------------
+
+Property of the Government of Aragón, created by Sergio Palao for ARASAAC
+(https://arasaac.org), distributed under Creative Commons BY-NC-SA 4.0:
+
+    https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+Full terms and attribution: public/pictograms/ATTRIBUTION.txt
+
+The non-commercial clause is load-bearing. SpeakEasy is distributed free of
+charge, which BY-NC-SA permits. It does not permit commercial use, so if a
+derivative carries a price, a paid tier, or advertising, these symbols must be
+replaced or separately licensed from ARASAAC first. Removing them is
+straightforward — they are referenced by filename from
+utils/starterVocabulary.ts — but it has to be done deliberately.
+
+Note that the MIT licence on the code grants the right to sell the software.
+That grant is ours to make and covers the code alone; it cannot and does not
+extend to these symbols.
+
+
+Typeface
+--------
+
+Nunito, by Vernon Adams, Cyreal and Jacques Le Bailly, under the SIL Open Font
+License 1.1. It is installed from npm (@fontsource-variable/nunito) rather than
+committed here, and is embedded in built releases of the app.
+
+    https://openfontlicense.org
+
+
+Everything else
+---------------
+
+The source code, the starter vocabulary word list and its translations, the
+application icon, and the documentation are copyright Azat Kooman and licensed
+under the MIT licence in LICENSE.
