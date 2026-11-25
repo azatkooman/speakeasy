@@ -411,3 +411,26 @@ body {
   border: 2px solid #fff;
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
 }
+
+/* ── Parent-mode controls on a cell ───────────────────────────────────────────
+ *
+ * A family wrote in that they could not edit their cards any more: on their
+ * board the reorder arrows sat on top of the edit gear, and the gears on the
+ * lowest rail cards were under the fixed bottom bar. Both were measurable —
+ * 28 arrow/gear overlaps on a 5x8 grid, and three gears the bottom bar
+ * swallowed.
+ *
+ * Three 24px controls do not fit on a 47px-wide cell, so the arrows are shown
+ * only when the cell is wide enough to hold them clear of the gear. Nothing is
+ * lost on a small cell: the gear opens a sheet that already offers Move.
+ */
+[data-part="cell"] { container-type: inline-size; }
+
+[data-cell-reorder] { display: none; }
+@container (min-width: 110px) {
+  [data-cell-reorder] { display: flex; }
+}
+
+/* Where the two can still meet, the gear takes the tap: it is the control that
+ * leads everywhere else, and a parent who cannot reach it is stuck. */
+[data-cell-edit] { z-index: 40; }

@@ -1119,17 +1119,17 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         await audioPlayer.play(item.audioUrl);
       } else {
         const txt = (item.textToSpeak || (item.labelKey ? t(item.labelKey as TranslationKey) : item.label) || '').trim();
-        if (txt) await voiceService.speak({ text: txt, language: settings.language, rate: settings.voiceRate, pitch: settings.voicePitch });
+        if (txt) await voiceService.speak({ text: txt, language: settings.language, voiceLang: settings.speechVoiceLang, rate: settings.voiceRate, pitch: settings.voicePitch });
       }
     } catch (e) {
-      if (item.label) await voiceService.speak({ text: item.label, language: settings.language, rate: settings.voiceRate, pitch: settings.voicePitch });
+      if (item.label) await voiceService.speak({ text: item.label, language: settings.language, voiceLang: settings.speechVoiceLang, rate: settings.voiceRate, pitch: settings.voicePitch });
     }
   };
 
   const addToSentence = (item: AACItem) => {
       if (isPlaying) return;
       if (item.linkedBoardId) {
-          voiceService.speak({ text: item.labelKey ? t(item.labelKey as TranslationKey) : item.label, language: settings.language }).catch(()=>{});
+          voiceService.speak({ text: item.labelKey ? t(item.labelKey as TranslationKey) : item.label, language: settings.language, voiceLang: settings.speechVoiceLang }).catch(()=>{});
           setBoardHistory(prev => [...prev, currentBoardId]);
           setCurrentBoardId(item.linkedBoardId);
           setCurrentFolderId(ROOT_FOLDER);
@@ -1167,7 +1167,7 @@ export const SpeakEasyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
       setPreviewItemId(item.id);
       const txt = (item.textToSpeak || (item.labelKey ? t(item.labelKey as TranslationKey) : item.label) || '').trim();
-      if (txt) voiceService.speak({ text: txt, language: settings.language, rate: settings.voiceRate, pitch: settings.voicePitch }).catch(() => {});
+      if (txt) voiceService.speak({ text: txt, language: settings.language, voiceLang: settings.speechVoiceLang, rate: settings.voiceRate, pitch: settings.voicePitch }).catch(() => {});
       if (previewTimerRef.current) clearTimeout(previewTimerRef.current);
       previewTimerRef.current = window.setTimeout(() => setPreviewItemId(null), 4000);
   };

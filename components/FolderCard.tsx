@@ -120,13 +120,13 @@ const FolderCard: React.FC<FolderCardProps> = ({
         <>
           <button
             type="button"
-            aria-label={t('folder.edit')}
+            aria-label={t('folder.edit')} data-cell-edit
             onClick={() => onEdit?.()}
             className="absolute top-3 right-1 z-30 bg-white/90 backdrop-blur-sm rounded-full p-1.5 shadow-sm border border-slate-200 hover:bg-slate-50 active:scale-95 transition-all"
           >
             <Settings2 size={14} className="text-slate-700" />
           </button>
-          <div className="absolute bottom-[3.25rem] sm:bottom-[3.5rem] inset-x-3 flex justify-between z-30 pointer-events-none">
+          <div data-cell-reorder className="absolute bottom-[3.25rem] sm:bottom-[3.5rem] inset-x-3 flex justify-between z-30 pointer-events-none">
             <button
               type="button"
               aria-label={t('a11y.move_left')}

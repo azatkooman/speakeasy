@@ -3,6 +3,10 @@ import { AppLanguage } from '../types';
 import { vocabLabel } from '../utils/starterVocabulary';
 
 export type TranslationKey = 
+  | 'modal.settings.voice_language'
+  | 'modal.settings.voice_language_default'
+  | 'modal.settings.voice_language_desc'
+  | 'modal.settings.voice_language_none'
   | 'profile.restore'
   | 'profile.restore_desc'
   | 'modal.settings.backup'
@@ -265,6 +269,10 @@ export type TranslationKey =
 
 const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
   en: {
+    'modal.settings.voice_language': 'Voice language',
+    'modal.settings.voice_language_default': 'Same as app language',
+    'modal.settings.voice_language_desc': 'Pick any voice installed on this device, even one the app is not translated into. Use it when a card is spelled the way a different language sounds it out.',
+    'modal.settings.voice_language_none': 'No voices found on this device yet. Install a voice in the system settings, then reopen this screen.',
     'profile.restore': 'Restore from a backup',
     'profile.restore_desc': 'Moving from another tablet? Bring the boards across instead of starting again.',
     'modal.settings.backup': 'Backup',
@@ -535,6 +543,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'onboarding.dismiss': 'Got it',
   },
   ru: {
+    'modal.settings.voice_language': 'Язык голоса',
+    'modal.settings.voice_language_default': 'Как язык приложения',
+    'modal.settings.voice_language_desc': 'Выберите любой голос, установленный на устройстве, даже если приложение не переведено на этот язык. Это нужно, когда карточка записана по произношению другого языка.',
+    'modal.settings.voice_language_none': 'На устройстве пока не найдено голосов. Установите голос в настройках системы и откройте этот экран снова.',
     'profile.restore': 'Восстановить из копии',
     'profile.restore_desc': 'Переходите с другого планшета? Перенесите доски вместо того, чтобы начинать заново.',
     'modal.settings.backup': 'Резервная копия',
@@ -805,6 +817,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'onboarding.dismiss': 'Понятно',
   },
   fr: {
+    'modal.settings.voice_language': 'Langue de la voix',
+    'modal.settings.voice_language_default': 'Comme la langue de l’application',
+    'modal.settings.voice_language_desc': 'Choisissez n’importe quelle voix installée sur cet appareil, même dans une langue où l’application n’est pas traduite. Utile quand une carte est écrite selon la prononciation d’une autre langue.',
+    'modal.settings.voice_language_none': 'Aucune voix trouvée sur cet appareil. Installez une voix dans les réglages du système, puis rouvrez cet écran.',
     'profile.restore': 'Restaurer une sauvegarde',
     'profile.restore_desc': 'Vous changez de tablette ? Transférez les tableaux au lieu de tout recommencer.',
     'modal.settings.backup': 'Sauvegarde',
@@ -1075,6 +1091,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     'onboarding.dismiss': 'Compris',
   },
   es: {
+    'modal.settings.voice_language': 'Idioma de la voz',
+    'modal.settings.voice_language_default': 'Igual que el idioma de la app',
+    'modal.settings.voice_language_desc': 'Elija cualquier voz instalada en el dispositivo, incluso en un idioma al que la app no está traducida. Sirve cuando una tarjeta está escrita según la pronunciación de otro idioma.',
+    'modal.settings.voice_language_none': 'No se encontraron voces en este dispositivo. Instale una voz en los ajustes del sistema y vuelva a abrir esta pantalla.',
     'profile.restore': 'Restaurar desde una copia',
     'profile.restore_desc': '¿Cambias de tableta? Trae los tableros en lugar de empezar de nuevo.',
     'modal.settings.backup': 'Copia de seguridad',

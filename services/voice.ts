@@ -7,6 +7,21 @@ import { getLanguageOption } from '../utils/languages';
 export interface SpeakOptions {
   text: string;
   language: AppLanguage;
+  /**
+   * BCP 47 tag that overrides the app language for speech only.
+   *
+   * The two were the same thing until a German family wrote in: they had
+   * spelled every card phonetically so a German voice would say their child's
+   * names correctly, which worked because the Android plugin was being handed
+   * the wrong option key and quietly fell back to the device locale. Fixing
+   * that key made the app honour its own setting — English — and every name
+   * started being read by an English voice.
+   *
+   * The app's interface exists in four languages; the voices on a device do
+   * not stop there. A parent must be able to pick the voice that says their
+   * child's words without waiting for the interface to be translated.
+   */
+  voiceLang?: string;
   rate?: number;
   pitch?: number;
 }
@@ -49,7 +64,7 @@ class VoiceService {
   }
 
   async speak(options: SpeakOptions): Promise<void> {
-    const { text, language, rate = 0.9, pitch = 1.0 } = options;
+    const { text, language, voiceLang, rate = 0.9, pitch = 1.0 } = options;
     if (!text || !text.trim()) return;
 
     await this.stop();
@@ -59,7 +74,8 @@ class VoiceService {
     // Region-qualified BCP 47 tag. A bare 'fr'/'es' resolves inconsistently
     // across engines, and an unmapped language silently falls back to the
     // device locale — which is what made fr/es speak with an English voice.
-    const langCode = getLanguageOption(language).bcp47;
+    // The parent's explicit choice wins over the interface language.
+    const langCode = (voiceLang && voiceLang.trim()) || getLanguageOption(language).bcp47;
     
     const platform = Capacitor.getPlatform(); // 'ios', 'android', 'web'
     const isAndroid = platform === 'android';
@@ -203,5 +219,36 @@ class VoiceService {
     })().catch(e => { console.error('SpeechSynthesis failed unexpectedly', e); resolve(); }); });
   }
 }
+
+/**
+ * The voices this device can actually speak with.
+ *
+ * Read through the WebView's speech API even on Android, where the native
+ * plugin does the speaking: the plugin has no list of its own, and both draw on
+ * the same installed engines. Returns an empty list rather than throwing when
+ * speech is unavailable, so Settings can say so instead of breaking.
+ */
+export interface DeviceVoice {
+  lang: string;   // BCP 47, e.g. 'de-DE'
+  name: string;
+}
+
+export const listDeviceVoices = (): DeviceVoice[] => {
+  try {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return [];
+    const seen = new Set<string>();
+    const out: DeviceVoice[] = [];
+    for (const v of window.speechSynthesis.getVoices()) {
+      if (!v.lang) continue;
+      const lang = v.lang.replace('_', '-');
+      if (seen.has(lang)) continue;
+      seen.add(lang);
+      out.push({ lang, name: v.name || lang });
+    }
+    return out.sort((a, b) => a.lang.localeCompare(b.lang));
+  } catch {
+    return [];
+  }
+};
 
 export const voiceService = new VoiceService();

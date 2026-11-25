@@ -109,6 +109,12 @@ export interface AppSettings {
    */
   gridColumns: GridSize;
   language: AppLanguage;
+  /**
+   * BCP 47 tag for speech, when the voice should not follow the interface
+   * language. Undefined means "follow the interface", which is what almost
+   * everyone wants; a German or Kazakh family needs the two to come apart.
+   */
+  speechVoiceLang?: string;
   maxSentenceLength: number; // 0 = unlimited, 1-5 = limit
   autoClearSentence: boolean;
   /**

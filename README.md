@@ -72,7 +72,9 @@ key), so it has to survive every visual change.
   their peers
 - Parent mode behind a 1.5s press-and-hold
 
-**Languages** — English, Russian, French, Spanish. UI, vocabulary and speech.
+**Languages** — English, Russian, French, Spanish for the interface, vocabulary and speech. The
+speaking voice is set separately from the interface, so a family can use any voice installed on the
+device — German, Kazakh, anything — without waiting for the interface to be translated.
 
 ---
 
@@ -150,7 +152,7 @@ services/     storage.ts (IndexedDB), backup.ts (export/import), translations.ts
               arasaac.ts, audioPlayer.ts
 utils/        starterVocabulary.ts, keyboardLayouts.ts, useScanner.ts, useSelectable.ts,
               useRenderedCols.ts, history.ts, languages.ts, seedPictograms.ts, icons.ts
-tests/        15 suites, 113 tests
+tests/        16 suites, 118 tests
 scripts/      fetch-pictograms.mjs, build-review-sheet.mjs
 public/       92 bundled ARASAAC pictograms, manifest, icons
 android/      Capacitor Android project
@@ -187,7 +189,7 @@ android/      Capacitor Android project
 npm test
 ```
 
-113 tests over 15 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
+118 tests over 16 suites: schema migrations, profile isolation, switch traversal, keyboard layouts,
 history snapshots, asset paths, starter-vocabulary integrity, delete ordering, blocked database
 upgrades, the settings write race, hook ordering, dependency declarations, accessible names,
 backup round trips, and native asset handling.

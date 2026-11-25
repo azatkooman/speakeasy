@@ -19,6 +19,8 @@ interface CreateCardModalProps {
   defaultColorTheme?: ColorTheme;
   voiceRate: number;
   voicePitch: number;
+  /** BCP 47 override, so the preview speaks with the same voice the board will. */
+  speechVoiceLang?: string;
 }
 
 type SoundMode = 'recording' | 'tts';
@@ -35,7 +37,7 @@ const THEMES: { theme: ColorTheme; bg: string; border: string; labelKey: Transla
   { theme: 'slate', bg: 'bg-slate-100', border: 'border-slate-400', labelKey: 'fitzgerald.misc', descKey: 'fitzgerald.misc_desc' },
 ];
 
-const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSave, editItem, t, language, currentFolderName, defaultColorTheme, voiceRate, voicePitch }) => {
+const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSave, editItem, t, language, currentFolderName, defaultColorTheme, voiceRate, voicePitch, speechVoiceLang }) => {
   const [label, setLabel] = useState('');
   const [isLabelManuallyEdited, setIsLabelManuallyEdited] = useState(false);
   
@@ -329,6 +331,7 @@ const CreateCardModal: React.FC<CreateCardModalProps> = ({ isOpen, onClose, onSa
       await voiceService.speak({
         text,
         language,
+        voiceLang: speechVoiceLang,
         rate: voiceRate,
         pitch: voicePitch
       });

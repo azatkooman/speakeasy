@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Monitor, Volume2, Grid, Languages, Sparkles, AlertTriangle, Home, Palette, Hand, ScanLine, BookPlus, Check, Download, Upload, Save } from 'lucide-react';
 import { AppSettings } from '../types';
-import { voiceService } from '../services/voice';
+import { voiceService, listDeviceVoices, DeviceVoice } from '../services/voice';
 import { LANGUAGES, getLanguageOption } from '../utils/languages';
 import Dialog from './Dialog.tsx';
 import { useSpeakEasy } from '../contexts/SpeakEasyContext.tsx';
@@ -45,6 +45,24 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
    * outcome. This is the control a parent reaches for when something has
    * already gone wrong, so it must not need interpreting.
    */
+  /*
+   * The voices this device has, so speech can be set independently of the
+   * interface language. A German family had spelled every card phonetically for
+   * a German voice; tying speech to the four translated languages took that
+   * away from them. The list is read from the device, not from our own.
+   */
+  const [voices, setVoices] = useState<DeviceVoice[]>([]);
+  useEffect(() => {
+    if (!isOpen) return;
+    const refresh = () => setVoices(listDeviceVoices());
+    refresh();
+    // Android populates the list asynchronously after the engine wakes up.
+    const synth = typeof window !== 'undefined' ? window.speechSynthesis : undefined;
+    synth?.addEventListener?.('voiceschanged', refresh);
+    const retry = window.setTimeout(refresh, 600);
+    return () => { synth?.removeEventListener?.('voiceschanged', refresh); window.clearTimeout(retry); };
+  }, [isOpen]);
+
   const [busy, setBusy] = useState<null | 'export' | 'import'>(null);
   const [backupNote, setBackupNote] = useState<string | null>(null);
   const [backupError, setBackupError] = useState<string | null>(null);
@@ -118,7 +136,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
       try {
           await voiceService.speak({
               text,
-              language: settings.language,
+              language: settings.language, voiceLang: settings.speechVoiceLang,
               rate: settings.voiceRate,
               pitch: settings.voicePitch
           });
@@ -252,6 +270,31 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
                         </div>
                     )}
                 </button>
+
+                <div>
+                   <label htmlFor="voice-language" className="block text-sm font-bold text-slate-500 uppercase mb-2">
+                     {t('modal.settings.voice_language')}
+                   </label>
+                   <select
+                     id="voice-language"
+                     value={settings.speechVoiceLang || ''}
+                     onChange={(e) => onUpdateSettings(prev => ({
+                       ...prev,
+                       speechVoiceLang: e.target.value || undefined,
+                     }))}
+                     className="w-full min-h-[44px] px-3 py-2 rounded-xl border-2 border-slate-200 bg-white font-bold text-slate-700 focus:border-primary focus:outline-none"
+                   >
+                     <option value="">{t('modal.settings.voice_language_default')}</option>
+                     {voices.map(v => (
+                       <option key={v.lang} value={v.lang}>{v.lang} — {v.name}</option>
+                     ))}
+                   </select>
+                   <p className="mt-2 text-xs text-slate-400 font-medium">
+                     {voices.length === 0
+                       ? t('modal.settings.voice_language_none')
+                       : t('modal.settings.voice_language_desc')}
+                   </p>
+                </div>
 
             </div>
           </section>

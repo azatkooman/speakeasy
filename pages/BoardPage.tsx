@@ -375,6 +375,7 @@ export const BoardPage: React.FC = () => {
         <nav
           aria-label={t('modal.create.core')}
           className="shrink-0 w-16 sm:w-28 bg-white/70 border-r border-slate-200 overflow-y-auto no-scrollbar p-2 flex flex-col gap-2"
+          style={{ paddingBottom: isEditMode ? 'calc(10rem + var(--sa-bottom))' : 'calc(1rem + var(--sa-bottom))' }}
         >
           {coreItems.map((card, railIdx) => {
               const style = getCardStyle(card);
@@ -421,7 +422,7 @@ export const BoardPage: React.FC = () => {
                   <>
                     <button
                       type="button"
-                      aria-label={t('modal.create.title_edit')}
+                      aria-label={t('modal.create.title_edit')} data-cell-edit
                       onClick={() => setEditOptionsItem({ item: card, type: 'card' })}
                       className="absolute top-1 right-1 z-30 bg-white/95 backdrop-blur-sm rounded-full w-6 h-6 flex items-center justify-center shadow-sm border border-slate-200 text-slate-700 hover:border-primary hover:text-primary active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary"
                     >
@@ -440,6 +441,7 @@ export const BoardPage: React.FC = () => {
                     <button
                       type="button"
                       aria-label={t('move.up')}
+                      data-cell-reorder
                       onClick={() => reorderCore(card.id, -1)}
                       disabled={railIdx === 0}
                       className={`absolute top-1 left-1 z-30 w-6 h-6 flex items-center justify-center rounded-full shadow-sm border transition-all active:scale-95 backdrop-blur-sm ${railIdx === 0 ? 'bg-slate-100/60 border-slate-200/60 text-slate-300 cursor-not-allowed' : 'bg-white/95 border-slate-200 text-slate-700 hover:border-primary hover:text-primary'}`}
@@ -449,6 +451,7 @@ export const BoardPage: React.FC = () => {
                     <button
                       type="button"
                       aria-label={t('move.down')}
+                      data-cell-reorder
                       onClick={() => reorderCore(card.id, 1)}
                       disabled={railIdx === coreItems.length - 1}
                       className={`absolute bottom-6 left-1 z-30 w-6 h-6 flex items-center justify-center rounded-full shadow-sm border transition-all active:scale-95 backdrop-blur-sm ${railIdx === coreItems.length - 1 ? 'bg-slate-100/60 border-slate-200/60 text-slate-300 cursor-not-allowed' : 'bg-white/95 border-slate-200 text-slate-700 hover:border-primary hover:text-primary'}`}
@@ -609,8 +612,8 @@ export const BoardPage: React.FC = () => {
 
                             {isEditMode && (
                                 <>
-                                    <button type="button" aria-label={t('modal.create.title_edit')} onClick={() => setEditOptionsItem({ item: card, type: 'card' })} className="absolute top-1 right-1 bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-sm z-30 border border-slate-200 hover:bg-slate-100 active:scale-95 transition-all"><Settings2 size={16} className="text-slate-700" /></button>
-                                    <div className="absolute bottom-[3.25rem] sm:bottom-[3.5rem] inset-x-2 flex justify-between z-30 pointer-events-none">
+                                    <button type="button" aria-label={t('modal.create.title_edit')} data-cell-edit onClick={() => setEditOptionsItem({ item: card, type: 'card' })} className="absolute top-1 right-1 bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-sm z-30 border border-slate-200 hover:bg-slate-100 active:scale-95 transition-all"><Settings2 size={16} className="text-slate-700" /></button>
+                                    <div data-cell-reorder className="absolute bottom-[3.25rem] sm:bottom-[3.5rem] inset-x-2 flex justify-between z-30 pointer-events-none">
                                         <button type="button" aria-label={t('move.title')} onClick={() => reorderGrid(card.id, -1)} disabled={isFirst} className={`pointer-events-auto w-8 h-8 flex items-center justify-center rounded-full shadow-lg border-2 transition-all active:scale-95 backdrop-blur-md ${isFirst ? 'bg-slate-100/50 border-slate-200 text-slate-300 opacity-50 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-700 hover:border-primary hover:text-primary hover:bg-slate-50'}`}><ArrowLeft size={16} strokeWidth={2.5} /></button>
                                         <button type="button" aria-label={t('move.title')} onClick={() => reorderGrid(card.id, 1)} disabled={isLast} className={`pointer-events-auto w-8 h-8 flex items-center justify-center rounded-full shadow-lg border-2 transition-all active:scale-95 backdrop-blur-md ${isLast ? 'bg-slate-100/50 border-slate-200 text-slate-300 opacity-50 cursor-not-allowed' : 'bg-white border-slate-200 text-slate-700 hover:border-primary hover:text-primary hover:bg-slate-50'}`}><ArrowRight size={16} strokeWidth={2.5} /></button>
                                     </div>
@@ -679,7 +682,7 @@ export const BoardPage: React.FC = () => {
 
       <HistoryModal isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} entries={isHistoryOpen ? readHistory(currentProfileId) : []} library={library} onSelectSentence={setSentenceFromHistory} t={t} />
       <CreateSelectionModal isOpen={isCreateSelectionOpen} onClose={() => setIsCreateSelectionOpen(false)} onSelectCard={() => { setIsCreateSelectionOpen(false); setEditingItem(null); setIsCreateModalOpen(true); }} onSelectFolder={() => { setIsCreateSelectionOpen(false); setEditingFolder(null); setIsFolderModalOpen(true); }} onSelectLink={() => { setIsCreateSelectionOpen(false); setIsLinkBoardModalOpen(true); }} t={t} />
-      <CreateCardModal voiceRate={settings.voiceRate} voicePitch={settings.voicePitch} isOpen={isCreateModalOpen} onClose={() => { setIsCreateModalOpen(false); setEditingItem(null); }} onSave={(d) => saveCard(d, editingItem?.id)} editItem={editingItem} t={t} language={settings.language} currentFolderName={currentFolderId === ROOT_FOLDER ? t('app.home_folder') : categories.find(c => c.id === currentFolderId)?.label} />
+      <CreateCardModal voiceRate={settings.voiceRate} voicePitch={settings.voicePitch} speechVoiceLang={settings.speechVoiceLang} isOpen={isCreateModalOpen} onClose={() => { setIsCreateModalOpen(false); setEditingItem(null); }} onSave={(d) => saveCard(d, editingItem?.id)} editItem={editingItem} t={t} language={settings.language} currentFolderName={currentFolderId === ROOT_FOLDER ? t('app.home_folder') : categories.find(c => c.id === currentFolderId)?.label} />
       <FolderModal isOpen={isFolderModalOpen} onClose={() => { setIsFolderModalOpen(false); setEditingFolder(null); }} onSave={(l, c, i) => saveFolderObj(l, c, i, editingFolder)} editFolder={editingFolder} t={t} language={settings.language} />
       <LinkBoardModal isOpen={isLinkBoardModalOpen} onClose={() => setIsLinkBoardModalOpen(false)} onSave={saveLinkBoard} boards={boards} currentBoardId={currentBoardId} t={t} />
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} settings={settings} onUpdateSettings={setSettings} onUpdateGridSize={setBoardGridSize} currentBoardLabel={boards.find(b => b.id === currentBoardId)?.label} t={t} />
